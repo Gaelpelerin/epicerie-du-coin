@@ -1668,9 +1668,13 @@ main {
 }
 
 @media (max-width: 680px) {
+  body {
+    font-size: 15px;
+  }
+
   .hero {
     min-height: auto;
-    padding-bottom: 20px;
+    padding: 12px 10px 18px;
   }
 
   .topbar,
@@ -1679,41 +1683,264 @@ main {
     flex-direction: column;
   }
 
+  .topbar {
+    gap: 12px;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand strong {
+    font-size: 0.9rem;
+  }
+
+  .brand small {
+    font-size: 0.72rem;
+  }
+
   .nav-actions {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
+    gap: 8px;
   }
 
   .nav-actions a,
   .cart-chip {
     justify-content: center;
+    min-height: 40px;
+    padding: 8px 7px;
+    font-size: 0.82rem;
+  }
+
+  .hero-cover {
+    margin-top: 16px;
+  }
+
+  .hero-cover img {
+    min-height: 0;
+    aspect-ratio: 1366 / 372;
+    object-fit: contain;
+    background: #030706;
+    border-radius: 6px;
+  }
+
+  .hero-note {
+    margin-top: 14px;
+    padding: 13px 10px;
+  }
+
+  .hero-note p {
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  main {
+    padding: 10px 10px 42px;
+  }
+
+  .service-strip article {
+    min-height: auto;
+    padding: 22px 16px;
+  }
+
+  .service-strip span {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 10px;
+  }
+
+  .service-strip strong {
+    font-size: 1rem;
+  }
+
+  .service-strip p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+  }
+
+  .main-actions {
+    gap: 10px;
+    margin: 18px 0 0;
+  }
+
+  .catalogue {
+    padding: 44px 0 26px;
+  }
+
+  .section-heading {
+    display: block;
+  }
+
+  .section-heading h2 {
+    font-size: 2.2rem;
+  }
+
+  .category-tabs {
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 12px -10px 20px;
+    padding: 0 10px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .category-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-tabs button {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 0 13px;
+    font-size: 0.88rem;
   }
 
   .product-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .product-card,
+  .featured-product {
+    min-height: 0;
+    border-radius: 7px;
+  }
+
+  .product-card {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .product-image {
+    min-height: 100%;
+    font-size: 2.45rem;
+  }
+
+  .product-body {
+    padding: 13px;
+  }
+
+  .product-body h3 {
+    margin-bottom: 5px;
+    font-size: 1rem;
+  }
+
+  .product-body p {
+    display: -webkit-box;
+    margin-bottom: 10px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.84rem;
+    line-height: 1.35;
+  }
+
+  .featured-main-image {
+    height: 155px;
+    min-height: 155px;
+  }
+
+  .featured-thumbs {
+    display: none;
+  }
+
+  .stock-badge {
+    min-height: 26px;
+    margin-bottom: 10px;
+    padding: 0 8px;
+    font-size: 0.68rem;
+  }
+
+  .allergen-tags {
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .allergen-tags span {
+    min-height: 22px;
+    padding: 0 7px;
+    font-size: 0.66rem;
+  }
+
+  .price {
+    font-size: 1rem;
+  }
+
+  .add-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .sold-out-ribbon {
+    top: 50%;
+    width: min(210px, 82%);
   }
 
   .product-modal {
-    width: min(100vw - 20px, 560px);
-    max-height: calc(100vh - 20px);
+    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    max-height: none;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    transform: none;
   }
 
   .modal-product-detail {
-    padding: 16px;
+    gap: 18px;
+    padding: 18px 14px 28px;
   }
 
   .modal-main-image {
-    min-height: 260px;
+    min-height: 0;
+    aspect-ratio: 1 / 0.74;
   }
 
   .modal-ribbon {
     width: min(330px, 88%);
   }
 
-  .hero-cover img {
-    min-height: 188px;
-    object-fit: cover;
+  .modal-product-info {
+    justify-content: flex-start;
+    padding-right: 0;
+  }
+
+  .modal-product-info h3 {
+    font-size: 2.2rem;
+  }
+
+  .featured-icon {
+    display: none;
+  }
+
+  .featured-highlights li {
+    min-height: 42px;
+    gap: 12px;
+    font-size: 0.9rem;
+  }
+
+  .featured-buy {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .featured-price {
+    font-size: 2rem;
+  }
+
+  .featured-quantity {
+    width: 152px;
   }
 
   .hero-actions {
@@ -1729,6 +1956,31 @@ main {
   .main-actions .ghost-btn {
     width: 100%;
     min-width: 0;
+  }
+
+  .feature-band {
+    padding: 22px 18px;
+  }
+
+  .allergen-panel,
+  .notice {
+    padding: 18px;
+  }
+
+  .cart-panel {
+    width: 100vw;
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .cart-items {
+    flex: 0 0 auto;
+    max-height: 34vh;
+    margin: 16px 0;
+  }
+
+  .checkout-grid {
+    grid-template-columns: 1fr;
   }
 
   .admin-heading,
