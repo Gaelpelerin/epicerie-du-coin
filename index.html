@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>L'Épicerie du Coin - Livraison gourmande</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=stock-47" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <nav class="topbar" aria-label="Navigation principale">
+          <a class="brand" href="#catalogue" aria-label="L'Épicerie du Coin">
+            <span class="brand-mark">❤</span>
+            <span>
+              <strong>L'Épicerie</strong>
+              <small>du coin</small>
+            </span>
+          </a>
+          <div class="nav-actions">
+            <a href="#catalogue">Catalogue</a>
+            <a href="#livraison">Livraison</a>
+            <button class="cart-chip" type="button" data-cart-open>
+              Panier
+              <span data-cart-count>0</span>
+            </button>
+          </div>
+        </nav>
+
+        <section class="hero-cover" aria-label="L'Épicerie du Coin">
+          <img src="assets/hero-cover-room-service.png" alt="L'Épicerie du Coin Room Service des Vosges - Le bon, tout près de chez vous." />
+          <div class="hero-note">
+            <p>
+              Nos produits ont été sélectionnés avec soin et pensés pour faciliter le confort de votre séjour par notre service de livraison.
+            </p>
+          </div>
+        </section>
+      </header>
+
+      <main>
+        <section class="service-strip" id="livraison" aria-label="Services">
+          <article class="service-order">
+            <span aria-hidden="true"><img src="assets/service-clock.svg" alt="" /></span>
+            <strong>Commander<br />à l'avance</strong>
+            <p>Pour être sûr que vos produits soient disponibles et livrés dans les meilleures conditions !</p>
+          </article>
+          <article class="service-delivery">
+            <span aria-hidden="true"><img src="assets/service-address.svg" alt="" /></span>
+            <strong>Livraison à votre adresse<br />7 jours sur 7</strong>
+            <p>Profitez, on s'occupe du reste !</p>
+          </article>
+          <article class="service-treat">
+            <strong>Une envie gourmande après votre journée ?</strong>
+            <p>On est là pour vous régaler !</p>
+          </article>
+        </section>
+
+        <div class="main-actions" aria-label="Actions principales">
+          <a class="primary-btn" href="#catalogue">Voir notre boutique</a>
+          <a class="ghost-btn" href="#packs">Voir nos packs</a>
+        </div>
+
+        <section class="catalogue" id="catalogue">
+          <div class="section-heading">
+            <p class="eyebrow">Catalogue</p>
+            <h2>Vos essentiels gourmands</h2>
+          </div>
+
+          <div class="category-tabs" role="tablist" aria-label="Catégories produits">
+            <button class="active" type="button" data-filter="all">Tout</button>
+            <button type="button" data-filter="quiches">Quiches</button>
+            <button type="button" data-filter="snacking">Snacking</button>
+            <button type="button" data-filter="pizzas">Pizzas</button>
+            <button type="button" data-filter="pizza-pincees">Pizzas pincées</button>
+            <button type="button" data-filter="panwichs">Panwichs</button>
+            <button type="button" data-filter="douceurs">Douceurs</button>
+            <button type="button" data-filter="softs">Softs</button>
+            <button type="button" data-filter="eaux">Eaux</button>
+            <button type="button" data-filter="jus">Jus premium</button>
+            <button type="button" data-filter="bieres">Bières</button>
+            <button type="button" data-filter="vins">Vins</button>
+            <button type="button" data-filter="bulles">Bulles</button>
+            <button type="button" data-filter="apero">Apéro</button>
+            <button type="button" data-filter="pack">Packs</button>
+          </div>
+
+          <div class="product-grid" data-product-grid></div>
+        </section>
+
+        <section class="allergen-panel" aria-label="Légende allergènes">
+          <p class="eyebrow">Allergènes</p>
+          <h2>Légende à valider avant publication</h2>
+          <div class="allergen-legend">
+            <span>Gluten</span>
+            <span>Œufs</span>
+            <span>Lait</span>
+            <span>Fruits à coque</span>
+            <span>Soja</span>
+            <span>Sésame</span>
+            <span>Moutarde</span>
+            <span>Céleri</span>
+            <span>Sulfites</span>
+            <span>Poisson</span>
+            <span>Lupin</span>
+            <span>Arachides</span>
+            <span>Mollusques</span>
+          </div>
+          <p>
+            Les allergènes affichés sont une base de travail issue du flyer. Avant toute mise en ligne publique, ils doivent être confirmés avec les fiches produits ou fournisseurs.
+          </p>
+        </section>
+
+        <section class="feature-band" id="packs">
+          <div>
+            <p class="eyebrow">Idée apéro</p>
+            <h2>Pack Apéro Chalet</h2>
+            <p>
+              Une sélection simple à commander pour accompagner un apéritif : bières artisanales, bretzel gratiné, chips premium et fromage.
+            </p>
+          </div>
+          <button class="primary-btn" type="button" data-add-pack>Ajouter le pack</button>
+        </section>
+
+        <section class="notice">
+          <strong>Vente d'alcool réglementée</strong>
+          <p>
+            Les boissons alcoolisées sont désactivées tant que la licence de vente à emporter n'est pas confirmée. L'abus d'alcool est dangereux pour la santé.
+          </p>
+        </section>
+        <footer class="legal-footer">
+          <a href="mentions-legales.html">Mentions légales</a>
+          <a href="cgv.html">CGV</a>
+          <a href="confidentialite.html">Confidentialité</a>
+        </footer>
+      </main>
+    </div>
+
+    <aside class="cart-panel" data-cart-panel aria-label="Panier">
+      <div class="cart-header">
+        <div>
+          <p class="eyebrow">Commande</p>
+          <h2>Votre panier</h2>
+        </div>
+        <button class="icon-btn" type="button" data-cart-close aria-label="Fermer le panier">×</button>
+      </div>
+      <div class="cart-items" data-cart-items>
+        <p class="empty-cart">Votre panier est vide.</p>
+      </div>
+      <div class="cart-footer">
+        <form class="checkout-form" data-checkout-form>
+          <label>
+            Nom
+            <input type="text" name="name" autocomplete="name" placeholder="Votre nom" />
+          </label>
+          <label>
+            Téléphone
+            <input type="tel" name="phone" autocomplete="tel" placeholder="+33 ..." />
+          </label>
+          <label class="full-field">
+            Adresse ou logement
+            <input type="text" name="address" autocomplete="street-address" placeholder="Adresse, résidence, chambre..." />
+          </label>
+          <div class="checkout-grid">
+            <label>
+              Jour souhaité
+              <input type="date" name="date" />
+            </label>
+            <label>
+              Heure souhaitée
+              <input type="time" name="time" />
+            </label>
+          </div>
+          <label class="full-field">
+            Notes
+            <textarea name="notes" rows="3" placeholder="Digicode, précision de livraison, allergie à signaler..."></textarea>
+          </label>
+          <label class="checkbox-field hidden" data-alcohol-confirm>
+            <input type="checkbox" name="alcoholAge" />
+            Je confirme avoir 18 ans ou plus pour les boissons alcoolisées.
+          </label>
+        </form>
+        <div class="cart-total">
+          <span>Total estimé</span>
+          <strong data-cart-total>0,00 €</strong>
+        </div>
+        <button class="primary-btn full" type="button" data-checkout>Envoyer la demande</button>
+        <p class="cart-message" data-cart-message aria-live="polite"></p>
+      </div>
+    </aside>
+    <section class="product-modal" data-product-modal aria-label="Détail produit" aria-modal="true">
+      <button class="icon-btn modal-close" type="button" data-product-modal-close aria-label="Fermer le détail produit">×</button>
+      <div data-product-modal-content></div>
+    </section>
+    <div class="scrim" data-cart-close data-product-modal-close></div>
+
+    <script src="stock.js?v=stock-47"></script>
+    <script src="script.js?v=stock-47"></script>
+  </body>
+</html>
