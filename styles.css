@@ -1680,9 +1680,13 @@ main {
   .product-card,
   .featured-product {
     display: grid;
-    grid-template-columns: 104px minmax(0, 1fr);
-    height: 136px;
-    min-height: 136px;
+    grid-template-columns: 124px minmax(0, 1fr);
+    min-height: 210px;
+    height: auto;
+  }
+
+  .product-body {
+    overflow: visible;
   }
 
   .featured-product .featured-gallery {
@@ -1866,15 +1870,15 @@ main {
 
   .product-card,
   .featured-product {
-    min-height: 136px;
+    min-height: 212px;
     border-radius: 7px;
   }
 
   .product-card,
   .featured-product {
     display: grid;
-    grid-template-columns: 104px minmax(0, 1fr);
-    height: 136px;
+    grid-template-columns: 96px minmax(0, 1fr);
+    height: auto;
   }
 
   .featured-product .featured-gallery {
@@ -1890,8 +1894,8 @@ main {
 
   .product-body {
     min-height: 0;
-    padding: 13px;
-    overflow: hidden;
+    padding: 13px 12px;
+    overflow: visible;
   }
 
   .product-body h3 {
@@ -1910,6 +1914,21 @@ main {
     line-height: 1.35;
   }
 
+  .product-meta {
+    margin-top: auto;
+  }
+
+  .allergen-tags {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .allergen-tags span {
+    min-height: 22px;
+    padding: 0 7px;
+    font-size: 0.66rem;
+  }
+
   .featured-main-image {
     height: 100%;
     min-height: 0;
@@ -1925,19 +1944,6 @@ main {
     margin-bottom: 7px;
     padding: 0 8px;
     font-size: 0.68rem;
-  }
-
-  .allergen-tags {
-    gap: 4px;
-    max-height: 22px;
-    margin-bottom: 8px;
-    overflow: hidden;
-  }
-
-  .allergen-tags span {
-    min-height: 22px;
-    padding: 0 7px;
-    font-size: 0.66rem;
   }
 
   .price {

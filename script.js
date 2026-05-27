@@ -708,7 +708,7 @@ function renderProducts(filter = "all") {
             ${renderAllergens(product)}
             <div class="product-meta">
               <span class="price">${formatPrice(product.price)}</span>
-              <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>+</button>
+              <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
             </div>
           </div>
         </article>
@@ -755,7 +755,7 @@ function renderFeaturedProduct(product) {
         ${renderAllergens(product)}
         <div class="product-meta">
           <span class="price">${formatPrice(product.price)}</span>
-          <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>+</button>
+          <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
         </div>
       </div>
     </article>
@@ -838,6 +838,21 @@ function closeProductModal() {
   if (!cartPanel.classList.contains("open")) scrim.classList.remove("open");
 }
 
+function getCartQuantity(productId) {
+  return cart.get(productId)?.quantity || 0;
+}
+
+function renderCartQuantityLabel(productId) {
+  const quantity = getCartQuantity(productId);
+  return quantity > 0 ? quantity : "+";
+}
+
+function refreshAddButtons() {
+  document.querySelectorAll("[data-add]").forEach((button) => {
+    button.textContent = renderCartQuantityLabel(button.dataset.add);
+  });
+}
+
 function showCartToast(message) {
   cartToast.textContent = message;
   cartToast.classList.add("show");
@@ -875,6 +890,7 @@ function addToCart(productId, quantity = 1) {
   cartMessage.textContent =
     requestedQuantity > stock ? `Stock limité : ${stock} disponible pour ${product.name}.` : "";
   renderCart();
+  refreshAddButtons();
   if (productModal.classList.contains("open")) closeProductModal();
   showCartToast(`${product.name} ajouté au panier`);
 }
@@ -891,6 +907,7 @@ function updateQuantity(productId, delta) {
   }
 
   renderCart();
+  refreshAddButtons();
 }
 
 function setCheckoutFormVisible(isVisible) {
@@ -1040,11 +1057,7 @@ document.addEventListener("click", (event) => {
     recordProductClick(product);
     openProductModal(productCard.dataset.productCard);
   }
-  if (addButton) {
-    const product = products.find((item) => item.id === addButton.dataset.add);
-    recordProductClick(product);
-    openProductModal(addButton.dataset.add);
-  }
+  if (addButton) addToCart(addButton.dataset.add);
   if (quantityButton) updateQuantity(quantityButton.dataset.qty, Number(quantityButton.dataset.delta));
   if (featuredImageButton) {
     featuredState.activeImage = featuredImageButton.dataset.featuredImage;
