@@ -934,6 +934,11 @@ function refreshShopFromStock() {
   renderCart();
 }
 
+async function refreshStockThenShop() {
+  await refreshRemoteStock();
+  refreshShopFromStock();
+}
+
 if ("BroadcastChannel" in window) {
   const stockChannel = new BroadcastChannel(STOCK_EVENT);
   stockChannel.addEventListener("message", refreshShopFromStock);
@@ -1036,12 +1041,13 @@ document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEve
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
 document.querySelector("[data-add-pack]").addEventListener("click", () => addToCart("pack-apero"));
 document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
-window.addEventListener("focus", refreshShopFromStock);
+window.addEventListener("focus", refreshStockThenShop);
 window.addEventListener(STOCK_EVENT, refreshShopFromStock);
-window.addEventListener("pageshow", refreshShopFromStock);
+window.addEventListener("pageshow", refreshStockThenShop);
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refreshShopFromStock();
+  if (!document.hidden) refreshStockThenShop();
 });
 
 renderProducts();
 renderCart();
+refreshStockThenShop();

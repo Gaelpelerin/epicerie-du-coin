@@ -4,6 +4,14 @@ const ANALYTICS_KEY = "epicerie-product-analytics";
 const STOCK_EVENT = "epicerie-stock-updated";
 const SALES_EVENT = "epicerie-sales-updated";
 const ANALYTICS_EVENT = "epicerie-product-analytics-updated";
+const SUPABASE_URL = "https://uqlqgfmlvyejenxbxjnx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_IeCEj5v9LP9GQ-3DZVw_sg__IBZtvxg";
+
+const supabaseHeaders = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+};
 
 const stockDefaults = {
   "quiche-lorraine": 8,
@@ -112,6 +120,53 @@ function setProductStock(productId, quantity) {
   const stock = loadStock();
   stock[productId] = Math.max(0, Number(quantity) || 0);
   saveStock(stock);
+}
+
+async function refreshRemoteStock() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/product_stock?select=product_id,quantity`, {
+      headers: supabaseHeaders,
+    });
+
+    if (!response.ok) throw new Error("Stock central indisponible.");
+
+    const rows = await response.json();
+    const remoteStock = rows.reduce(
+      (stock, row) => ({
+        ...stock,
+        [row.product_id]: Number(row.quantity) || 0,
+      }),
+      { ...stockDefaults }
+    );
+
+    saveStock(remoteStock);
+    return remoteStock;
+  } catch (error) {
+    console.warn(error);
+    return loadStock();
+  }
+}
+
+async function updateRemoteProductStock(productId, quantity, pin) {
+  const cleanQuantity = Math.max(0, Number(quantity) || 0);
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_product_stock`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({
+      p_product_id: productId,
+      p_quantity: cleanQuantity,
+      p_pin: pin,
+    }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible d'enregistrer le stock central.");
+  }
+
+  const updatedRow = await response.json();
+  setProductStock(productId, cleanQuantity);
+  return updatedRow;
 }
 
 function subtractStock(cartItems) {
@@ -250,6 +305,8 @@ window.loadStock = loadStock;
 window.saveStock = saveStock;
 window.getProductStock = getProductStock;
 window.setProductStock = setProductStock;
+window.refreshRemoteStock = refreshRemoteStock;
+window.updateRemoteProductStock = updateRemoteProductStock;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;
 window.saveSales = saveSales;

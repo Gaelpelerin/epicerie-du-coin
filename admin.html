@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock privé - L'Épicerie du Coin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=supabase-1" />
+  </head>
+  <body class="admin-page">
+    <main class="admin-shell">
+      <section class="admin-login" data-admin-login>
+        <p class="eyebrow">Accès privé</p>
+        <h1>Mode stock</h1>
+        <p>Entrez le code admin pour consulter et ajuster les quantités disponibles.</p>
+        <label>
+          Code admin
+          <input type="password" data-admin-pin autocomplete="current-password" />
+        </label>
+        <button class="primary-btn" type="button" data-admin-unlock>Accéder au stock</button>
+        <p class="admin-error" data-admin-error></p>
+      </section>
+
+      <section class="admin-stock hidden" data-admin-stock>
+        <div class="admin-heading">
+          <div>
+            <p class="eyebrow">Inventaire</p>
+            <h1>Stock boutique</h1>
+          </div>
+          <a class="ghost-btn" href="index.html?v=supabase-1#catalogue">Voir la boutique</a>
+        </div>
+
+        <div class="admin-tabs" role="tablist" aria-label="Administration">
+          <button class="active" type="button" data-admin-view="stock">Stock</button>
+          <button type="button" data-admin-view="sales">Suivi CA</button>
+          <button class="hidden" type="button" data-sales-filter-open>Filtrer</button>
+        </div>
+
+        <div data-admin-panel="stock">
+          <div class="stock-table" data-stock-table></div>
+
+          <div class="admin-actions">
+            <button class="primary-btn" type="button" data-stock-save>Enregistrer</button>
+            <button class="ghost-btn" type="button" data-stock-reset>Réinitialiser la démo</button>
+          </div>
+        </div>
+
+        <div class="hidden" data-admin-panel="sales">
+          <div class="sales-dashboard" data-sales-dashboard></div>
+          <div class="admin-actions">
+            <button class="ghost-btn" type="button" data-sales-reset>Réinitialiser le suivi CA</button>
+          </div>
+        </div>
+
+        <p class="admin-success" data-admin-success></p>
+      </section>
+    </main>
+
+    <div class="admin-modal hidden" data-sales-modal aria-label="Évolution du CA" aria-modal="true">
+      <div class="admin-modal-panel">
+        <button class="icon-btn admin-modal-close" type="button" data-sales-modal-close aria-label="Fermer">×</button>
+        <div data-sales-chart-modal></div>
+      </div>
+    </div>
+
+    <div class="admin-modal hidden" data-sales-filter-modal aria-label="Filtrer le suivi CA" aria-modal="true">
+      <div class="admin-modal-panel admin-filter-panel">
+        <button class="icon-btn admin-modal-close" type="button" data-sales-filter-close aria-label="Fermer">×</button>
+        <div data-sales-filter-modal-content></div>
+      </div>
+    </div>
+
+    <script src="stock.js?v=supabase-1"></script>
+    <script src="admin.js?v=supabase-1"></script>
+  </body>
+</html>
