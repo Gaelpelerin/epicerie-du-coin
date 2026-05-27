@@ -766,7 +766,7 @@ function renderProductModal(product) {
   const stock = getProductStock(product.id);
   const productImages = product.images || [];
   const activeImage = productImages.includes(featuredState.activeImage) ? featuredState.activeImage : productImages[0];
-  const highlights = product.highlights || ["Produit sélectionné avec soin", "Prêt à savourer", "Disponible en livraison logement"];
+  const highlights = product.highlights || ["Produit sélectionné avec soin", "Prêt à savourer", "Livraison à votre adresse"];
   const selectedQuantity = Math.min(featuredState.quantity, Math.max(1, stock));
   featuredState.quantity = selectedQuantity;
 
@@ -1040,7 +1040,11 @@ document.addEventListener("click", (event) => {
     recordProductClick(product);
     openProductModal(productCard.dataset.productCard);
   }
-  if (addButton) addToCart(addButton.dataset.add);
+  if (addButton) {
+    const product = products.find((item) => item.id === addButton.dataset.add);
+    recordProductClick(product);
+    openProductModal(addButton.dataset.add);
+  }
   if (quantityButton) updateQuantity(quantityButton.dataset.qty, Number(quantityButton.dataset.delta));
   if (featuredImageButton) {
     featuredState.activeImage = featuredImageButton.dataset.featuredImage;
