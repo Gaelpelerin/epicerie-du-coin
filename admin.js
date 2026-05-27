@@ -532,14 +532,21 @@ async function unlockAdmin() {
   }
 
   adminSessionPin = pin;
-  errorMessage.textContent = "";
-  successMessage.textContent = "Connexion au stock central...";
-  await refreshRemoteStock();
-  loginPanel.classList.add("hidden");
-  stockPanel.classList.remove("hidden");
-  renderStockTable();
-  renderSalesDashboard();
-  successMessage.textContent = "Stock central chargé.";
+  errorMessage.textContent = "Connexion au stock central...";
+
+  try {
+    await verifyRemoteAdminPin(pin);
+    errorMessage.textContent = "";
+    loginPanel.classList.add("hidden");
+    stockPanel.classList.remove("hidden");
+    renderStockTable();
+    renderSalesDashboard();
+    successMessage.textContent = "Stock central chargé.";
+  } catch (error) {
+    adminSessionPin = "";
+    errorMessage.textContent = "Code incorrect ou connexion au stock impossible.";
+    console.error(error);
+  }
 }
 
 document.querySelector("[data-admin-unlock]").addEventListener("click", unlockAdmin);

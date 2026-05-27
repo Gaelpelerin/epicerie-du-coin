@@ -1819,10 +1819,16 @@ main {
     border-radius: 7px;
   }
 
-  .product-card {
+  .product-card,
+  .featured-product {
     display: grid;
     grid-template-columns: 104px minmax(0, 1fr);
     height: 136px;
+  }
+
+  .featured-product .featured-gallery {
+    min-height: 0;
+    height: 100%;
   }
 
   .product-image {
@@ -1854,8 +1860,9 @@ main {
   }
 
   .featured-main-image {
-    height: 155px;
-    min-height: 155px;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
   }
 
   .featured-thumbs {

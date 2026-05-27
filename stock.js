@@ -169,6 +169,13 @@ async function updateRemoteProductStock(productId, quantity, pin) {
   return updatedRow;
 }
 
+async function verifyRemoteAdminPin(pin) {
+  const currentStock = await refreshRemoteStock();
+  const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
+  await updateRemoteProductStock("quiche-lorraine", checkQuantity, pin);
+  return true;
+}
+
 function subtractStock(cartItems) {
   const stock = loadStock();
   const unavailableItem = cartItems.find((item) => (stock[item.product.id] ?? 0) < item.quantity);
@@ -307,6 +314,7 @@ window.getProductStock = getProductStock;
 window.setProductStock = setProductStock;
 window.refreshRemoteStock = refreshRemoteStock;
 window.updateRemoteProductStock = updateRemoteProductStock;
+window.verifyRemoteAdminPin = verifyRemoteAdminPin;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;
 window.saveSales = saveSales;
