@@ -667,6 +667,7 @@ const alcoholConfirm = document.querySelector("[data-alcohol-confirm]");
 const productModal = document.querySelector("[data-product-modal]");
 const productModalContent = document.querySelector("[data-product-modal-content]");
 const scrim = document.querySelector(".scrim");
+const cartToast = document.querySelector("[data-cart-toast]");
 const cart = new Map();
 const featuredState = {
   quantity: 1,
@@ -835,6 +836,15 @@ function closeProductModal() {
   if (!cartPanel.classList.contains("open")) scrim.classList.remove("open");
 }
 
+function showCartToast(message) {
+  cartToast.textContent = message;
+  cartToast.classList.add("show");
+  clearTimeout(showCartToast.timeout);
+  showCartToast.timeout = window.setTimeout(() => {
+    cartToast.classList.remove("show");
+  }, 2200);
+}
+
 function addToCart(productId, quantity = 1) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
@@ -846,12 +856,14 @@ function addToCart(productId, quantity = 1) {
 
   if (isAlcoholLocked(product)) {
     cartMessage.textContent = `${product.name} sera disponible après validation de la licence alcool.`;
+    showCartToast("Licence alcool en validation");
     openCart();
     return;
   }
 
   if (stock <= 0 || allowedQuantity <= 0) {
     cartMessage.textContent = `${product.name} est indisponible.`;
+    showCartToast("Produit indisponible");
     openCart();
     return;
   }
@@ -861,7 +873,8 @@ function addToCart(productId, quantity = 1) {
   cartMessage.textContent =
     requestedQuantity > stock ? `Stock limité : ${stock} disponible pour ${product.name}.` : "";
   renderCart();
-  openCart();
+  if (productModal.classList.contains("open")) closeProductModal();
+  showCartToast(`${product.name} ajouté au panier`);
 }
 
 function updateQuantity(productId, delta) {
