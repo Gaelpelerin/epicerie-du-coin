@@ -668,12 +668,14 @@ const productModal = document.querySelector("[data-product-modal]");
 const productModalContent = document.querySelector("[data-product-modal-content]");
 const scrim = document.querySelector(".scrim");
 const cartToast = document.querySelector("[data-cart-toast]");
+const checkoutButton = document.querySelector("[data-checkout]");
 const cart = new Map();
 const featuredState = {
   quantity: 1,
   activeImage: "assets/quiche-lorraine-1.png",
   productId: null,
 };
+let checkoutFormVisible = false;
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
@@ -891,11 +893,23 @@ function updateQuantity(productId, delta) {
   renderCart();
 }
 
+function setCheckoutFormVisible(isVisible) {
+  checkoutFormVisible = isVisible;
+  checkoutForm.classList.toggle("hidden", !checkoutFormVisible);
+  checkoutButton.textContent = checkoutFormVisible ? "Envoyer la demande" : "Finaliser ma commande";
+  if (checkoutFormVisible) cartMessage.textContent = "Complétez vos informations pour envoyer la demande.";
+}
+
 function checkoutCart() {
   const items = [...cart.values()];
 
   if (!items.length) {
     cartMessage.textContent = "Votre panier est vide.";
+    return;
+  }
+
+  if (!checkoutFormVisible) {
+    setCheckoutFormVisible(true);
     return;
   }
 
@@ -969,6 +983,7 @@ function renderCart() {
 
   if (!items.length) {
     cartItems.innerHTML = '<p class="empty-cart">Votre panier est vide.</p>';
+    setCheckoutFormVisible(false);
     return;
   }
 
@@ -993,6 +1008,7 @@ function renderCart() {
 
 function openCart() {
   closeProductModal();
+  if (!cart.size) setCheckoutFormVisible(false);
   cartPanel.classList.add("open");
   scrim.classList.add("open");
 }

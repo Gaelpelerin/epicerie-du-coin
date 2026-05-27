@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=supabase-5" />
+    <link rel="stylesheet" href="styles.css?v=supabase-6" />
   </head>
   <body>
     <div class="app-shell">
@@ -153,7 +153,7 @@
         <p class="empty-cart">Votre panier est vide.</p>
       </div>
       <div class="cart-footer">
-        <form class="checkout-form" data-checkout-form>
+        <form class="checkout-form hidden" data-checkout-form>
           <label>
             Nom
             <input type="text" name="name" autocomplete="name" placeholder="Votre nom" />
@@ -189,7 +189,7 @@
           <span>Total estimé</span>
           <strong data-cart-total>0,00 €</strong>
         </div>
-        <button class="primary-btn full" type="button" data-checkout>Envoyer la demande</button>
+        <button class="primary-btn full" type="button" data-checkout>Finaliser ma commande</button>
         <p class="cart-message" data-cart-message aria-live="polite"></p>
       </div>
     </aside>
@@ -200,7 +200,7 @@
     <div class="scrim" data-cart-close data-product-modal-close></div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-    <script src="stock.js?v=supabase-5"></script>
-    <script src="script.js?v=supabase-5"></script>
+    <script src="stock.js?v=supabase-6"></script>
+    <script src="script.js?v=supabase-6"></script>
   </body>
 </html>
