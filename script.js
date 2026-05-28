@@ -1052,12 +1052,25 @@ document.addEventListener("click", (event) => {
   const featuredCard = event.target.closest("[data-featured-card]");
   const productCard = event.target.closest("[data-product-card]");
 
+  if (addButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    addToCart(addButton.dataset.add);
+    return;
+  }
+
+  if (featuredAddButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    addToCart(featuredAddButton.dataset.featuredAdd, featuredState.quantity);
+    return;
+  }
+
   if (productCard && !event.target.closest("button")) {
     const product = products.find((item) => item.id === productCard.dataset.productCard);
     recordProductClick(product);
     openProductModal(productCard.dataset.productCard);
   }
-  if (addButton) addToCart(addButton.dataset.add);
   if (quantityButton) updateQuantity(quantityButton.dataset.qty, Number(quantityButton.dataset.delta));
   if (featuredImageButton) {
     featuredState.activeImage = featuredImageButton.dataset.featuredImage;
@@ -1074,7 +1087,6 @@ document.addEventListener("click", (event) => {
     featuredState.quantity = Math.min(maxQuantity, Math.max(1, featuredState.quantity + Number(featuredDeltaButton.dataset.featuredDelta)));
     document.querySelector("[data-featured-quantity]").textContent = featuredState.quantity;
   }
-  if (featuredAddButton) addToCart(featuredAddButton.dataset.featuredAdd, featuredState.quantity);
   if (featuredCard && !event.target.closest("button")) {
     const product = products.find((item) => item.id === featuredCard.dataset.featuredCard);
     recordProductClick(product);
