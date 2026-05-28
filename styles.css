@@ -1061,6 +1061,18 @@ main {
   color: rgba(238, 219, 191, 0.46);
 }
 
+.checkout-note {
+  margin: 0;
+  padding: 12px 13px;
+  border: 1px solid rgba(240, 162, 66, 0.3);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(240, 162, 66, 0.08);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .checkbox-field {
   display: flex !important;
   grid-template-columns: auto 1fr;

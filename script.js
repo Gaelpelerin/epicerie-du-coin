@@ -953,8 +953,11 @@ function checkoutCart() {
 
   const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const lines = items.map((item) => `- ${item.quantity} x ${item.product.name} (${formatPrice(item.product.price)})`);
+  const orderReference = `EDC-${Date.now().toString().slice(-6)}`;
   const message = [
     "Bonjour, je souhaite passer une commande L'Épicerie du Coin :",
+    "",
+    `Référence demande : ${orderReference}`,
     "",
     ...lines,
     "",
@@ -964,6 +967,11 @@ function checkoutCart() {
     `Téléphone : ${customer.phone}`,
     `Adresse/logement : ${customer.address}`,
     `Créneau souhaité : ${customer.date} à ${customer.time}`,
+    "",
+    "Information dégustation : les produits sont livrés froids, prêts à réchauffer.",
+    "Merci de penser à préchauffer votre four 10 à 15 minutes avant dégustation.",
+    "",
+    "La commande sera confirmée après validation de la disponibilité et du créneau.",
     customer.notes ? `Notes : ${customer.notes}` : "",
   ]
     .filter(Boolean)
