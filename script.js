@@ -654,6 +654,7 @@ const products = [
 ];
 
 const ALCOHOL_SALES_ENABLED = false;
+const FIRST_DELIVERY_DATE = "2026-05-31";
 const WHATSAPP_ORDER_NUMBER = "33675748449";
 const grid = document.querySelector("[data-product-grid]");
 const tabs = document.querySelectorAll("[data-filter]");
@@ -663,6 +664,8 @@ const cartCount = document.querySelector("[data-cart-count]");
 const cartTotal = document.querySelector("[data-cart-total]");
 const cartMessage = document.querySelector("[data-cart-message]");
 const checkoutForm = document.querySelector("[data-checkout-form]");
+const deliveryDateInput = checkoutForm.querySelector('input[name="date"]');
+const deliveryHint = document.querySelector("[data-delivery-hint]");
 const alcoholConfirm = document.querySelector("[data-alcohol-confirm]");
 const productModal = document.querySelector("[data-product-modal]");
 const productModalContent = document.querySelector("[data-product-modal-content]");
@@ -679,6 +682,24 @@ let checkoutFormVisible = false;
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
+
+function formatDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function setupDeliveryDateInput() {
+  const today = formatDateInput(new Date());
+  const minDate = today > FIRST_DELIVERY_DATE ? today : FIRST_DELIVERY_DATE;
+  deliveryDateInput.min = minDate;
+  if (deliveryDateInput.value && deliveryDateInput.value < minDate) deliveryDateInput.value = minDate;
+  deliveryHint.textContent =
+    minDate === FIRST_DELIVERY_DATE
+      ? "Premiers créneaux disponibles à partir du dimanche 31 mai."
+      : "Choisissez un créneau à partir d'aujourd'hui.";
+}
 
 function isAlcoholLocked(product) {
   return Boolean(product.alcohol) && !ALCOHOL_SALES_ENABLED;
@@ -1116,4 +1137,5 @@ document.addEventListener("visibilitychange", () => {
 
 renderProducts();
 renderCart();
+setupDeliveryDateInput();
 refreshStockThenShop();

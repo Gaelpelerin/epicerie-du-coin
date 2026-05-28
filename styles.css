@@ -1073,6 +1073,11 @@ main {
   line-height: 1.45;
 }
 
+.checkout-note.compact {
+  padding: 10px 12px;
+  font-size: 0.78rem;
+}
+
 .checkbox-field {
   display: flex !important;
   grid-template-columns: auto 1fr;
