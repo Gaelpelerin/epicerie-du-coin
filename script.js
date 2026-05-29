@@ -765,9 +765,9 @@ function renderFeaturedProduct(product) {
 
   return `
     <article class="featured-product ${stock <= 0 ? "is-sold-out" : ""}" data-featured-card="${product.id}">
+      ${stock <= 0 ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
       <div class="featured-gallery">
         <img class="featured-main-image" src="${activeImage}" alt="${product.name}" />
-        ${stock <= 0 ? '<div class="sold-out-ribbon"><span>Victime de son succès</span></div>' : ""}
       </div>
       <div class="featured-details product-body">
         <h3>${product.name}</h3>
