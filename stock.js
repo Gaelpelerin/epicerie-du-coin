@@ -169,6 +169,77 @@ async function updateRemoteProductStock(productId, quantity, pin) {
   return updatedRow;
 }
 
+async function createRemoteOrderRequest(cartItems, customer, reference) {
+  const payload = {
+    p_reference: reference,
+    p_customer: {
+      name: customer.name,
+      phone: customer.phone,
+      address: customer.address,
+      delivery_date: customer.date,
+      delivery_time: customer.time,
+      notes: customer.notes || "",
+    },
+    p_items: cartItems.map((item) => ({
+      product_id: item.product.id,
+      name: item.product.name,
+      category: item.product.category,
+      price: item.product.price,
+      quantity: item.quantity,
+      total: item.product.price * item.quantity,
+      alcohol: Boolean(item.product.alcohol),
+    })),
+  };
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_order_request`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    const error = new Error(message || "Impossible d'enregistrer la commande.");
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
+async function loadRemoteSales(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_order_requests`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger les commandes centrales.");
+  }
+
+  const rows = await response.json();
+  const sales = rows.map((order) => ({
+    id: order.reference,
+    createdAt: order.createdAt,
+    total: Number(order.total) || 0,
+    customer: order.customer || {},
+    items: (order.items || []).map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 0,
+      total: Number(item.total) || 0,
+      alcohol: Boolean(item.alcohol),
+    })),
+  }));
+
+  saveSales(sales);
+  return sales;
+}
+
 async function verifyRemoteAdminPin(pin) {
   const currentStock = await refreshRemoteStock();
   const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
@@ -314,6 +385,8 @@ window.getProductStock = getProductStock;
 window.setProductStock = setProductStock;
 window.refreshRemoteStock = refreshRemoteStock;
 window.updateRemoteProductStock = updateRemoteProductStock;
+window.createRemoteOrderRequest = createRemoteOrderRequest;
+window.loadRemoteSales = loadRemoteSales;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;

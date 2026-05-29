@@ -938,7 +938,7 @@ function setCheckoutFormVisible(isVisible) {
   if (checkoutFormVisible) cartMessage.textContent = "Complétez vos informations pour envoyer la demande.";
 }
 
-function checkoutCart() {
+async function checkoutCart() {
   const items = [...cart.values()];
 
   if (!items.length) {
@@ -975,10 +975,32 @@ function checkoutCart() {
   const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const lines = items.map((item) => `- ${item.quantity} x ${item.product.name} (${formatPrice(item.product.price)})`);
   const orderReference = `EDC-${Date.now().toString().slice(-6)}`;
+  let finalReference = orderReference;
+
+  cartMessage.textContent = "Préparation de votre demande...";
+
+  try {
+    const remoteOrder = await createRemoteOrderRequest(items, customer, orderReference);
+    finalReference = remoteOrder.reference || orderReference;
+    recordSale(items, { ...customer, reference: finalReference, remote: true });
+    await refreshRemoteStock();
+  } catch (error) {
+    const message = String(error.message || "");
+
+    if (message.includes("stock_insufficient") || message.includes("product_not_available")) {
+      cartMessage.textContent = "Un produit vient d'être épuisé. Le stock a été mis à jour, merci de vérifier votre panier.";
+      await refreshStockThenShop();
+      return;
+    }
+
+    console.warn(error);
+    recordSale(items, { ...customer, reference: finalReference, remote: false });
+  }
+
   const message = [
     "Bonjour, je souhaite passer une commande L'Épicerie du Coin :",
     "",
-    `Référence demande : ${orderReference}`,
+    `Référence demande : ${finalReference}`,
     "",
     ...lines,
     "",

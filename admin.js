@@ -536,12 +536,17 @@ async function unlockAdmin() {
 
   try {
     await verifyRemoteAdminPin(pin);
+    try {
+      await loadRemoteSales(pin);
+    } catch (ordersError) {
+      console.warn(ordersError);
+    }
     errorMessage.textContent = "";
     loginPanel.classList.add("hidden");
     stockPanel.classList.remove("hidden");
     renderStockTable();
     renderSalesDashboard();
-    successMessage.textContent = "Stock central chargé.";
+    successMessage.textContent = "Stock et commandes centrales chargés.";
   } catch (error) {
     adminSessionPin = "";
     errorMessage.textContent = "Code incorrect ou connexion au stock impossible.";
