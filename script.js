@@ -357,6 +357,7 @@ const products = [
     description: "Classique frais pour accompagner votre commande.",
     price: 3.5,
     icon: "🥤",
+    images: ["assets/coca-cola-33cl.jpeg"],
   },
   {
     id: "coca-zero",
@@ -711,17 +712,20 @@ function isPurchasable(product) {
 
 function renderProducts(filter = "all") {
   const visibleProducts = filter === "all" ? products : products.filter((product) => product.category === filter);
-  const featuredProduct = visibleProducts.find((product) => product.featured);
-  const standardProducts = visibleProducts.filter((product) => !product.featured);
 
   grid.innerHTML = `
-    ${featuredProduct ? renderFeaturedProduct(featuredProduct) : ""}
-    ${standardProducts
+    ${visibleProducts
     .map(
       (product) => `
         <article class="product-card ${getProductStock(product.id) <= 0 ? "is-sold-out" : ""}" data-product-card="${product.id}">
           ${getProductStock(product.id) <= 0 ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
-          <div class="product-image" aria-hidden="true">${product.icon}</div>
+          <div class="product-image" aria-hidden="true">
+            ${
+              product.images?.[0]
+                ? `<img class="product-card-photo" src="${product.images[0]}" alt="" />`
+                : product.icon
+            }
+          </div>
           <div class="product-body">
             <h3>${product.name}</h3>
             <p>${product.description}</p>
