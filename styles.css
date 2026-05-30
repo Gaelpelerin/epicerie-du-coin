@@ -686,24 +686,49 @@ main {
 }
 
 .product-image {
+  position: relative;
   display: grid;
   place-items: center;
-  min-height: 132px;
+  height: 170px;
+  min-height: 170px;
   background:
     radial-gradient(circle at center, rgba(240, 162, 66, 0.18), transparent 58%),
     #0b1614;
   color: var(--copper-light);
   font-size: 3.2rem;
+  overflow: hidden;
+}
+
+.product-image.has-photo {
+  background: #0b1614;
+}
+
+.product-image.has-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4, 9, 8, 0) 35%, rgba(9, 19, 17, 0.64) 100%),
+    radial-gradient(circle at center, rgba(240, 162, 66, 0.06), transparent 64%);
+  pointer-events: none;
 }
 
 .product-card-photo {
   width: 100%;
-  height: 132px;
-  padding: 8px;
-  object-fit: contain;
-  background:
-    radial-gradient(circle at center, rgba(240, 162, 66, 0.12), transparent 60%),
-    #0b1614;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.03);
+}
+
+.product-icon-fallback {
+  display: none;
+  color: var(--copper-light);
+  font-size: 3.2rem;
+}
+
+.product-image.has-icon .product-icon-fallback {
+  display: inline-block;
 }
 
 .product-body {

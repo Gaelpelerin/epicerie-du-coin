@@ -357,7 +357,7 @@ const products = [
     description: "Classique frais pour accompagner votre commande.",
     price: 3.5,
     icon: "🥤",
-    images: ["assets/coca-cola-33cl.jpeg"],
+    images: ["products/coca.jpeg"],
   },
   {
     id: "coca-zero",
@@ -719,13 +719,7 @@ function renderProducts(filter = "all") {
       (product) => `
         <article class="product-card ${getProductStock(product.id) <= 0 ? "is-sold-out" : ""}" data-product-card="${product.id}">
           ${getProductStock(product.id) <= 0 ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
-          <div class="product-image" aria-hidden="true">
-            ${
-              product.images?.[0]
-                ? `<img class="product-card-photo" src="${product.images[0]}" alt="" />`
-                : product.icon
-            }
-          </div>
+          ${renderProductCardImage(product)}
           <div class="product-body">
             <h3>${product.name}</h3>
             <p>${product.description}</p>
@@ -757,6 +751,21 @@ function renderAllergens(product) {
   return `
     <div class="allergen-tags" aria-label="Allergènes ${product.name}">
       ${product.allergens.map((allergen) => `<span>${allergen}</span>`).join("")}
+    </div>
+  `;
+}
+
+function getProductCardImage(product) {
+  return product.images?.[0] || `products/${product.id}.jpeg`;
+}
+
+function renderProductCardImage(product) {
+  const image = getProductCardImage(product);
+
+  return `
+    <div class="product-image has-photo" aria-hidden="true">
+      <img class="product-card-photo" src="${image}" alt="" loading="lazy" onerror="this.closest('.product-image').classList.remove('has-photo'); this.closest('.product-image').classList.add('has-icon'); this.remove();" />
+      <span class="product-icon-fallback">${product.icon}</span>
     </div>
   `;
 }
