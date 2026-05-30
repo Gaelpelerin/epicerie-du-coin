@@ -1,0 +1,38 @@
+evian.jpeg - Evian 50 cl
+perrier-33.jpeg - Perrier 33 cl
+san-pellegrino-50.jpeg - San Pellegrino 50 cl
+coca.jpeg - Coca-Cola 33 cl
+coca-zero.jpeg - Coca-Cola Zero 33 cl
+ice-tea-peche.jpeg - Ice Tea pêche
+oasis-tropical.jpeg - Oasis Tropical
+orangina.jpeg - Orangina
+schweppes-agrumes.jpeg - Schweppes Agrumes
+lemonaid-citron.jpeg - Lemonaid citron bio
+lemonaid-passion.jpeg - Lemonaid passion bio
+lemonaid-ginger.jpeg - Lemonaid ginger bio
+charitea-the-vert.jpeg - Charitea thé vert bio
+jus-pomme-artisanal.jpeg - Jus de pomme artisanal 25 cl
+jus-orange-presse.jpeg - Jus orange pressé premium 25 cl
+nectar-mirabelle.jpeg - Nectar mirabelle artisanal 25 cl
+jus-pomme-fruits-rouges.jpeg - Jus pomme - fruits rouges 25 cl
+desperados.jpeg - Desperados 33 cl
+heineken.jpeg - Heineken
+corona.jpeg - Corona
+lorraine-peu-blond.jpeg - Lorraine Peu Blond
+lorraine-duchasse.jpeg - Lorraine Duchasse
+saint-nicolas.jpeg - Saint Nicolas
+loroyse-triple.jpeg - Loroyse Triple
+noiraude-blanche.jpeg - Noiraude Blanche
+riesling-alsace.jpeg - Riesling
+chardonnay.jpeg - Chardonnay Pierres
+pinot-noir.jpeg - Pinot noir
+cotes-du-rhone.jpeg - Côtes-du-Rhône
+coteaux-aix-rose.jpeg - Rosé Coteaux d'Aix
+uby-3.jpeg - UBY n°3
+uby-4.jpeg - UBY n°4
+prosecco.jpeg - Prosecco
+champagne-brut.jpeg - Champagne Veuve Pelletier
+gin-tonic.jpeg - Gin Tonic prêt à boire 25 cl
+spritz.jpeg - Spritz prêt à boire 25 cl
+mojito.jpeg - Mojito prêt à boire 25 cl
+pack-apero.jpeg - Pack Apéro Chalet
