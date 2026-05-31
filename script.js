@@ -761,10 +761,11 @@ function getProductCardImage(product) {
 
 function renderProductCardImage(product) {
   const image = getProductCardImage(product);
+  const uploadedPhotoClass = image.startsWith("products/") ? " product-card-photo--uploaded" : "";
 
   return `
     <div class="product-image has-photo" aria-hidden="true">
-      <img class="product-card-photo" src="${image}" alt="" loading="lazy" onerror="this.closest('.product-image').classList.remove('has-photo'); this.closest('.product-image').classList.add('has-icon'); this.remove();" />
+      <img class="product-card-photo${uploadedPhotoClass}" src="${image}" alt="" loading="lazy" onerror="this.closest('.product-image').classList.remove('has-photo'); this.closest('.product-image').classList.add('has-icon'); this.remove();" />
       <span class="product-icon-fallback">${product.icon}</span>
     </div>
   `;
