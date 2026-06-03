@@ -1,3 +1,5 @@
+const PRODUCT_IMAGE_VERSION = "drinks-1";
+
 const products = [
   {
     id: "quiche-lorraine",
@@ -333,6 +335,7 @@ const products = [
     description: "Boisson fraîche à conserver au réfrigérateur.",
     price: 2.5,
     icon: "💧",
+    images: ["products/evian.jpeg"],
   },
   {
     id: "perrier-33",
@@ -341,6 +344,7 @@ const products = [
     description: "Eau pétillante fraîche.",
     price: 3.5,
     icon: "💧",
+    images: ["products/perrier-33.jpeg"],
   },
   {
     id: "san-pellegrino-50",
@@ -349,6 +353,7 @@ const products = [
     description: "Eau pétillante fraîche.",
     price: 3.9,
     icon: "💧",
+    images: ["products/san-pellegrino-50.jpeg"],
   },
   {
     id: "coca",
@@ -366,6 +371,7 @@ const products = [
     description: "Classique sans sucres, servi frais.",
     price: 3.5,
     icon: "🥤",
+    images: ["products/coca-zero.jpeg"],
   },
   {
     id: "ice-tea-peche",
@@ -390,6 +396,7 @@ const products = [
     description: "Boisson pétillante à l'orange.",
     price: 3.9,
     icon: "🥤",
+    images: ["products/orangina.jpeg"],
   },
   {
     id: "schweppes-agrumes",
@@ -398,6 +405,7 @@ const products = [
     description: "Boisson pétillante aux agrumes.",
     price: 3.9,
     icon: "🥤",
+    images: ["products/schweppes-agrumes.jpeg"],
   },
   {
     id: "lemonaid-citron",
@@ -406,6 +414,7 @@ const products = [
     description: "Limonade bio au citron, servie fraîche.",
     price: 5.9,
     icon: "🥤",
+    images: ["products/lemonaid-citron.jpeg"],
   },
   {
     id: "lemonaid-passion",
@@ -470,6 +479,7 @@ const products = [
     description: "Bière blonde - vendue avec nourriture uniquement.",
     price: 5.9,
     icon: "🍺",
+    images: ["products/desperados.jpeg"],
     alcohol: true,
   },
   {
@@ -479,6 +489,7 @@ const products = [
     description: "Bière blonde, vendue avec nourriture uniquement.",
     price: 4.9,
     icon: "🍺",
+    images: ["products/heineken.jpeg"],
     alcohol: true,
   },
   {
@@ -488,6 +499,7 @@ const products = [
     description: "Bière blonde - vendue avec nourriture uniquement.",
     price: 5.9,
     icon: "🍺",
+    images: ["products/corona.jpeg"],
     alcohol: true,
   },
   {
@@ -506,6 +518,7 @@ const products = [
     description: "Bière locale - vendue avec nourriture uniquement.",
     price: 6.9,
     icon: "🍺",
+    images: ["products/lorraine-duchasse.jpeg"],
     alcohol: true,
   },
   {
@@ -515,6 +528,7 @@ const products = [
     description: "Bière locale - vendue avec nourriture uniquement.",
     price: 7.5,
     icon: "🍺",
+    images: ["products/saint-nicolas.jpeg"],
     alcohol: true,
   },
   {
@@ -524,6 +538,7 @@ const products = [
     description: "Bière locale triple - vendue avec nourriture uniquement.",
     price: 7.5,
     icon: "🍺",
+    images: ["products/loroyse-triple.jpeg"],
     alcohol: true,
   },
   {
@@ -533,6 +548,7 @@ const products = [
     description: "Bière blanche locale - vendue avec nourriture uniquement.",
     price: 7.9,
     icon: "🍺",
+    images: ["products/noiraude-blanche.jpeg"],
     alcohol: true,
   },
   {
@@ -542,6 +558,7 @@ const products = [
     description: "Vin blanc - vendu avec nourriture uniquement.",
     price: 6.9,
     icon: "🍷",
+    images: ["products/riesling-alsace.jpeg"],
     alcohol: true,
   },
   {
@@ -551,6 +568,7 @@ const products = [
     description: "Vin blanc - vendu avec nourriture uniquement.",
     price: 19.9,
     icon: "🍷",
+    images: ["products/chardonnay.jpeg"],
     alcohol: true,
   },
   {
@@ -569,6 +587,7 @@ const products = [
     description: "Vin rouge - vendu avec nourriture uniquement.",
     price: 19.9,
     icon: "🍷",
+    images: ["products/cotes-du-rhone.jpeg"],
     alcohol: true,
   },
   {
@@ -578,6 +597,7 @@ const products = [
     description: "Vin rosé - vendu avec nourriture uniquement.",
     price: 17.9,
     icon: "🍷",
+    images: ["products/coteaux-aix-rose.jpeg"],
     alcohol: true,
   },
   {
@@ -587,6 +607,7 @@ const products = [
     description: "Vin blanc UBY - vendu avec nourriture uniquement.",
     price: 19.9,
     icon: "🍷",
+    images: ["products/uby-3.jpeg"],
     alcohol: true,
   },
   {
@@ -605,6 +626,7 @@ const products = [
     description: "Bulles - vendues avec nourriture uniquement.",
     price: 18.9,
     icon: "🍾",
+    images: ["products/prosecco.jpeg"],
     alcohol: true,
   },
   {
@@ -614,6 +636,7 @@ const products = [
     description: "Champagne brut - vendu avec nourriture uniquement.",
     price: 39.9,
     icon: "🍾",
+    images: ["products/champagne-brut.jpeg"],
     alcohol: true,
   },
   {
@@ -756,7 +779,13 @@ function renderAllergens(product) {
 }
 
 function getProductCardImage(product) {
-  return product.images?.[0] || `products/${product.id}.jpeg`;
+  const image = product.images?.[0] || `products/${product.id}.jpeg`;
+
+  if (image.startsWith("products/") && !image.includes("?")) {
+    return `${image}?v=${PRODUCT_IMAGE_VERSION}`;
+  }
+
+  return image;
 }
 
 function renderProductCardImage(product) {
