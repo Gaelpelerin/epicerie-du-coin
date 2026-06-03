@@ -1,4 +1,4 @@
-const PRODUCT_IMAGE_VERSION = "drinks-1";
+const PRODUCT_IMAGE_VERSION = "drinks-2";
 
 const products = [
   {
