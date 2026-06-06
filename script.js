@@ -1,4 +1,4 @@
-const PRODUCT_IMAGE_VERSION = "drinks-2";
+const PRODUCT_IMAGE_VERSION = "drinks-4";
 
 const products = [
   {
@@ -790,10 +790,12 @@ function getProductCardImage(product) {
 
 function renderProductCardImage(product) {
   const image = getProductCardImage(product);
-  const uploadedPhotoClass = image.startsWith("products/") ? " product-card-photo--uploaded" : "";
+  const isUploadedPhoto = image.startsWith("products/");
+  const uploadedImageClass = isUploadedPhoto ? " product-image--uploaded" : "";
+  const uploadedPhotoClass = isUploadedPhoto ? " product-card-photo--uploaded" : "";
 
   return `
-    <div class="product-image has-photo" aria-hidden="true">
+    <div class="product-image has-photo${uploadedImageClass}" aria-hidden="true">
       <img class="product-card-photo${uploadedPhotoClass}" src="${image}" alt="" loading="lazy" onerror="this.closest('.product-image').classList.remove('has-photo'); this.closest('.product-image').classList.add('has-icon'); this.remove();" />
       <span class="product-icon-fallback">${product.icon}</span>
     </div>
