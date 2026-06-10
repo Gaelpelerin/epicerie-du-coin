@@ -176,6 +176,7 @@ async function createRemoteOrderRequest(cartItems, customer, reference) {
       name: customer.name,
       phone: customer.phone,
       address: customer.address,
+      email: customer.email || "",
       delivery_date: customer.date,
       delivery_time: customer.time,
       notes: customer.notes || "",

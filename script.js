@@ -1001,6 +1001,7 @@ async function checkoutCart() {
     name: String(formData.get("name") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
     address: String(formData.get("address") || "").trim(),
+    email: String(formData.get("email") || "").trim(),
     date: String(formData.get("date") || "").trim(),
     time: String(formData.get("time") || "").trim(),
     notes: String(formData.get("notes") || "").trim(),
