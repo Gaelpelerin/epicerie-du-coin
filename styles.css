@@ -790,6 +790,32 @@ main {
   font-size: 1.35rem;
 }
 
+.card-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-qty strong {
+  min-width: 20px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--cream);
+}
+
+.card-qty button:not(.add-btn) {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .feature-band {
   display: flex;
   align-items: center;

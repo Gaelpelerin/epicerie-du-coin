@@ -750,7 +750,7 @@ function renderProducts(filter = "all") {
             ${renderAllergens(product)}
             <div class="product-meta">
               <span class="price">${formatPrice(product.price)}</span>
-              <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
+              ${renderProductCardControl(product)}
             </div>
           </div>
         </article>
@@ -913,9 +913,28 @@ function renderCartQuantityLabel(productId) {
   return quantity > 0 ? quantity : "+";
 }
 
+function renderProductCardControl(product) {
+  const quantity = getCartQuantity(product.id);
+
+  if (quantity > 0) {
+    return `
+      <div class="card-qty" data-card-control="${product.id}">
+        <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="Retirer un ${product.name}">−</button>
+        <strong>${quantity}</strong>
+        <button type="button" data-qty="${product.id}" data-delta="1" aria-label="Ajouter un ${product.name}">+</button>
+      </div>`;
+  }
+
+  return `
+    <div class="card-qty" data-card-control="${product.id}">
+      <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>+</button>
+    </div>`;
+}
+
 function refreshAddButtons() {
-  document.querySelectorAll("[data-add]").forEach((button) => {
-    button.textContent = renderCartQuantityLabel(button.dataset.add);
+  document.querySelectorAll("[data-card-control]").forEach((control) => {
+    const product = products.find((item) => item.id === control.dataset.cardControl);
+    if (product) control.outerHTML = renderProductCardControl(product);
   });
 }
 
