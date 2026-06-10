@@ -1086,6 +1086,12 @@ async function checkoutCart() {
     .join("\n");
 
   window.open(`https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+
+  cart.clear();
+  setCheckoutFormVisible(false);
+  checkoutForm.reset();
+  renderCart();
+  refreshAddButtons();
   cartMessage.textContent = "Votre demande va s'ouvrir dans WhatsApp. La commande sera confirmée après échange.";
 }
 
