@@ -223,6 +223,7 @@ async function loadRemoteSales(pin) {
   const rows = await response.json();
   const sales = rows.map((order) => ({
     id: order.reference,
+    orderId: order.id,
     createdAt: order.createdAt,
     total: Number(order.total) || 0,
     customer: order.customer || {},
@@ -239,6 +240,21 @@ async function loadRemoteSales(pin) {
 
   saveSales(sales);
   return sales;
+}
+
+async function cancelRemoteOrderRequest(orderId, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_cancel_order_request`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_order_id: orderId }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible d'annuler la commande.");
+  }
+
+  return response.json();
 }
 
 async function verifyRemoteAdminPin(pin) {
@@ -388,6 +404,7 @@ window.refreshRemoteStock = refreshRemoteStock;
 window.updateRemoteProductStock = updateRemoteProductStock;
 window.createRemoteOrderRequest = createRemoteOrderRequest;
 window.loadRemoteSales = loadRemoteSales;
+window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;

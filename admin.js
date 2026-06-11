@@ -79,6 +79,7 @@ const loginPanel = document.querySelector("[data-admin-login]");
 const stockPanel = document.querySelector("[data-admin-stock]");
 const stockTable = document.querySelector("[data-stock-table]");
 const salesDashboard = document.querySelector("[data-sales-dashboard]");
+const salesHistory = document.querySelector("[data-sales-history]");
 const salesFilterOpenButton = document.querySelector("[data-sales-filter-open]");
 const salesModal = document.querySelector("[data-sales-modal]");
 const salesChartModal = document.querySelector("[data-sales-chart-modal]");
@@ -91,6 +92,7 @@ let salesFilterPeriod = "this-week";
 let salesFilterMonth = new Date().toISOString().slice(0, 7);
 let salesFilterYear = new Date().getFullYear();
 let adminSessionPin = "";
+let historySales = [];
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
@@ -462,13 +464,27 @@ function renderSalesDashboard() {
                 .slice(0, 6)
                 .map(
                   (sale) => `
-                    <div class="sales-row">
-                      <span>
-                        ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                        ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
-                      </span>
-                      <strong>${formatPrice(sale.total)} · ${sale.items.length} ligne(s)</strong>
-                    </div>
+                    <details class="sales-order">
+                      <summary class="sales-row">
+                        <span>
+                          ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                          ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
+                          ${sale.customer?.phone ? `<small>${sale.customer.phone}</small>` : ""}
+                        </span>
+                        <strong>${formatPrice(sale.total)} · ${sale.items.length} ligne(s)</strong>
+                      </summary>
+                      <div class="sales-order-detail">
+                        <ul class="sales-order-items">
+                          ${sale.items
+                            .map(
+                              (item) => `<li><span>${item.quantity}× ${item.name}</span><strong>${formatPrice(item.total)}</strong></li>`
+                            )
+                            .join("")}
+                        </ul>
+                        ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${sale.customer.notes}</p>` : ""}
+                        ${sale.orderId ? `<button class="cancel-order-btn" type="button" data-cancel-order="${sale.orderId}">Annuler / Restaurer le stock</button>` : ""}
+                      </div>
+                    </details>
                   `
                 )
                 .join("")
@@ -479,6 +495,162 @@ function renderSalesDashboard() {
   `;
 
   salesFilterOpenButton.textContent = `Filtrer · ${filtered.label}`;
+}
+
+function renderSalesHistory() {
+  const sales = [...loadSales()].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  historySales = sales;
+
+  if (!sales.length) {
+    salesHistory.innerHTML = `
+      <div class="sales-history-head">
+        <h2>Historique de ventes</h2>
+        <p>Toutes les commandes confirmées apparaissent ici.</p>
+      </div>
+      <p class="empty-cart">Aucune commande pour le moment.</p>
+    `;
+    return;
+  }
+
+  salesHistory.innerHTML = `
+    <div class="sales-history-head">
+      <h2>Historique de ventes</h2>
+      <p>${sales.length} commande(s) · ${formatPrice(sumSales(sales))} au total</p>
+    </div>
+    ${sales
+      .map(
+        (sale, index) => `
+          <details class="sales-order">
+            <summary class="sales-row">
+              <span>
+                ${sale.id ? `<strong class="sales-order-ref">${sale.id}</strong>` : ""}
+                ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
+                ${sale.customer?.phone ? `<small>${sale.customer.phone}</small>` : ""}
+              </span>
+              <strong>${formatPrice(sale.total)} · ${sale.items.length} ligne(s)</strong>
+            </summary>
+            <div class="sales-order-detail">
+              <ul class="sales-order-items">
+                ${sale.items
+                  .map(
+                    (item) => `<li><span>${item.quantity}× ${item.name}</span><strong>${formatPrice(item.total)}</strong></li>`
+                  )
+                  .join("")}
+              </ul>
+              ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${sale.customer.notes}</p>` : ""}
+              <div class="sales-order-actions">
+                <button class="ghost-btn" type="button" data-recap-index="${index}">Télécharger le récapitulatif (PDF)</button>
+                ${sale.orderId ? `<button class="cancel-order-btn" type="button" data-cancel-order="${sale.orderId}">Annuler / Restaurer le stock</button>` : ""}
+              </div>
+            </div>
+          </details>
+        `
+      )
+      .join("")}
+  `;
+}
+
+function downloadOrderRecap(sale) {
+  const created = new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
+  const customer = sale.customer || {};
+  const delivery = [customer.date, customer.time].filter(Boolean).join(" · ");
+  const rows = sale.items
+    .map(
+      (item) => `
+        <tr>
+          <td>${item.quantity}</td>
+          <td>${item.name}</td>
+          <td class="num">${formatPrice(item.price)}</td>
+          <td class="num">${formatPrice(item.total)}</td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const recap = `
+    <!doctype html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Récapitulatif ${sale.id || ""}</title>
+      <style>
+        * { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; }
+        body { margin: 32px; }
+        h1 { margin: 0 0 4px; font-size: 22px; }
+        .brand { font-size: 13px; color: #555; margin: 0 0 24px; }
+        .meta { margin: 0 0 20px; font-size: 13px; line-height: 1.6; }
+        .meta strong { display: inline-block; min-width: 110px; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #ddd; }
+        .num { text-align: right; }
+        tfoot td { font-weight: bold; border-top: 2px solid #333; border-bottom: none; font-size: 15px; }
+        .note { font-size: 11px; color: #888; margin-top: 28px; line-height: 1.5; }
+      </style>
+    </head>
+    <body>
+      <h1>L'Épicerie du Coin</h1>
+      <p class="brand">contact@epicerieducoin.fr · epicerieducoin.fr</p>
+      <p class="meta">
+        <strong>Récapitulatif</strong> ${sale.id || ""}<br />
+        <strong>Date</strong> ${created}<br />
+        ${customer.name ? `<strong>Client</strong> ${customer.name}<br />` : ""}
+        ${customer.phone ? `<strong>Téléphone</strong> ${customer.phone}<br />` : ""}
+        ${customer.email ? `<strong>Email</strong> ${customer.email}<br />` : ""}
+        ${customer.address ? `<strong>Adresse</strong> ${customer.address}<br />` : ""}
+        ${delivery ? `<strong>Livraison</strong> ${delivery}<br />` : ""}
+        ${customer.notes ? `<strong>Note</strong> ${customer.notes}<br />` : ""}
+      </p>
+      <table>
+        <thead>
+          <tr><th>Qté</th><th>Article</th><th class="num">Prix unit.</th><th class="num">Total</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr><td colspan="3">Total</td><td class="num">${formatPrice(sale.total)}</td></tr>
+        </tfoot>
+      </table>
+      <p class="note">
+        Ce document est un récapitulatif de commande et ne constitue pas une facture.
+        La facture conforme est émise au moment du paiement.
+      </p>
+      <script>window.onload = function () { window.print(); };<\/script>
+    </body>
+    </html>
+  `;
+
+  const win = window.open("", "_blank");
+  if (!win) {
+    errorMessage.textContent = "Autorise les fenêtres pop-up pour télécharger le récapitulatif.";
+    return;
+  }
+  win.document.open();
+  win.document.write(recap);
+  win.document.close();
+}
+
+async function handleCancelOrder(cancelButton) {
+  const orderId = cancelButton.dataset.cancelOrder;
+  if (!window.confirm("Annuler cette commande et remettre les articles en stock ?")) return;
+
+  cancelButton.disabled = true;
+  successMessage.textContent = "Annulation de la commande...";
+  errorMessage.textContent = "";
+
+  try {
+    await cancelRemoteOrderRequest(orderId, adminSessionPin);
+    await loadRemoteSales(adminSessionPin);
+    await refreshRemoteStock();
+    renderSalesDashboard();
+    renderSalesHistory();
+    renderStockTable();
+    successMessage.textContent = "Commande annulée : le stock a été restauré.";
+  } catch (error) {
+    cancelButton.disabled = false;
+    successMessage.textContent = "";
+    errorMessage.textContent = "Impossible d'annuler la commande. Vérifie le code admin ou la connexion.";
+    console.error(error);
+  }
 }
 
 function renderSalesChartModal() {
@@ -546,6 +718,7 @@ async function unlockAdmin() {
     stockPanel.classList.remove("hidden");
     renderStockTable();
     renderSalesDashboard();
+    renderSalesHistory();
     successMessage.textContent = "Stock et commandes centrales chargés.";
   } catch (error) {
     adminSessionPin = "";
@@ -576,6 +749,14 @@ stockTable.addEventListener("input", (event) => {
 });
 
 document.querySelector("[data-stock-reset]").addEventListener("click", () => {
+  const confirmPin = window.prompt("⚠️ Réinitialiser TOUT le stock aux valeurs par défaut. Retape ton code admin pour confirmer :");
+  if (confirmPin === null) return;
+  if (confirmPin.trim() !== adminSessionPin) {
+    errorMessage.textContent = "Code incorrect : réinitialisation annulée.";
+    return;
+  }
+
+  errorMessage.textContent = "";
   saveStock(stockDefaults);
   document.querySelectorAll("[data-stock-input]").forEach((input) => {
     input.value = stockDefaults[input.dataset.stockInput] ?? 0;
@@ -592,6 +773,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     document.querySelector(`[data-admin-panel="${button.dataset.adminView}"]`).classList.remove("hidden");
     salesFilterOpenButton.classList.toggle("hidden", button.dataset.adminView !== "sales");
     if (button.dataset.adminView === "sales") renderSalesDashboard();
+    if (button.dataset.adminView === "history") renderSalesHistory();
   });
 });
 
@@ -603,12 +785,31 @@ document.querySelector("[data-sales-reset]").addEventListener("click", () => {
 });
 
 window.addEventListener(SALES_EVENT, renderSalesDashboard);
+window.addEventListener(SALES_EVENT, renderSalesHistory);
 window.addEventListener(ANALYTICS_EVENT, renderSalesDashboard);
 
-salesDashboard.addEventListener("click", (event) => {
+salesHistory.addEventListener("click", async (event) => {
+  const recapButton = event.target.closest("[data-recap-index]");
+  if (recapButton) {
+    const sale = historySales[Number(recapButton.dataset.recapIndex)];
+    if (sale) downloadOrderRecap(sale);
+    return;
+  }
+
+  const cancelButton = event.target.closest("[data-cancel-order]");
+  if (cancelButton) await handleCancelOrder(cancelButton);
+});
+
+salesDashboard.addEventListener("click", async (event) => {
   const openButton = event.target.closest("[data-sales-chart-open]");
   if (openButton) {
     openSalesModal();
+    return;
+  }
+
+  const cancelButton = event.target.closest("[data-cancel-order]");
+  if (cancelButton) {
+    await handleCancelOrder(cancelButton);
     return;
   }
 

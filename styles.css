@@ -1680,6 +1680,107 @@ main {
   text-align: right;
 }
 
+.sales-order {
+  border-top: 1px solid var(--line-soft);
+}
+
+.sales-order > summary.sales-row {
+  border-top: none;
+  cursor: pointer;
+  list-style: none;
+}
+
+.sales-order > summary.sales-row::-webkit-details-marker {
+  display: none;
+}
+
+.sales-order-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 0 16px;
+}
+
+.sales-order-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sales-order-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.sales-order-items strong {
+  color: var(--cream);
+  white-space: nowrap;
+}
+
+.sales-history-head {
+  margin: 0 0 8px;
+}
+
+.sales-history-head h2 {
+  margin: 0;
+}
+
+.sales-history-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.sales-order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.sales-order-ref {
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--copper-light);
+  font-weight: 800;
+}
+
+.sales-order-notes {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.cancel-order-btn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cancel-order-btn:hover {
+  color: var(--cream);
+  border-color: var(--cream);
+}
+
+.cancel-order-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
 .sales-row small {
   display: block;
   margin-top: 4px;

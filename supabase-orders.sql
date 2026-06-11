@@ -7,6 +7,7 @@ create table if not exists public.order_requests (
   customer_name text not null,
   customer_phone text not null,
   customer_address text not null,
+  customer_email text,
   delivery_date date not null,
   delivery_time time not null,
   notes text,
@@ -95,6 +96,7 @@ begin
     customer_name,
     customer_phone,
     customer_address,
+    customer_email,
     delivery_date,
     delivery_time,
     notes,
@@ -105,6 +107,7 @@ begin
     p_customer->>'name',
     p_customer->>'phone',
     p_customer->>'address',
+    nullif(p_customer->>'email', ''),
     (p_customer->>'delivery_date')::date,
     (p_customer->>'delivery_time')::time,
     nullif(p_customer->>'notes', ''),
@@ -185,6 +188,7 @@ begin
             'name', orders.customer_name,
             'phone', orders.customer_phone,
             'address', orders.customer_address,
+            'email', orders.customer_email,
             'date', orders.delivery_date,
             'time', orders.delivery_time,
             'notes', orders.notes
@@ -210,6 +214,7 @@ begin
         from public.order_items
         where order_items.order_id = orders.id
       ) items on true
+      where orders.status <> 'cancelled'
     ),
     '[]'::jsonb
   );
@@ -217,3 +222,55 @@ end;
 $$;
 
 grant execute on function public.admin_get_order_requests(text) to anon;
+
+create or replace function public.admin_cancel_order_request(
+  p_pin text,
+  p_order_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_status text;
+begin
+  if not exists (
+    select 1
+    from public.admin_settings
+    where key = 'admin_pin'
+      and value = extensions.crypt(p_pin, value)
+  ) then
+    raise exception 'invalid_pin';
+  end if;
+
+  select status
+  into v_status
+  from public.order_requests
+  where id = p_order_id
+  for update;
+
+  if v_status is null then
+    raise exception 'order_not_found';
+  end if;
+
+  if v_status = 'cancelled' then
+    return jsonb_build_object('id', p_order_id, 'status', 'cancelled');
+  end if;
+
+  update public.product_stock ps
+  set quantity = ps.quantity + oi.quantity,
+      updated_at = now()
+  from public.order_items oi
+  where oi.order_id = p_order_id
+    and oi.product_id = ps.product_id;
+
+  update public.order_requests
+  set status = 'cancelled'
+  where id = p_order_id;
+
+  return jsonb_build_object('id', p_order_id, 'status', 'cancelled');
+end;
+$$;
+
+grant execute on function public.admin_cancel_order_request(text, uuid) to anon;
