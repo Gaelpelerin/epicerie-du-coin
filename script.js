@@ -1016,10 +1016,16 @@ async function checkoutCart() {
   }
 
   const formData = new FormData(checkoutForm);
+  const street = String(formData.get("address") || "").trim();
+  const postalCode = String(formData.get("postalCode") || "").trim();
+  const city = String(formData.get("city") || "").trim();
+  const fullAddress = [street, [postalCode, city].filter(Boolean).join(" ")]
+    .filter(Boolean)
+    .join(", ");
   const customer = {
     name: String(formData.get("name") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
-    address: String(formData.get("address") || "").trim(),
+    address: fullAddress,
     email: String(formData.get("email") || "").trim(),
     date: String(formData.get("date") || "").trim(),
     time: String(formData.get("time") || "").trim(),
@@ -1027,8 +1033,8 @@ async function checkoutCart() {
   };
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
-  if (!customer.name || !customer.phone || !customer.address || !customer.date || !customer.time) {
-    cartMessage.textContent = "Merci de compléter nom, téléphone, adresse, jour et heure de livraison.";
+  if (!customer.name || !customer.phone || !street || !postalCode || !city || !customer.date || !customer.time) {
+    cartMessage.textContent = "Merci de compléter nom, téléphone, adresse, code postal, ville, jour et heure de livraison.";
     return;
   }
 

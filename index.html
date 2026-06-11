@@ -164,8 +164,18 @@
           </label>
           <label class="full-field">
             Adresse ou logement
-            <input type="text" name="address" autocomplete="street-address" placeholder="Adresse, résidence, chambre..." />
+            <input type="text" name="address" autocomplete="address-line1" placeholder="N° et rue, résidence, chambre..." />
           </label>
+          <div class="checkout-grid">
+            <label>
+              Code postal
+              <input type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" placeholder="88160" />
+            </label>
+            <label>
+              Ville
+              <input type="text" name="city" autocomplete="address-level2" placeholder="Le Thillot" />
+            </label>
+          </div>
           <label class="full-field">
             Email (facultatif, pour recevoir votre reçu)
             <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" />
@@ -208,7 +218,7 @@
     <div class="scrim" data-cart-close data-product-modal-close></div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="stock.js?v=email-3"></script>
-  <script src="script.js?v=email-3"></script>
+  <script src="stock.js?v=address-1"></script>
+  <script src="script.js?v=address-1"></script>
   </body>
 </html>
