@@ -1080,59 +1080,32 @@ async function checkoutCart() {
   const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const lines = items.map((item) => `- ${item.quantity} x ${item.product.name} (${formatPrice(item.product.price)})`);
   const orderReference = `EDC-${Date.now().toString().slice(-6)}`;
-  let finalReference = orderReference;
 
-  cartMessage.textContent = "Préparation de votre demande...";
-
+  // Mémorise la commande : la page "Merci" en aura besoin pour le message
+  // WhatsApp après paiement, et le panier sera restauré si le paiement est annulé.
   try {
-    const remoteOrder = await createRemoteOrderRequest(items, customer, orderReference);
-    finalReference = remoteOrder.reference || orderReference;
-    recordSale(items, { ...customer, reference: finalReference, remote: true });
-    await refreshRemoteStock();
+    localStorage.setItem(
+      "epicerie-last-order",
+      JSON.stringify({ reference: orderReference, total: totalPrice, lines, customer })
+    );
+    localStorage.setItem(
+      "epicerie-pending-cart",
+      JSON.stringify(items.map((item) => ({ id: item.product.id, quantity: item.quantity })))
+    );
   } catch (error) {
-    const message = String(error.message || "");
-
-    if (message.includes("stock_insufficient") || message.includes("product_not_available")) {
-      cartMessage.textContent = "Un produit vient d'être épuisé. Le stock a été mis à jour, merci de vérifier votre panier.";
-      await refreshStockThenShop();
-      return;
-    }
-
     console.warn(error);
-    recordSale(items, { ...customer, reference: finalReference, remote: false });
   }
 
-  const message = [
-    "Bonjour, je souhaite passer une commande L'Épicerie du Coin :",
-    "",
-    `Référence demande : ${finalReference}`,
-    "",
-    ...lines,
-    "",
-    `Total estimé : ${formatPrice(totalPrice)}`,
-    "",
-    `Nom : ${customer.name}`,
-    `Téléphone : ${customer.phone}`,
-    `Adresse/logement : ${customer.address}`,
-    `Créneau souhaité : ${customer.date} à ${customer.time}`,
-    "",
-    "Information dégustation : les produits sont livrés froids, prêts à réchauffer.",
-    "Merci de penser à préchauffer votre four 10 à 15 minutes avant dégustation.",
-    "",
-    "La commande sera confirmée après validation de la disponibilité et du créneau.",
-    customer.notes ? `Notes : ${customer.notes}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  cartMessage.textContent = "Redirection vers le paiement sécurisé...";
 
-  window.open(`https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
-
-  cart.clear();
-  setCheckoutFormVisible(false);
-  checkoutForm.reset();
-  renderCart();
-  refreshAddButtons();
-  cartMessage.textContent = "Votre demande va s'ouvrir dans WhatsApp. La commande sera confirmée après échange.";
+  try {
+    const session = await createCheckoutSession(items, customer, orderReference);
+    if (!session?.url) throw new Error("URL de paiement manquante.");
+    window.location.href = session.url;
+  } catch (error) {
+    console.warn(error);
+    cartMessage.textContent = "Le paiement n'a pas pu démarrer. Merci de réessayer dans un instant.";
+  }
 }
 
 function refreshShopFromStock() {
@@ -1268,7 +1241,36 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refreshStockThenShop();
 });
 
+// Retour depuis Stripe avec paiement annulé : on restaure le panier conservé
+// dans localStorage avant la redirection, pour que le client puisse réessayer.
+function restoreCartIfPaymentCancelled() {
+  if (!new URLSearchParams(window.location.search).has("paiement")) return;
+
+  let pending = null;
+  try {
+    pending = JSON.parse(localStorage.getItem("epicerie-pending-cart") || "null");
+  } catch (error) {
+    console.warn(error);
+  }
+
+  if (Array.isArray(pending) && pending.length) {
+    cart.clear();
+    pending.forEach((entry) => {
+      const product = products.find((item) => item.id === entry.id);
+      if (product) cart.set(product.id, { product, quantity: entry.quantity });
+    });
+    renderCart();
+    refreshAddButtons();
+    openCart();
+    cartMessage.textContent = "Paiement annulé : votre panier a été conservé.";
+  }
+
+  localStorage.removeItem("epicerie-pending-cart");
+  history.replaceState(null, "", window.location.pathname);
+}
+
 renderProducts();
 renderCart();
 setupDeliveryDateInput();
 refreshStockThenShop();
+restoreCartIfPaymentCancelled();
