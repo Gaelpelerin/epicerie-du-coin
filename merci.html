@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Merci pour votre commande — L'Épicerie du Coin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=email-2" />
+    <style>
+      .thanks-shell {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 48px 20px 64px;
+      }
+      .thanks-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 32px 28px;
+        box-shadow: 0 24px 60px rgba(20, 20, 40, 0.12);
+        text-align: center;
+      }
+      .thanks-badge {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: #e8f7ed;
+        color: #1f9d55;
+        font-size: 38px;
+        line-height: 72px;
+        margin: 0 auto 16px;
+      }
+      .thanks-card h1 {
+        font-family: "Playfair Display", serif;
+        margin: 0 0 8px;
+      }
+      .thanks-ref {
+        display: inline-block;
+        margin: 12px 0 4px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: #f4f1ec;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      .thanks-summary {
+        text-align: left;
+        margin: 24px 0;
+        padding: 18px 20px;
+        border-radius: 16px;
+        background: #faf8f4;
+      }
+      .thanks-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 12px;
+      }
+      .thanks-summary li {
+        padding: 6px 0;
+        border-bottom: 1px solid #ece7df;
+      }
+      .thanks-summary li:last-child {
+        border-bottom: none;
+      }
+      .thanks-total {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 700;
+        padding-top: 10px;
+      }
+      .thanks-wa {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        padding: 14px 24px;
+        border-radius: 999px;
+        background: #25d366;
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .thanks-hint {
+        margin-top: 18px;
+        font-size: 0.92rem;
+        color: #6a6a6a;
+      }
+      .thanks-back {
+        display: inline-block;
+        margin-top: 22px;
+        color: #b8442f;
+        font-weight: 600;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="thanks-shell">
+      <div class="thanks-card">
+        <div class="thanks-badge" aria-hidden="true">✓</div>
+        <h1>Merci, votre paiement est confirmé !</h1>
+        <p>Votre commande est bien enregistrée. Nous préparons tout avec soin.</p>
+        <span class="thanks-ref" data-ref>Référence</span>
+
+        <div class="thanks-summary" data-summary hidden>
+          <ul data-lines></ul>
+          <div class="thanks-total">
+            <span>Total payé</span>
+            <strong data-total></strong>
+          </div>
+        </div>
+
+        <p>
+          Pour confirmer votre créneau de livraison et nous donner les derniers
+          détails, contactez-nous en un clic sur WhatsApp :
+        </p>
+        <a class="thanks-wa" data-whatsapp href="#" target="_blank" rel="noopener">
+          Confirmer mon créneau sur WhatsApp
+        </a>
+
+        <p class="thanks-hint">
+          Un email de confirmation vous a été envoyé si vous avez renseigné votre
+          adresse. À très vite !
+        </p>
+        <a class="thanks-back" href="index.html">← Retour à la boutique</a>
+      </div>
+    </main>
+
+    <script>
+      const WHATSAPP_ORDER_NUMBER = "33675748449";
+
+      function formatPrice(value) {
+        return new Intl.NumberFormat("fr-FR", {
+          style: "currency",
+          currency: "EUR",
+        }).format(value);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const refFromUrl = params.get("ref") || "";
+
+      let order = null;
+      try {
+        order = JSON.parse(localStorage.getItem("epicerie-last-order") || "null");
+      } catch (error) {
+        console.warn(error);
+      }
+
+      const reference = (order && order.reference) || refFromUrl;
+      const refEl = document.querySelector("[data-ref]");
+      if (reference) {
+        refEl.textContent = "Référence " + reference;
+      } else {
+        refEl.hidden = true;
+      }
+
+      if (order) {
+        const summary = document.querySelector("[data-summary]");
+        const linesEl = document.querySelector("[data-lines]");
+        const totalEl = document.querySelector("[data-total]");
+
+        if (Array.isArray(order.lines) && order.lines.length) {
+          linesEl.innerHTML = order.lines
+            .map((line) => "<li>" + line + "</li>")
+            .join("");
+        }
+        if (typeof order.total === "number") {
+          totalEl.textContent = formatPrice(order.total);
+        }
+        summary.hidden = false;
+      }
+
+      // Message WhatsApp pré-rempli pour coordonner la livraison de la commande payée.
+      const waLines = [];
+      waLines.push("Bonjour, je viens de régler ma commande L'Épicerie du Coin.");
+      if (reference) waLines.push("Référence : " + reference);
+      if (order && order.customer) {
+        const c = order.customer;
+        if (c.name) waLines.push("Nom : " + c.name);
+        if (c.address) waLines.push("Adresse : " + c.address);
+        if (c.date || c.time) {
+          waLines.push("Créneau souhaité : " + [c.date, c.time].filter(Boolean).join(" à "));
+        }
+      }
+      waLines.push("Je confirme mon créneau de livraison. Merci !");
+
+      const waUrl =
+        "https://wa.me/" +
+        WHATSAPP_ORDER_NUMBER +
+        "?text=" +
+        encodeURIComponent(waLines.join("\n"));
+      document.querySelector("[data-whatsapp]").href = waUrl;
+
+      // Le paiement a réussi : on nettoie le panier conservé pour une annulation.
+      localStorage.removeItem("epicerie-pending-cart");
+    </script>
+  </body>
+</html>

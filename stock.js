@@ -208,6 +208,43 @@ async function createRemoteOrderRequest(cartItems, customer, reference) {
   return response.json();
 }
 
+async function createCheckoutSession(cartItems, customer, reference) {
+  const payload = {
+    reference,
+    customer: {
+      name: customer.name,
+      phone: customer.phone,
+      address: customer.address,
+      email: customer.email || "",
+      date: customer.date,
+      time: customer.time,
+      notes: customer.notes || "",
+    },
+    items: cartItems.map((item) => ({
+      product_id: item.product.id,
+      name: item.product.name,
+      category: item.product.category,
+      price: item.product.price,
+      quantity: item.quantity,
+      total: item.product.price * item.quantity,
+      alcohol: Boolean(item.product.alcohol),
+    })),
+  };
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de démarrer le paiement.");
+  }
+
+  return response.json();
+}
+
 async function loadRemoteSales(pin) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_order_requests`, {
     method: "POST",
@@ -403,6 +440,7 @@ window.setProductStock = setProductStock;
 window.refreshRemoteStock = refreshRemoteStock;
 window.updateRemoteProductStock = updateRemoteProductStock;
 window.createRemoteOrderRequest = createRemoteOrderRequest;
+window.createCheckoutSession = createCheckoutSession;
 window.loadRemoteSales = loadRemoteSales;
 window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;
