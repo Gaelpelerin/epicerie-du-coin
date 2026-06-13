@@ -1,78 +1,80 @@
+// [id, name, price, category, alcohol] — synchronisé avec products[] de script.js.
+// Le prix/catégorie/alcool servent à la saisie de commande manuelle (mode admin).
 const productsForAdmin = [
-  ["quiche-lorraine", "Quiche lorraine"],
-  ["quiche-saumon", "Quiche saumon & brocoli"],
-  ["quiche-epinards", "Quiche épinards, pignons de pin"],
-  ["quiche-poulet", "Quiche poulet"],
-  ["quiche-dinde-halal", "Quiche dinde halal"],
-  ["quiche-poireaux", "Quiche poireaux"],
-  ["quiche-mediterraneenne", "Quiche méditerranéenne"],
-  ["quiche-3-fromages", "Quiche 3 fromages"],
-  ["quiche-chevre-tomate", "Quiche chèvre tomate"],
-  ["croque", "Croque-monsieur premium"],
-  ["bretzel-nature", "Bretzel nature"],
-  ["bretzel-gratine-lard", "Bretzel gratiné lard & emmental"],
-  ["pizza-napolitaine", "Pizza napolitaine"],
-  ["pizza-jambon-fromage", "Pizza jambon fromage"],
-  ["pizza-mozzarella-pesto", "Pizza mozzarella tomate pesto"],
-  ["pizza-chevre", "Pizza chèvre miel"],
-  ["pizza-saumon-aneth", "Pizza saumon aneth"],
-  ["pizza-poulet-curry", "Pizza poulet curry"],
-  ["pizza-poulet", "Pizza poulet"],
-  ["pizza-vegetarienne", "Pizza végétarienne"],
-  ["pizza-4-fromages", "Pizza 4 fromages"],
-  ["pizza-pincee-margherita", "Pizza pincée margherita"],
-  ["pizza-pincee-diavola", "Pizza pincée diavola"],
-  ["pizza-pincee-jambon", "Pizza pincée jambon fromage"],
-  ["panwich-jambon-emmental", "Panwich jambon emmental"],
-  ["panwich-mozzarella-pesto", "Panwich mozzarella tomate pesto"],
-  ["panwich-jambon-fromage", "Panwich jambon fromage emmental"],
-  ["donut-speculoos", "Donut Spéculoos"],
-  ["donut-lion", "Donut Lion"],
-  ["brioche-babka", "Brioche Babka"],
-  ["cake-marbre-rocher", "Cake marbré rocher"],
-  ["carrot-cake", "Carrot cake"],
-  ["cake-citron", "Cake citron"],
-  ["cake-marbre", "Cake marbré"],
-  ["cake-pain-epices", "Cake pain d'épices"],
-  ["kouglof-sucre", "Kouglof sucré"],
-  ["evian", "Evian 50 cl"],
-  ["perrier-33", "Perrier 33 cl"],
-  ["san-pellegrino-50", "San Pellegrino 50 cl"],
-  ["coca", "Coca-Cola 33 cl"],
-  ["coca-zero", "Coca-Cola Zero 33 cl"],
-  ["ice-tea-peche", "Ice Tea pêche 33 cl"],
-  ["oasis-tropical", "Oasis tropical 33 cl"],
-  ["orangina", "Orangina 33 cl"],
-  ["schweppes-agrumes", "Schweppes Agrumes 33 cl"],
-  ["lemonaid-citron", "Lemonaid citron bio"],
-  ["lemonaid-passion", "Lemonaid passion bio"],
-  ["lemonaid-ginger", "Lemonaid ginger bio"],
-  ["charitea-the-vert", "Charitea thé vert bio"],
-  ["jus-pomme-artisanal", "Jus de pomme artisanal 25 cl"],
-  ["jus-orange-presse", "Jus orange pressé premium 25 cl"],
-  ["nectar-mirabelle", "Nectar mirabelle artisanal 25 cl"],
-  ["jus-pomme-fruits-rouges", "Jus pomme - fruits rouges 25 cl"],
-  ["desperados", "Desperados 33 cl"],
-  ["heineken", "Heineken 33 cl"],
-  ["corona", "Corona 33 cl"],
-  ["lorraine-peu-blond", "Lorraine Peu Blond"],
-  ["lorraine-duchasse", "Lorraine Duchasse"],
-  ["saint-nicolas", "Saint Nicolas"],
-  ["loroyse-triple", "Loroyse Triple"],
-  ["noiraude-blanche", "Noiraude Blanche"],
-  ["riesling-alsace", "Riesling"],
-  ["chardonnay", "Chardonnay Pierres"],
-  ["pinot-noir", "Pinot noir"],
-  ["cotes-du-rhone", "Côtes-du-Rhône"],
-  ["coteaux-aix-rose", "Rosé Coteaux d'Aix"],
-  ["uby-3", "UBY n°3"],
-  ["uby-4", "UBY n°4"],
-  ["prosecco", "Prosecco"],
-  ["champagne-brut", "Champagne Veuve Pelletier"],
-  ["gin-tonic", "Gin Tonic prêt à boire 25 cl"],
-  ["spritz", "Spritz prêt à boire 25 cl"],
-  ["mojito", "Mojito prêt à boire 25 cl"],
-  ["pack-apero", "Pack Apéro Chalet"],
+  ["quiche-lorraine", "Quiche lorraine", 5.9, "quiches", false],
+  ["quiche-saumon", "Quiche saumon & brocoli", 5.9, "quiches", false],
+  ["quiche-epinards", "Quiche épinards, pignons de pin", 5.9, "quiches", false],
+  ["quiche-poulet", "Quiche poulet", 5.9, "quiches", false],
+  ["quiche-dinde-halal", "Quiche dinde halal", 5.9, "quiches", false],
+  ["quiche-poireaux", "Quiche poireaux", 5.9, "quiches", false],
+  ["quiche-mediterraneenne", "Quiche méditerranéenne", 5.9, "quiches", false],
+  ["quiche-3-fromages", "Quiche 3 fromages", 5.9, "quiches", false],
+  ["quiche-chevre-tomate", "Quiche chèvre tomate", 5.9, "quiches", false],
+  ["croque", "Croque-monsieur premium", 8.9, "snacking", false],
+  ["bretzel-nature", "Bretzel nature", 3.9, "snacking", false],
+  ["bretzel-gratine-lard", "Bretzel gratiné lard & emmental", 5.9, "snacking", false],
+  ["pizza-napolitaine", "Pizza napolitaine", 8.9, "pizzas", false],
+  ["pizza-jambon-fromage", "Pizza jambon fromage", 8.9, "pizzas", false],
+  ["pizza-mozzarella-pesto", "Pizza mozzarella tomate pesto", 8.9, "pizzas", false],
+  ["pizza-chevre", "Pizza chèvre miel", 8.9, "pizzas", false],
+  ["pizza-saumon-aneth", "Pizza saumon aneth", 8.9, "pizzas", false],
+  ["pizza-poulet-curry", "Pizza poulet curry", 8.9, "pizzas", false],
+  ["pizza-poulet", "Pizza poulet", 8.9, "pizzas", false],
+  ["pizza-vegetarienne", "Pizza végétarienne", 8.9, "pizzas", false],
+  ["pizza-4-fromages", "Pizza 4 fromages", 8.9, "pizzas", false],
+  ["pizza-pincee-margherita", "Pizza pincée margherita", 7.9, "pizza-pincees", false],
+  ["pizza-pincee-diavola", "Pizza pincée diavola", 7.9, "pizza-pincees", false],
+  ["pizza-pincee-jambon", "Pizza pincée jambon fromage", 7.9, "pizza-pincees", false],
+  ["panwich-jambon-emmental", "Panwich jambon emmental", 8.9, "panwichs", false],
+  ["panwich-mozzarella-pesto", "Panwich mozzarella tomate pesto", 8.9, "panwichs", false],
+  ["panwich-jambon-fromage", "Panwich jambon fromage emmental", 8.9, "panwichs", false],
+  ["donut-speculoos", "Donut Spéculoos", 4.9, "douceurs", false],
+  ["donut-lion", "Donut Lion", 4.9, "douceurs", false],
+  ["brioche-babka", "Brioche Babka", 14.9, "douceurs", false],
+  ["cake-marbre-rocher", "Cake marbré rocher", 24.9, "douceurs", false],
+  ["carrot-cake", "Carrot cake", 19.9, "douceurs", false],
+  ["cake-citron", "Cake citron", 18.9, "douceurs", false],
+  ["cake-marbre", "Cake marbré", 17.9, "douceurs", false],
+  ["cake-pain-epices", "Cake pain d'épices", 17.9, "douceurs", false],
+  ["kouglof-sucre", "Kouglof sucré", 14.9, "douceurs", false],
+  ["evian", "Evian 50 cl", 2.5, "eaux", false],
+  ["perrier-33", "Perrier 33 cl", 3.5, "eaux", false],
+  ["san-pellegrino-50", "San Pellegrino 50 cl", 3.9, "eaux", false],
+  ["coca", "Coca-Cola 33 cl", 3.5, "softs", false],
+  ["coca-zero", "Coca-Cola Zero 33 cl", 3.5, "softs", false],
+  ["ice-tea-peche", "Ice Tea pêche", 3.5, "softs", false],
+  ["oasis-tropical", "Oasis Tropical", 3.5, "softs", false],
+  ["orangina", "Orangina", 3.9, "softs", false],
+  ["schweppes-agrumes", "Schweppes Agrumes", 3.9, "softs", false],
+  ["lemonaid-citron", "Lemonaid citron bio", 5.9, "softs", false],
+  ["lemonaid-passion", "Lemonaid passion bio", 5.9, "softs", false],
+  ["lemonaid-ginger", "Lemonaid ginger bio", 5.9, "softs", false],
+  ["charitea-the-vert", "Charitea thé vert bio", 5.9, "softs", false],
+  ["jus-pomme-artisanal", "Jus de pomme artisanal 25 cl", 3.9, "jus", false],
+  ["jus-orange-presse", "Jus orange pressé premium 25 cl", 3.9, "jus", false],
+  ["nectar-mirabelle", "Nectar mirabelle artisanal 25 cl", 3.9, "jus", false],
+  ["jus-pomme-fruits-rouges", "Jus pomme - fruits rouges 25 cl", 3.9, "jus", false],
+  ["desperados", "Desperados 33 cl", 5.9, "bieres", true],
+  ["heineken", "Heineken 33 cl", 4.9, "bieres", true],
+  ["corona", "Corona 33 cl", 5.9, "bieres", true],
+  ["lorraine-peu-blond", "Lorraine Peu Blond", 5.9, "bieres", true],
+  ["lorraine-duchasse", "Lorraine Duchasse", 6.9, "bieres", true],
+  ["saint-nicolas", "Saint Nicolas", 7.5, "bieres", true],
+  ["loroyse-triple", "Loroyse Triple", 7.5, "bieres", true],
+  ["noiraude-blanche", "Noiraude Blanche", 7.9, "bieres", true],
+  ["riesling-alsace", "Riesling", 6.9, "vins", true],
+  ["chardonnay", "Chardonnay Pierres", 19.9, "vins", true],
+  ["pinot-noir", "Pinot noir", 16.9, "vins", true],
+  ["cotes-du-rhone", "Côtes-du-Rhône", 19.9, "vins", true],
+  ["coteaux-aix-rose", "Rosé Coteaux d'Aix", 17.9, "vins", true],
+  ["uby-3", "UBY n°3", 19.9, "vins", true],
+  ["uby-4", "UBY n°4", 16.9, "vins", true],
+  ["prosecco", "Prosecco", 18.9, "bulles", true],
+  ["champagne-brut", "Champagne Veuve Pelletier", 39.9, "bulles", true],
+  ["gin-tonic", "Gin Tonic prêt à boire 25 cl", 5.9, "apero", true],
+  ["spritz", "Spritz prêt à boire 25 cl", 5.9, "apero", true],
+  ["mojito", "Mojito prêt à boire 25 cl", 5.9, "apero", true],
+  ["pack-apero", "Pack Apéro Chalet", 24.9, "pack", true],
 ];
 
 const loginPanel = document.querySelector("[data-admin-login]");
@@ -774,6 +776,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     salesFilterOpenButton.classList.toggle("hidden", button.dataset.adminView !== "sales");
     if (button.dataset.adminView === "sales") renderSalesDashboard();
     if (button.dataset.adminView === "history") renderSalesHistory();
+    if (button.dataset.adminView === "manual") renderManualPanel();
   });
 });
 
@@ -866,3 +869,195 @@ salesFilterModal.addEventListener("click", (event) => {
   renderSalesDashboard();
   renderSalesFilterModal();
 });
+
+/* --- Commande manuelle (commande passée au téléphone) --- */
+const manualCart = new Map(); // id -> quantité
+let manualSearch = "";
+
+function findProduct(id) {
+  return productsForAdmin.find((product) => product[0] === id);
+}
+
+function manualStep(id, delta) {
+  const stock = loadStock();
+  const available = stock[id] ?? 0;
+  const current = manualCart.get(id) || 0;
+  let next = current + delta;
+  if (next < 0) next = 0;
+  if (delta > 0 && next > available) {
+    next = available;
+    errorMessage.textContent = available === 0 ? "Ce produit est en rupture de stock." : `Stock limité : ${available} disponible(s).`;
+  } else {
+    errorMessage.textContent = "";
+  }
+  if (next <= 0) manualCart.delete(id);
+  else manualCart.set(id, next);
+  renderManualPanel();
+}
+
+function renderManualList() {
+  const list = document.querySelector("[data-manual-list]");
+  if (!list) return;
+  const stock = loadStock();
+  const term = manualSearch.trim().toLowerCase();
+  const filtered = productsForAdmin.filter(([, name]) => name.toLowerCase().includes(term));
+
+  if (!filtered.length) {
+    list.innerHTML = '<p class="empty-cart">Aucun produit trouvé.</p>';
+    return;
+  }
+
+  list.innerHTML = filtered
+    .map(([id, name, price]) => {
+      const qty = manualCart.get(id) || 0;
+      const available = stock[id] ?? 0;
+      return `
+        <div class="manual-item ${qty ? "active" : ""}">
+          <div class="manual-item-info">
+            <strong>${name}</strong>
+            <small>${formatPrice(price)} · stock ${available}</small>
+          </div>
+          <div class="manual-stepper">
+            <button type="button" data-manual-step="-1" data-manual-id="${id}" aria-label="Retirer">−</button>
+            <span>${qty}</span>
+            <button type="button" data-manual-step="1" data-manual-id="${id}" aria-label="Ajouter">+</button>
+          </div>
+        </div>`;
+    })
+    .join("");
+}
+
+function renderManualSummary() {
+  const summary = document.querySelector("[data-manual-summary]");
+  if (!summary) return;
+
+  if (manualCart.size === 0) {
+    summary.innerHTML = '<p class="empty-cart">Aucun article sélectionné.</p>';
+    return;
+  }
+
+  let total = 0;
+  const rows = [...manualCart.entries()]
+    .map(([id, qty]) => {
+      const [, name, price] = findProduct(id);
+      const lineTotal = price * qty;
+      total += lineTotal;
+      return `<li><span>${qty}× ${name}</span><strong>${formatPrice(lineTotal)}</strong></li>`;
+    })
+    .join("");
+
+  summary.innerHTML = `
+    <h2>Récapitulatif</h2>
+    <ul class="manual-summary-list">${rows}</ul>
+    <p class="manual-total"><span>Total</span><strong>${formatPrice(total)}</strong></p>`;
+}
+
+function renderManualPanel() {
+  renderManualList();
+  renderManualSummary();
+}
+
+async function submitManualOrder() {
+  const get = (key) => (document.querySelector(`[data-manual="${key}"]`)?.value || "").trim();
+  const customer = {
+    name: get("name"),
+    phone: get("phone"),
+    address: get("address"),
+    email: get("email"),
+    date: get("date"),
+    time: get("time"),
+    notes: get("notes"),
+  };
+
+  if (!customer.name || !customer.phone || !customer.address || !customer.date || !customer.time) {
+    successMessage.textContent = "";
+    errorMessage.textContent = "Renseigne au moins le nom, le téléphone, l'adresse, la date et l'heure.";
+    return;
+  }
+  if (manualCart.size === 0) {
+    successMessage.textContent = "";
+    errorMessage.textContent = "Ajoute au moins un produit à la commande.";
+    return;
+  }
+
+  customer.notes = `[Téléphone] ${customer.notes}`.trim();
+
+  const cartItems = [...manualCart.entries()].map(([id, quantity]) => {
+    const [pid, name, price, category, alcohol] = findProduct(id);
+    return { product: { id: pid, name, price, category, alcohol }, quantity };
+  });
+
+  const reference = `EDC-${Date.now().toString().slice(-6)}`;
+  const submitButton = document.querySelector("[data-manual-submit]");
+  submitButton.disabled = true;
+  errorMessage.textContent = "";
+  successMessage.textContent = "Enregistrement de la commande…";
+
+  try {
+    await createRemoteOrderRequest(cartItems, customer, reference);
+    await loadRemoteSales(adminSessionPin);
+    await refreshRemoteStock();
+
+    manualCart.clear();
+    manualSearch = "";
+    document.querySelectorAll("[data-manual]").forEach((field) => {
+      field.value = "";
+    });
+    const searchInput = document.querySelector("[data-manual-search]");
+    if (searchInput) searchInput.value = "";
+
+    renderManualPanel();
+    renderStockTable();
+    renderSalesDashboard();
+    renderSalesHistory();
+    successMessage.textContent = `Commande ${reference} enregistrée : stock à jour, emails envoyés.`;
+  } catch (error) {
+    submitButton.disabled = false;
+    successMessage.textContent = "";
+    const message = String(error?.message || "");
+    if (message.includes("stock_insufficient")) {
+      const name = message.split("stock_insufficient:")[1]?.split('"')[0]?.trim() || "un produit";
+      errorMessage.textContent = `Stock insuffisant pour ${name}. Ajuste la quantité ou le stock.`;
+    } else if (message.includes("product_not_available")) {
+      errorMessage.textContent = "Un produit n'est plus disponible. Vérifie le catalogue.";
+    } else {
+      errorMessage.textContent = "Impossible d'enregistrer la commande. Vérifie la connexion.";
+    }
+    console.error(error);
+  }
+}
+
+const manualListEl = document.querySelector("[data-manual-list]");
+const manualSearchEl = document.querySelector("[data-manual-search]");
+const manualSubmitEl = document.querySelector("[data-manual-submit]");
+const manualClearEl = document.querySelector("[data-manual-clear]");
+
+if (manualListEl) {
+  manualListEl.addEventListener("click", (event) => {
+    const step = event.target.closest("[data-manual-step]");
+    if (!step) return;
+    manualStep(step.dataset.manualId, Number(step.dataset.manualStep));
+  });
+}
+
+if (manualSearchEl) {
+  manualSearchEl.addEventListener("input", (event) => {
+    manualSearch = event.target.value;
+    renderManualList();
+  });
+}
+
+if (manualSubmitEl) manualSubmitEl.addEventListener("click", submitManualOrder);
+
+if (manualClearEl) {
+  manualClearEl.addEventListener("click", () => {
+    manualCart.clear();
+    manualSearch = "";
+    if (manualSearchEl) manualSearchEl.value = "";
+    document.querySelectorAll("[data-manual]").forEach((field) => {
+      field.value = "";
+    });
+    errorMessage.textContent = "";
+    renderManualPanel();
+  });
+}

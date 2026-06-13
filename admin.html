@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=history-1" />
+    <link rel="stylesheet" href="styles.css?v=manual-1" />
   </head>
   <body class="admin-page">
     <main class="admin-shell">
@@ -32,11 +32,12 @@
             <p class="eyebrow">Inventaire</p>
             <h1>Stock boutique</h1>
           </div>
-          <a class="ghost-btn" href="index.html?v=history-1#catalogue">Voir la boutique</a>
+          <a class="ghost-btn" href="index.html?v=manual-1#catalogue">Voir la boutique</a>
         </div>
 
         <div class="admin-tabs" role="tablist" aria-label="Administration">
           <button class="active" type="button" data-admin-view="stock">Stock</button>
+          <button type="button" data-admin-view="manual">Commande manuelle</button>
           <button type="button" data-admin-view="sales">Suivi CA</button>
           <button type="button" data-admin-view="history">Historique de ventes</button>
           <button class="hidden" type="button" data-sales-filter-open>Filtrer</button>
@@ -48,6 +49,37 @@
           <div class="admin-actions">
             <button class="primary-btn" type="button" data-stock-save>Enregistrer</button>
             <button class="ghost-btn" type="button" data-stock-reset>Réinitialiser la démo</button>
+          </div>
+        </div>
+
+        <div class="hidden" data-admin-panel="manual">
+          <div class="manual-order">
+            <section class="manual-customer">
+              <h2>Client</h2>
+              <p class="manual-hint">Commande prise par téléphone. Le stock est décrémenté et les emails sont envoyés à l'enregistrement.</p>
+              <div class="manual-fields">
+                <label>Nom *<input type="text" data-manual="name" autocomplete="off" /></label>
+                <label>Téléphone *<input type="tel" data-manual="phone" autocomplete="off" /></label>
+                <label class="manual-wide">Adresse *<input type="text" data-manual="address" autocomplete="off" /></label>
+                <label>Email<input type="email" data-manual="email" autocomplete="off" /></label>
+                <label>Date *<input type="date" data-manual="date" /></label>
+                <label>Heure *<input type="time" data-manual="time" /></label>
+                <label class="manual-wide">Notes<textarea data-manual="notes" rows="2"></textarea></label>
+              </div>
+            </section>
+
+            <section class="manual-products">
+              <h2>Produits</h2>
+              <input type="search" class="manual-search" data-manual-search placeholder="Rechercher un produit…" />
+              <div class="manual-list" data-manual-list></div>
+            </section>
+
+            <section class="manual-summary" data-manual-summary></section>
+
+            <div class="admin-actions">
+              <button class="primary-btn" type="button" data-manual-submit>Enregistrer la commande</button>
+              <button class="ghost-btn" type="button" data-manual-clear>Vider</button>
+            </div>
           </div>
         </div>
 
@@ -80,7 +112,7 @@
       </div>
     </div>
 
-    <script src="stock.js?v=history-1"></script>
-    <script src="admin.js?v=history-1"></script>
+    <script src="stock.js?v=manual-1"></script>
+    <script src="admin.js?v=manual-1"></script>
   </body>
 </html>
