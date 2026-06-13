@@ -677,7 +677,7 @@ const products = [
   },
 ];
 
-const ALCOHOL_SALES_ENABLED = false;
+const ALCOHOL_SALES_ENABLED = true;
 const FIRST_DELIVERY_DATE = "2026-05-31";
 const WHATSAPP_ORDER_NUMBER = "33675748449";
 const grid = document.querySelector("[data-product-grid]");
@@ -750,7 +750,7 @@ function renderProducts(filter = "all") {
             ${renderAllergens(product)}
             <div class="product-meta">
               <span class="price">${formatPrice(product.price)}</span>
-              <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
+              ${renderProductCardControl(product)}
             </div>
           </div>
         </article>
@@ -913,9 +913,28 @@ function renderCartQuantityLabel(productId) {
   return quantity > 0 ? quantity : "+";
 }
 
+function renderProductCardControl(product) {
+  const quantity = getCartQuantity(product.id);
+
+  if (quantity > 0) {
+    return `
+      <div class="card-qty" data-card-control="${product.id}">
+        <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="Retirer un ${product.name}">−</button>
+        <strong>${quantity}</strong>
+        <button type="button" data-qty="${product.id}" data-delta="1" aria-label="Ajouter un ${product.name}">+</button>
+      </div>`;
+  }
+
+  return `
+    <div class="card-qty" data-card-control="${product.id}">
+      <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>+</button>
+    </div>`;
+}
+
 function refreshAddButtons() {
-  document.querySelectorAll("[data-add]").forEach((button) => {
-    button.textContent = renderCartQuantityLabel(button.dataset.add);
+  document.querySelectorAll("[data-card-control]").forEach((control) => {
+    const product = products.find((item) => item.id === control.dataset.cardControl);
+    if (product) control.outerHTML = renderProductCardControl(product);
   });
 }
 
@@ -997,18 +1016,25 @@ async function checkoutCart() {
   }
 
   const formData = new FormData(checkoutForm);
+  const street = String(formData.get("address") || "").trim();
+  const postalCode = String(formData.get("postalCode") || "").trim();
+  const city = String(formData.get("city") || "").trim();
+  const fullAddress = [street, [postalCode, city].filter(Boolean).join(" ")]
+    .filter(Boolean)
+    .join(", ");
   const customer = {
     name: String(formData.get("name") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
-    address: String(formData.get("address") || "").trim(),
+    address: fullAddress,
+    email: String(formData.get("email") || "").trim(),
     date: String(formData.get("date") || "").trim(),
     time: String(formData.get("time") || "").trim(),
     notes: String(formData.get("notes") || "").trim(),
   };
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
-  if (!customer.name || !customer.phone || !customer.address || !customer.date || !customer.time) {
-    cartMessage.textContent = "Merci de compléter nom, téléphone, adresse, jour et heure de livraison.";
+  if (!customer.name || !customer.phone || !street || !postalCode || !city || !customer.date || !customer.time) {
+    cartMessage.textContent = "Merci de compléter nom, téléphone, adresse, code postal, ville, jour et heure de livraison.";
     return;
   }
 
@@ -1066,6 +1092,12 @@ async function checkoutCart() {
     .join("\n");
 
   window.open(`https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+
+  cart.clear();
+  setCheckoutFormVisible(false);
+  checkoutForm.reset();
+  renderCart();
+  refreshAddButtons();
   cartMessage.textContent = "Votre demande va s'ouvrir dans WhatsApp. La commande sera confirmée après échange.";
 }
 
