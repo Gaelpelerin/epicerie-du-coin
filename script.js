@@ -679,6 +679,7 @@ const products = [
 
 const ALCOHOL_SALES_ENABLED = true;
 const FIRST_DELIVERY_DATE = "2026-05-31";
+const MIN_DELIVERY_LEAD_MINUTES = 60;
 const WHATSAPP_ORDER_NUMBER = "33675748449";
 const grid = document.querySelector("[data-product-grid]");
 const tabs = document.querySelectorAll("[data-filter]");
@@ -689,6 +690,7 @@ const cartTotal = document.querySelector("[data-cart-total]");
 const cartMessage = document.querySelector("[data-cart-message]");
 const checkoutForm = document.querySelector("[data-checkout-form]");
 const deliveryDateInput = checkoutForm.querySelector('input[name="date"]');
+const deliveryTimeInput = checkoutForm.querySelector('input[name="time"]');
 const deliveryHint = document.querySelector("[data-delivery-hint]");
 const alcoholConfirm = document.querySelector("[data-alcohol-confirm]");
 const productModal = document.querySelector("[data-product-modal]");
@@ -714,15 +716,40 @@ function formatDateInput(date) {
   return `${year}-${month}-${day}`;
 }
 
+const pad2 = (value) => String(value).padStart(2, "0");
+
+// Met à jour l'heure minimale sélectionnable selon le délai de préparation.
+// Livraison 24h/24, mais au moins MIN_DELIVERY_LEAD_MINUTES après la commande.
+function updateDeliveryTimeConstraints() {
+  const today = formatDateInput(new Date());
+  const earliest = new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
+
+  if (deliveryDateInput.value === today) {
+    if (formatDateInput(earliest) === today) {
+      const minTime = `${pad2(earliest.getHours())}:${pad2(earliest.getMinutes())}`;
+      deliveryTimeInput.min = minTime;
+      if (deliveryTimeInput.value && deliveryTimeInput.value < minTime) {
+        deliveryTimeInput.value = minTime;
+      }
+    } else {
+      // Le 1er créneau possible tombe demain : on bascule la date.
+      deliveryDateInput.value = formatDateInput(earliest);
+      deliveryTimeInput.removeAttribute("min");
+    }
+  } else {
+    deliveryTimeInput.removeAttribute("min");
+  }
+}
+
 function setupDeliveryDateInput() {
   const today = formatDateInput(new Date());
   const minDate = today > FIRST_DELIVERY_DATE ? today : FIRST_DELIVERY_DATE;
   deliveryDateInput.min = minDate;
   if (deliveryDateInput.value && deliveryDateInput.value < minDate) deliveryDateInput.value = minDate;
-  deliveryHint.textContent =
-    minDate === FIRST_DELIVERY_DATE
-      ? "Premiers créneaux disponibles à partir du dimanche 31 mai."
-      : "Choisissez un créneau à partir d'aujourd'hui.";
+  deliveryHint.textContent = "Livraison 7j/7, 24h/24 — commandez au moins 1 heure à l'avance.";
+  deliveryDateInput.addEventListener("change", updateDeliveryTimeConstraints);
+  deliveryTimeInput.addEventListener("change", updateDeliveryTimeConstraints);
+  updateDeliveryTimeConstraints();
 }
 
 function isAlcoholLocked(product) {
@@ -1035,6 +1062,13 @@ async function checkoutCart() {
 
   if (!customer.name || !customer.phone || !street || !postalCode || !city || !customer.date || !customer.time) {
     cartMessage.textContent = "Merci de compléter nom, téléphone, adresse, code postal, ville, jour et heure de livraison.";
+    return;
+  }
+
+  const deliveryAt = new Date(`${customer.date}T${customer.time}`);
+  const earliestDelivery = new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
+  if (Number.isNaN(deliveryAt.getTime()) || deliveryAt < earliestDelivery) {
+    cartMessage.textContent = "Choisissez un créneau au moins 1 heure après votre commande, le temps de préparer et livrer.";
     return;
   }
 

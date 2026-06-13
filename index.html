@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=drinks-4" />
+  <link rel="stylesheet" href="styles.css?v=email-2" />
   </head>
   <body>
     <div class="app-shell">
@@ -164,7 +164,21 @@
           </label>
           <label class="full-field">
             Adresse ou logement
-            <input type="text" name="address" autocomplete="street-address" placeholder="Adresse, résidence, chambre..." />
+            <input type="text" name="address" autocomplete="address-line1" placeholder="N° et rue, résidence, chambre..." />
+          </label>
+          <div class="checkout-grid">
+            <label>
+              Code postal
+              <input type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" placeholder="88160" />
+            </label>
+            <label>
+              Ville
+              <input type="text" name="city" autocomplete="address-level2" placeholder="Le Thillot" />
+            </label>
+          </div>
+          <label class="full-field">
+            Email (facultatif, pour recevoir votre reçu)
+            <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" />
           </label>
           <div class="checkout-grid">
             <label>
@@ -204,7 +218,7 @@
     <div class="scrim" data-cart-close data-product-modal-close></div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="stock.js?v=drinks-4"></script>
-  <script src="script.js?v=drinks-4"></script>
+  <script src="stock.js?v=delai-1"></script>
+  <script src="script.js?v=delai-1"></script>
   </body>
 </html>
