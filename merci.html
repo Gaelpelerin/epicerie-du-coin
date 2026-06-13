@@ -7,127 +7,170 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=email-2" />
     <style>
-      .thanks-shell {
-        max-width: 640px;
-        margin: 0 auto;
-        padding: 48px 20px 64px;
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
       }
-      .thanks-card {
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        color: #24211d;
+        background: #f4efe7;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        line-height: 1.5;
+      }
+      .card {
+        width: 100%;
+        max-width: 520px;
         background: #fff;
-        border-radius: 24px;
-        padding: 32px 28px;
-        box-shadow: 0 24px 60px rgba(20, 20, 40, 0.12);
+        border-radius: 22px;
+        padding: 36px 28px 32px;
+        box-shadow: 0 18px 50px rgba(40, 30, 20, 0.14);
         text-align: center;
       }
-      .thanks-badge {
-        width: 72px;
-        height: 72px;
+      .badge {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 18px;
         border-radius: 50%;
-        background: #e8f7ed;
+        background: #e7f6ec;
         color: #1f9d55;
-        font-size: 38px;
-        line-height: 72px;
-        margin: 0 auto 16px;
+        font-size: 32px;
+        line-height: 64px;
+        font-weight: 700;
       }
-      .thanks-card h1 {
-        font-family: "Playfair Display", serif;
-        margin: 0 0 8px;
+      h1 {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.7rem;
+        line-height: 1.25;
+        margin: 0 0 10px;
+        color: #1f1b16;
       }
-      .thanks-ref {
+      .lead {
+        margin: 0 0 18px;
+        color: #5c574f;
+        font-size: 1rem;
+      }
+      .ref {
         display: inline-block;
-        margin: 12px 0 4px;
-        padding: 6px 14px;
+        margin-bottom: 22px;
+        padding: 6px 16px;
         border-radius: 999px;
-        background: #f4f1ec;
+        background: #f4efe7;
         font-weight: 600;
-        letter-spacing: 0.04em;
+        font-size: 0.9rem;
+        letter-spacing: 0.03em;
+        color: #8a5a2b;
       }
-      .thanks-summary {
+      .summary {
         text-align: left;
-        margin: 24px 0;
-        padding: 18px 20px;
-        border-radius: 16px;
-        background: #faf8f4;
+        margin: 0 0 24px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        background: #faf7f1;
+        border: 1px solid #efe7da;
       }
-      .thanks-summary ul {
+      .summary ul {
         list-style: none;
+        margin: 0 0 10px;
         padding: 0;
-        margin: 0 0 12px;
       }
-      .thanks-summary li {
-        padding: 6px 0;
-        border-bottom: 1px solid #ece7df;
+      .summary li {
+        padding: 7px 0;
+        border-bottom: 1px solid #efe7da;
+        font-size: 0.94rem;
       }
-      .thanks-summary li:last-child {
+      .summary li:last-child {
         border-bottom: none;
       }
-      .thanks-total {
+      .total {
         display: flex;
         justify-content: space-between;
+        align-items: baseline;
+        padding-top: 12px;
         font-weight: 700;
-        padding-top: 10px;
+        font-size: 1.05rem;
       }
-      .thanks-wa {
+      .wa-intro {
+        margin: 0 0 14px;
+        color: #5c574f;
+        font-size: 0.96rem;
+      }
+      .wa-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 10px;
-        margin-top: 8px;
-        padding: 14px 24px;
-        border-radius: 999px;
+        width: 100%;
+        padding: 15px 20px;
+        border-radius: 14px;
         background: #25d366;
         color: #fff;
         font-weight: 700;
+        font-size: 1rem;
         text-decoration: none;
+        transition: filter 0.15s ease;
       }
-      .thanks-hint {
-        margin-top: 18px;
-        font-size: 0.92rem;
-        color: #6a6a6a;
+      .wa-btn:hover {
+        filter: brightness(0.95);
       }
-      .thanks-back {
+      .hint {
+        margin: 20px 0 0;
+        font-size: 0.85rem;
+        color: #8a847a;
+      }
+      .back {
         display: inline-block;
-        margin-top: 22px;
+        margin-top: 20px;
         color: #b8442f;
         font-weight: 600;
+        font-size: 0.92rem;
         text-decoration: none;
+      }
+      .back:hover {
+        text-decoration: underline;
       }
     </style>
   </head>
   <body>
-    <main class="thanks-shell">
-      <div class="thanks-card">
-        <div class="thanks-badge" aria-hidden="true">✓</div>
-        <h1>Merci, votre paiement est confirmé !</h1>
-        <p>Votre commande est bien enregistrée. Nous préparons tout avec soin.</p>
-        <span class="thanks-ref" data-ref>Référence</span>
+    <main class="card">
+      <div class="badge" aria-hidden="true">✓</div>
+      <h1>Merci, votre paiement est confirmé !</h1>
+      <p class="lead">Votre commande est bien enregistrée. Nous préparons tout avec soin.</p>
+      <span class="ref" data-ref hidden></span>
 
-        <div class="thanks-summary" data-summary hidden>
-          <ul data-lines></ul>
-          <div class="thanks-total">
-            <span>Total payé</span>
-            <strong data-total></strong>
-          </div>
+      <div class="summary" data-summary hidden>
+        <ul data-lines></ul>
+        <div class="total">
+          <span>Total payé</span>
+          <strong data-total></strong>
         </div>
-
-        <p>
-          Pour confirmer votre créneau de livraison et nous donner les derniers
-          détails, contactez-nous en un clic sur WhatsApp :
-        </p>
-        <a class="thanks-wa" data-whatsapp href="#" target="_blank" rel="noopener">
-          Confirmer mon créneau sur WhatsApp
-        </a>
-
-        <p class="thanks-hint">
-          Un email de confirmation vous a été envoyé si vous avez renseigné votre
-          adresse. À très vite !
-        </p>
-        <a class="thanks-back" href="index.html">← Retour à la boutique</a>
       </div>
+
+      <p class="wa-intro">
+        Dernière étape : confirmez votre créneau de livraison en un clic sur WhatsApp.
+      </p>
+      <a class="wa-btn" data-whatsapp href="#" target="_blank" rel="noopener">
+        Confirmer mon créneau sur WhatsApp
+      </a>
+
+      <p class="hint">
+        Un email de confirmation vous a été envoyé si vous avez renseigné votre adresse.
+      </p>
+      <a class="back" href="index.html">← Retour à la boutique</a>
     </main>
 
     <script>
@@ -154,8 +197,7 @@
       const refEl = document.querySelector("[data-ref]");
       if (reference) {
         refEl.textContent = "Référence " + reference;
-      } else {
-        refEl.hidden = true;
+        refEl.hidden = false;
       }
 
       if (order) {
