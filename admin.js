@@ -884,14 +884,15 @@ function manualStep(id, delta) {
   const current = manualCart.get(id) || 0;
   let next = current + delta;
   if (next < 0) next = 0;
-  if (delta > 0 && next > available) {
-    next = available;
-    errorMessage.textContent = available === 0 ? "Ce produit est en rupture de stock." : `Stock limité : ${available} disponible(s).`;
+  if (next <= 0) manualCart.delete(id);
+  else manualCart.set(id, next);
+  // La vente a déjà eu lieu au téléphone : on autorise la survente (stock négatif),
+  // on informe simplement quand la quantité dépasse le stock connu.
+  if (next > available) {
+    errorMessage.textContent = `Survente : ${next} commandé(s) pour ${available} en stock — le stock passera en négatif.`;
   } else {
     errorMessage.textContent = "";
   }
-  if (next <= 0) manualCart.delete(id);
-  else manualCart.set(id, next);
   renderManualPanel();
 }
 
@@ -994,7 +995,7 @@ async function submitManualOrder() {
   successMessage.textContent = "Enregistrement de la commande…";
 
   try {
-    await createRemoteOrderRequest(cartItems, customer, reference);
+    await createRemoteManualOrder(cartItems, customer, reference);
     await loadRemoteSales(adminSessionPin);
     await refreshRemoteStock();
 

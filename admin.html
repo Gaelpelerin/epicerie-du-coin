@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=manual-1" />
+    <link rel="stylesheet" href="styles.css?v=manual-2" />
   </head>
   <body class="admin-page">
     <main class="admin-shell">
@@ -32,7 +32,7 @@
             <p class="eyebrow">Inventaire</p>
             <h1>Stock boutique</h1>
           </div>
-          <a class="ghost-btn" href="index.html?v=manual-1#catalogue">Voir la boutique</a>
+          <a class="ghost-btn" href="index.html?v=manual-2#catalogue">Voir la boutique</a>
         </div>
 
         <div class="admin-tabs" role="tablist" aria-label="Administration">
@@ -56,7 +56,7 @@
           <div class="manual-order">
             <section class="manual-customer">
               <h2>Client</h2>
-              <p class="manual-hint">Commande prise par téléphone. Le stock est décrémenté et les emails sont envoyés à l'enregistrement.</p>
+              <p class="manual-hint">Commande prise par téléphone. Le stock est décrémenté (même en rupture, il peut passer en négatif = survente) et les emails sont envoyés à l'enregistrement.</p>
               <div class="manual-fields">
                 <label>Nom *<input type="text" data-manual="name" autocomplete="off" /></label>
                 <label>Téléphone *<input type="tel" data-manual="phone" autocomplete="off" /></label>
@@ -112,7 +112,7 @@
       </div>
     </div>
 
-    <script src="stock.js?v=manual-1"></script>
-    <script src="admin.js?v=manual-1"></script>
+    <script src="stock.js?v=manual-2"></script>
+    <script src="admin.js?v=manual-2"></script>
   </body>
 </html>

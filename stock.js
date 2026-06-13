@@ -169,7 +169,7 @@ async function updateRemoteProductStock(productId, quantity, pin) {
   return updatedRow;
 }
 
-async function createRemoteOrderRequest(cartItems, customer, reference) {
+async function createRemoteOrderRequest(cartItems, customer, reference, rpcName = "create_order_request") {
   const payload = {
     p_reference: reference,
     p_customer: {
@@ -192,7 +192,7 @@ async function createRemoteOrderRequest(cartItems, customer, reference) {
     })),
   };
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_order_request`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${rpcName}`, {
     method: "POST",
     headers: supabaseHeaders,
     body: JSON.stringify(payload),
@@ -206,6 +206,11 @@ async function createRemoteOrderRequest(cartItems, customer, reference) {
   }
 
   return response.json();
+}
+
+// Commande manuelle (téléphone) : enregistre la vente sans blocage de stock.
+function createRemoteManualOrder(cartItems, customer, reference) {
+  return createRemoteOrderRequest(cartItems, customer, reference, "create_manual_order");
 }
 
 async function createCheckoutSession(cartItems, customer, reference) {
@@ -440,6 +445,7 @@ window.setProductStock = setProductStock;
 window.refreshRemoteStock = refreshRemoteStock;
 window.updateRemoteProductStock = updateRemoteProductStock;
 window.createRemoteOrderRequest = createRemoteOrderRequest;
+window.createRemoteManualOrder = createRemoteManualOrder;
 window.createCheckoutSession = createCheckoutSession;
 window.loadRemoteSales = loadRemoteSales;
 window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
