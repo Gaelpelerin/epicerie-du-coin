@@ -193,6 +193,26 @@
         console.warn(error);
       }
 
+      // Mode aperçu (?demo=1) : remplit un exemple pour visualiser la page
+      // sans avoir à passer de vraie commande.
+      if (!order && params.get("demo") === "1") {
+        order = {
+          reference: "EDC-DEMO01",
+          total: 18.3,
+          lines: [
+            "- 1 x Pizza jambon fromage (8,90 €)",
+            "- 2 x Eau plate 50 cl (1,50 €)",
+            "- 1 x Tarte au citron (6,40 €)",
+          ],
+          customer: {
+            name: "Aperçu Client",
+            address: "12 rue des Vosges, 88160 Le Thillot",
+            date: "2026-06-14",
+            time: "19:30",
+          },
+        };
+      }
+
       const reference = (order && order.reference) || refFromUrl;
       const refEl = document.querySelector("[data-ref]");
       if (reference) {
