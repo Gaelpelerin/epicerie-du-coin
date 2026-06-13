@@ -1012,6 +1012,10 @@ async function submitManualOrder() {
     renderSalesDashboard();
     renderSalesHistory();
     successMessage.textContent = `Commande ${reference} enregistrée : stock à jour, emails envoyés.`;
+    submitButton.disabled = false;
+    const historyTab = document.querySelector('[data-admin-view="history"]');
+    if (historyTab) historyTab.click();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (error) {
     submitButton.disabled = false;
     successMessage.textContent = "";
