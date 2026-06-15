@@ -248,6 +248,15 @@
           waLines.push("Créneau souhaité : " + [c.date, c.time].filter(Boolean).join(" à "));
         }
       }
+      if (order && Array.isArray(order.lines) && order.lines.length) {
+        waLines.push("");
+        waLines.push("Détail de la commande :");
+        order.lines.forEach((line) => waLines.push(line));
+      }
+      if (order && typeof order.total === "number") {
+        waLines.push("Total payé : " + formatPrice(order.total));
+      }
+      waLines.push("");
       waLines.push("Je confirme mon créneau de livraison. Merci !");
 
       const waUrl =
