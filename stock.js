@@ -299,6 +299,54 @@ async function cancelRemoteOrderRequest(orderId, pin) {
   return response.json();
 }
 
+// Packs : lit la recette d'un pack (liste de {product_id, quantity}).
+async function getRemotePackRecipe(packId, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_pack_recipe`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_pack_id: packId }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger la recette du pack.");
+  }
+
+  return response.json();
+}
+
+// Packs : enregistre la recette (remplace l'ancienne).
+async function saveRemotePackRecipe(packId, components, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_save_pack_recipe`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_pack_id: packId, p_components: components }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible d'enregistrer la recette du pack.");
+  }
+
+  return response.json();
+}
+
+// Packs : monte N packs (incrémente le pack, décrémente les composants).
+async function assembleRemotePack(packId, count, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/assemble_pack`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_pack_id: packId, p_count: count }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible d'assembler le pack.");
+  }
+
+  return response.json();
+}
+
 async function verifyRemoteAdminPin(pin) {
   const currentStock = await refreshRemoteStock();
   const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
@@ -450,6 +498,9 @@ window.createCheckoutSession = createCheckoutSession;
 window.loadRemoteSales = loadRemoteSales;
 window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;
+window.getRemotePackRecipe = getRemotePackRecipe;
+window.saveRemotePackRecipe = saveRemotePackRecipe;
+window.assembleRemotePack = assembleRemotePack;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;
 window.saveSales = saveSales;

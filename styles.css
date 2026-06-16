@@ -2637,3 +2637,162 @@ main {
     padding: 24px;
   }
 }
+
+.pack-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pack-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pack-head h2 {
+  margin: 4px 0 0;
+}
+
+.pack-stock {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #5f5246;
+}
+
+.pack-recipe,
+.pack-assemble {
+  background: #fff;
+  border: 1px solid #ede3d6;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pack-recipe h3,
+.pack-assemble h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pack-recipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pack-recipe-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #f0e7da;
+  border-radius: 12px;
+  background: #faf6f0;
+}
+
+.pack-recipe-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pack-recipe-info small {
+  color: #8a7d6e;
+}
+
+.pack-recipe-qty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #8a7d6e;
+}
+
+.pack-recipe-qty input {
+  width: 80px;
+  padding: 8px 10px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+}
+
+.pack-recipe-remove {
+  border: none;
+  background: #f3e2e2;
+  color: #b3433a;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pack-recipe-remove:hover {
+  background: #eccfcf;
+}
+
+.pack-add {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pack-add select {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 12px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+}
+
+.pack-add input {
+  width: 80px;
+  padding: 10px 12px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+}
+
+.pack-dirty {
+  color: #b3742a;
+  font-size: 0.9rem;
+  align-self: center;
+}
+
+.pack-max {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.pack-assemble-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pack-assemble-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pack-assemble-row input {
+  width: 80px;
+  padding: 10px 12px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+}
+
+.pack-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #8a7d6e;
+}

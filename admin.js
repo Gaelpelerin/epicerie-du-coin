@@ -777,6 +777,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     if (button.dataset.adminView === "sales") renderSalesDashboard();
     if (button.dataset.adminView === "history") renderSalesHistory();
     if (button.dataset.adminView === "manual") renderManualPanel();
+    if (button.dataset.adminView === "packs") openPackPanel();
   });
 });
 
@@ -876,6 +877,215 @@ let manualSearch = "";
 
 function findProduct(id) {
   return productsForAdmin.find((product) => product[0] === id);
+}
+
+/* --- Packs (recette éditable + assemblage) --- */
+const packManager = document.querySelector("[data-pack-manager]");
+const packProducts = productsForAdmin.filter((product) => product[3] === "pack");
+let currentPackId = packProducts.length ? packProducts[0][0] : null;
+let packRecipe = []; // [{ product_id, quantity }]
+let packRecipeDirty = false;
+
+function productName(id) {
+  const product = findProduct(id);
+  return product ? product[1] : id;
+}
+
+function maxAssemblable(stock) {
+  if (!packRecipe.length) return null;
+  return packRecipe.reduce((min, component) => {
+    const available = stock[component.product_id] ?? 0;
+    return Math.min(min, Math.floor(available / component.quantity));
+  }, Infinity);
+}
+
+function renderPackManager() {
+  if (!packManager) return;
+  if (!currentPackId) {
+    packManager.innerHTML = '<p class="empty-cart">Aucun pack dans le catalogue.</p>';
+    return;
+  }
+
+  const stock = loadStock();
+  const packStock = stock[currentPackId] ?? 0;
+
+  const recipeRows = packRecipe.length
+    ? packRecipe
+        .map((component) => {
+          const available = stock[component.product_id] ?? 0;
+          return `
+        <div class="pack-recipe-row">
+          <div class="pack-recipe-info">
+            <strong>${productName(component.product_id)}</strong>
+            <small>stock ${available}</small>
+          </div>
+          <label class="pack-recipe-qty">
+            <span>par pack</span>
+            <input type="number" min="1" step="1" value="${component.quantity}" data-pack-qty="${component.product_id}" />
+          </label>
+          <button type="button" class="pack-recipe-remove" data-pack-remove="${component.product_id}" aria-label="Retirer">×</button>
+        </div>`;
+        })
+        .join("")
+    : '<p class="empty-cart">Aucun composant. Ajoute les produits qui composent ce pack.</p>';
+
+  const recipeIds = new Set(packRecipe.map((component) => component.product_id));
+  const options = productsForAdmin
+    .filter(([id]) => id !== currentPackId && !recipeIds.has(id))
+    .map(([id, name]) => `<option value="${id}">${name}</option>`)
+    .join("");
+
+  const max = maxAssemblable(stock);
+  const maxLabel = max === null ? "—" : max;
+
+  packManager.innerHTML = `
+    <div class="pack-head">
+      <div>
+        <p class="eyebrow">Pack</p>
+        <h2>${productName(currentPackId)}</h2>
+      </div>
+      <p class="pack-stock">Stock pack actuel : <strong>${packStock}</strong></p>
+    </div>
+
+    <section class="pack-recipe">
+      <h3>Recette — composants consommés par pack monté</h3>
+      <div class="pack-recipe-list">${recipeRows}</div>
+      <div class="pack-add">
+        <select data-pack-add-select ${options ? "" : "disabled"}>${
+          options || '<option value="">Tous les produits sont déjà dans la recette</option>'
+        }</select>
+        <input type="number" min="1" step="1" value="1" data-pack-add-qty aria-label="Quantité par pack" />
+        <button type="button" class="ghost-btn" data-pack-add ${options ? "" : "disabled"}>Ajouter</button>
+      </div>
+      <div class="admin-actions">
+        <button type="button" class="primary-btn" data-pack-save>Enregistrer la recette</button>
+        ${packRecipeDirty ? '<span class="pack-dirty">Recette modifiée — enregistre avant d\'assembler.</span>' : ""}
+      </div>
+    </section>
+
+    <section class="pack-assemble">
+      <h3>Assembler des packs</h3>
+      <p class="pack-max">Montables avec le stock actuel : <strong>${maxLabel}</strong></p>
+      <div class="pack-assemble-row">
+        <label>Monter <input type="number" min="1" step="1" value="1" data-pack-count /> pack(s)</label>
+        <button type="button" class="primary-btn" data-pack-assemble>Assembler</button>
+      </div>
+      <p class="pack-hint">L'assemblage ajoute au stock du pack et retire les composants. Refusé si un composant manque.</p>
+    </section>`;
+}
+
+async function openPackPanel() {
+  if (!currentPackId) {
+    renderPackManager();
+    return;
+  }
+  try {
+    const recipe = await getRemotePackRecipe(currentPackId, adminSessionPin);
+    packRecipe = (Array.isArray(recipe) ? recipe : []).map((component) => ({
+      product_id: component.product_id,
+      quantity: Math.max(1, Math.floor(Number(component.quantity) || 1)),
+    }));
+    packRecipeDirty = false;
+  } catch (error) {
+    console.error(error);
+    errorMessage.textContent = "Impossible de charger la recette du pack.";
+  }
+  renderPackManager();
+}
+
+async function savePackRecipe() {
+  try {
+    await saveRemotePackRecipe(currentPackId, packRecipe, adminSessionPin);
+    packRecipeDirty = false;
+    errorMessage.textContent = "";
+    successMessage.textContent = "Recette du pack enregistrée.";
+    renderPackManager();
+  } catch (error) {
+    console.error(error);
+    errorMessage.textContent = "Impossible d'enregistrer la recette du pack.";
+  }
+}
+
+async function assemblePack() {
+  const countInput = packManager.querySelector("[data-pack-count]");
+  const count = Math.max(0, Math.floor(Number(countInput && countInput.value) || 0));
+  if (count <= 0) {
+    errorMessage.textContent = "Indique combien de packs tu as montés.";
+    return;
+  }
+  if (!packRecipe.length) {
+    errorMessage.textContent = "Ajoute au moins un composant à la recette.";
+    return;
+  }
+  if (packRecipeDirty) {
+    errorMessage.textContent = "Enregistre la recette avant d'assembler.";
+    return;
+  }
+
+  errorMessage.textContent = "";
+  successMessage.textContent = "Assemblage en cours…";
+  try {
+    await assembleRemotePack(currentPackId, count, adminSessionPin);
+    await refreshRemoteStock();
+    renderStockTable();
+    renderPackManager();
+    successMessage.textContent = `${count} pack(s) monté(s) : stock pack et composants mis à jour.`;
+  } catch (error) {
+    const message = String((error && error.message) || "");
+    if (message.includes("component_insufficient")) {
+      const id = message.split("component_insufficient:")[1]?.split('"')[0]?.trim();
+      errorMessage.textContent = `Stock insuffisant : ${productName(id)} n'a pas assez de stock pour ${count} pack(s).`;
+    } else if (message.includes("component_not_available")) {
+      const id = message.split("component_not_available:")[1]?.split('"')[0]?.trim();
+      errorMessage.textContent = `Composant sans fiche stock : ${productName(id)}.`;
+    } else if (message.includes("pack_not_available")) {
+      errorMessage.textContent = "Ce pack n'a pas de fiche stock centrale.";
+    } else {
+      errorMessage.textContent = "Impossible d'assembler le pack. Vérifie le code admin ou la connexion.";
+    }
+    successMessage.textContent = "";
+    console.error(error);
+  }
+}
+
+if (packManager) {
+  packManager.addEventListener("click", (event) => {
+    if (event.target.closest("[data-pack-add]")) {
+      const select = packManager.querySelector("[data-pack-add-select]");
+      const qtyInput = packManager.querySelector("[data-pack-add-qty]");
+      const id = select && select.value;
+      if (!id) return;
+      const quantity = Math.max(1, Math.floor(Number(qtyInput && qtyInput.value) || 1));
+      packRecipe.push({ product_id: id, quantity });
+      packRecipeDirty = true;
+      renderPackManager();
+      return;
+    }
+    const remove = event.target.closest("[data-pack-remove]");
+    if (remove) {
+      packRecipe = packRecipe.filter((component) => component.product_id !== remove.dataset.packRemove);
+      packRecipeDirty = true;
+      renderPackManager();
+      return;
+    }
+    if (event.target.closest("[data-pack-save]")) {
+      savePackRecipe();
+      return;
+    }
+    if (event.target.closest("[data-pack-assemble]")) {
+      assemblePack();
+    }
+  });
+
+  packManager.addEventListener("input", (event) => {
+    const qtyField = event.target.closest("[data-pack-qty]");
+    if (!qtyField) return;
+    const entry = packRecipe.find((component) => component.product_id === qtyField.dataset.packQty);
+    if (entry) {
+      entry.quantity = Math.max(1, Math.floor(Number(qtyField.value) || 1));
+      packRecipeDirty = true;
+    }
+  });
 }
 
 function manualStep(id, delta) {
