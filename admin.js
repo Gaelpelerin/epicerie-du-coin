@@ -1050,15 +1050,17 @@ function renderPackManager() {
   const stock = loadStock();
   const editForm = renderPackEditForm(meta);
 
+  const outOfStock = packRecipe.filter((component) => (stock[component.product_id] ?? 0) <= 0);
   const recipeRows = packRecipe.length
     ? packRecipe
         .map((component) => {
           const available = stock[component.product_id] ?? 0;
+          const isOut = available <= 0;
           return `
-        <div class="pack-recipe-row">
+        <div class="pack-recipe-row${isOut ? " is-out" : ""}">
           <div class="pack-recipe-info">
             <strong>${productName(component.product_id)}</strong>
-            <small>stock ${available}</small>
+            <small>stock ${available}${isOut ? " · rupture" : ""}</small>
           </div>
           <label class="pack-recipe-qty">
             <span>par pack</span>
@@ -1069,6 +1071,10 @@ function renderPackManager() {
         })
         .join("")
     : '<p class="empty-cart">Aucun composant. Ajoute les produits qui composent ce pack.</p>';
+
+  const removeOutRow = outOfStock.length
+    ? `<button type="button" class="ghost-btn pack-remove-out" data-pack-remove-out>Retirer les ${outOfStock.length} ingrédient${outOfStock.length > 1 ? "s" : ""} en rupture</button>`
+    : "";
 
   const recipeByProduct = new Map(packRecipe.map((component) => [component.product_id, component.quantity]));
   const term = packTagSearch.trim().toLowerCase();
@@ -1106,6 +1112,7 @@ function renderPackManager() {
     <section class="pack-recipe">
       <h3>Recette — composants consommés par pack monté</h3>
       <div class="pack-recipe-list">${recipeRows}</div>
+      ${removeOutRow}
       <div class="pack-tags-head">
         <p class="pack-hint">Clique une étiquette pour l'ajouter à la recette (re-clic = +1).</p>
         <input type="search" class="pack-tag-search" data-pack-tag-search value="${packEscape(packTagSearch)}" placeholder="Filtrer les produits…" />
@@ -1314,6 +1321,18 @@ if (packManager) {
     }
     if (event.target.closest("[data-pack-autofill]")) {
       autofillPackFiche();
+      return;
+    }
+    if (event.target.closest("[data-pack-remove-out]")) {
+      const stock = loadStock();
+      const before = packRecipe.length;
+      packRecipe = packRecipe.filter((component) => (stock[component.product_id] ?? 0) > 0);
+      if (packRecipe.length !== before) {
+        packRecipeDirty = true;
+        renderPackManager();
+        syncPackPriceFromRecipe();
+        notifyPack("Ingrédients en rupture retirés. Pense à « Enregistrer la recette ».");
+      }
       return;
     }
     const remove = event.target.closest("[data-pack-remove]");

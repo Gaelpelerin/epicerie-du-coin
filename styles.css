@@ -2728,6 +2728,16 @@ main {
   border-radius: 8px;
 }
 
+.pack-recipe-row.is-out {
+  border-color: #e3b4ae;
+  background: #fbeceb;
+}
+
+.pack-recipe-row.is-out .pack-recipe-info small {
+  color: #b3433a;
+  font-weight: 600;
+}
+
 .pack-recipe-remove {
   border: none;
   background: #f3e2e2;
@@ -2742,6 +2752,12 @@ main {
 
 .pack-recipe-remove:hover {
   background: #eccfcf;
+}
+
+.pack-remove-out {
+  margin-top: 12px;
+  border-color: #e3b4ae;
+  color: #b3433a;
 }
 
 .pack-add {
