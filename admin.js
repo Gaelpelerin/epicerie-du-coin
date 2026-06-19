@@ -889,6 +889,20 @@ let packRecipeDirty = false;
 let packTagSearch = ""; // filtre des étiquettes produits de la recette
 let newPackImage = null; // photo (data URI) du pack en cours de création
 let editPackImage; // undefined = inchangé ; null/string = nouvelle photo du pack édité
+let packMessage = ""; // message inline du panneau Packs (les zones globales sont hors écran)
+let packMessageError = false;
+
+// Affiche un retour DANS le panneau Packs (data-admin-error est caché après login,
+// data-admin-success est en bas de page → invisibles ici). Persiste au re-render.
+function notifyPack(text, isError = false) {
+  packMessage = text || "";
+  packMessageError = Boolean(isError);
+  const el = packManager && packManager.querySelector("[data-pack-msg]");
+  if (el) {
+    el.textContent = packMessage;
+    el.classList.toggle("is-error", packMessageError);
+  }
+}
 
 function packEscape(value) {
   return String(value == null ? "" : value)
@@ -1006,9 +1020,10 @@ function renderPackManager() {
 
   const packs = allPacksList();
   const createForm = renderPackCreateForm();
+  const msgBlock = `<p class="pack-msg${packMessageError ? " is-error" : ""}" data-pack-msg>${packEscape(packMessage)}</p>`;
 
   if (!packs.length) {
-    packManager.innerHTML = createForm;
+    packManager.innerHTML = msgBlock + createForm;
     return;
   }
 
@@ -1028,7 +1043,7 @@ function renderPackManager() {
 
   const meta = currentPackMeta();
   if (!meta) {
-    packManager.innerHTML = createForm + selector;
+    packManager.innerHTML = msgBlock + createForm + selector;
     return;
   }
 
@@ -1083,6 +1098,7 @@ function renderPackManager() {
   const maxLabel = max === null ? "—" : max;
 
   packManager.innerHTML = `
+    ${msgBlock}
     ${createForm}
     ${selector}
     ${editForm}
@@ -1163,12 +1179,10 @@ async function createPack() {
   const price = Number(packManager.querySelector('[data-pack-new="price"]').value) || 0;
   const description = (packManager.querySelector('[data-pack-new="description"]').value || "").trim();
   if (!name) {
-    errorMessage.textContent = "Donne un nom au pack.";
-    successMessage.textContent = "";
+    notifyPack("Donne un nom au pack.", true);
     return;
   }
-  errorMessage.textContent = "";
-  successMessage.textContent = "Création du pack…";
+  notifyPack("Création du pack…");
   try {
     const result = await createRemotePack(
       { name, price, description, image: newPackImage || "" },
@@ -1178,12 +1192,12 @@ async function createPack() {
     currentPackId = result.id;
     await refreshRemoteStock();
     renderStockTable();
+    packMessage = `Pack « ${name} » créé. Ajoute sa recette ci-dessous : le prix se calcule depuis les ingrédients.`;
+    packMessageError = false;
     await openPackPanel();
-    successMessage.textContent = `Pack « ${name} » créé. Ajoute sa recette : il devient vendable dès que ses ingrédients sont en stock.`;
   } catch (error) {
     console.error(error);
-    errorMessage.textContent = "Impossible de créer le pack.";
-    successMessage.textContent = "";
+    notifyPack("Impossible de créer le pack. Vérifie le code admin ou la connexion.", true);
   }
 }
 
@@ -1194,8 +1208,7 @@ async function updatePack() {
   const price = Number(packManager.querySelector('[data-pack-edit="price"]').value);
   const description = (packManager.querySelector('[data-pack-edit="description"]').value || "").trim();
   const active = packManager.querySelector('[data-pack-edit="active"]').checked;
-  errorMessage.textContent = "";
-  successMessage.textContent = "Enregistrement…";
+  notifyPack("Enregistrement…");
   try {
     const payload = { id: currentPackId, name, price, description, active };
     if (editPackImage !== undefined) payload.image = editPackImage || "";
@@ -1203,12 +1216,12 @@ async function updatePack() {
     editPackImage = undefined;
     await refreshRemoteStock();
     renderStockTable();
+    packMessage = "Fiche du pack enregistrée.";
+    packMessageError = false;
     await openPackPanel();
-    successMessage.textContent = "Fiche du pack enregistrée.";
   } catch (error) {
     console.error(error);
-    errorMessage.textContent = "Impossible d'enregistrer la fiche.";
-    successMessage.textContent = "";
+    notifyPack("Impossible d'enregistrer la fiche.", true);
   }
 }
 
@@ -1216,18 +1229,18 @@ async function deletePack() {
   const meta = currentPackMeta();
   if (!meta || !meta.custom) return;
   if (!window.confirm(`Supprimer définitivement le pack « ${meta.name} » ? Il disparaîtra de la boutique.`)) return;
-  errorMessage.textContent = "";
   try {
     await deleteRemotePack(currentPackId, adminSessionPin);
     currentPackId = null;
     editPackImage = undefined;
     await refreshRemoteStock();
     renderStockTable();
+    packMessage = "Pack supprimé.";
+    packMessageError = false;
     await openPackPanel();
-    successMessage.textContent = "Pack supprimé.";
   } catch (error) {
     console.error(error);
-    errorMessage.textContent = "Impossible de supprimer le pack.";
+    notifyPack("Impossible de supprimer le pack.", true);
   }
 }
 
@@ -1235,12 +1248,12 @@ async function savePackRecipe() {
   try {
     await saveRemotePackRecipe(currentPackId, packRecipe, adminSessionPin);
     packRecipeDirty = false;
-    errorMessage.textContent = "";
-    successMessage.textContent = "Recette du pack enregistrée.";
+    packMessage = "Recette du pack enregistrée.";
+    packMessageError = false;
     renderPackManager();
   } catch (error) {
     console.error(error);
-    errorMessage.textContent = "Impossible d'enregistrer la recette du pack.";
+    notifyPack("Impossible d'enregistrer la recette du pack.", true);
   }
 }
 
@@ -1248,7 +1261,7 @@ function autofillPackFiche() {
   const meta = currentPackMeta();
   if (!meta || !meta.custom) return;
   if (!packRecipe.length) {
-    errorMessage.textContent = "Ajoute des produits à la recette d'abord.";
+    notifyPack("Ajoute des produits à la recette d'abord.", true);
     return;
   }
   const total = packRecipe.reduce((sum, component) => sum + productPrice(component.product_id) * component.quantity, 0);
@@ -1259,8 +1272,7 @@ function autofillPackFiche() {
   const descInput = packManager.querySelector('[data-pack-edit="description"]');
   if (priceInput) priceInput.value = (Math.round(total * 100) / 100).toFixed(2);
   if (descInput) descInput.value = description;
-  errorMessage.textContent = "";
-  successMessage.textContent = "Prix et description pré-remplis depuis la recette. Vérifie puis « Enregistrer la fiche ».";
+  notifyPack("Prix et description pré-remplis depuis la recette. Vérifie puis « Enregistrer la fiche ».");
 }
 
 // Met le prix de la fiche à jour en direct quand la recette change (somme des
