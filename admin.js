@@ -963,7 +963,6 @@ function renderPackCreateForm() {
       <div class="pack-form-grid">
         <label>Nom *<input type="text" data-pack-new="name" placeholder="Pack Noël" /></label>
         <label>Prix (€) *<input type="number" min="0" step="0.1" data-pack-new="price" placeholder="24.9" /></label>
-        <label>Stock initial<input type="number" min="0" step="1" value="0" data-pack-new="stock" /></label>
         <label class="pack-form-wide">Description<textarea data-pack-new="description" rows="2" placeholder="Ce que contient le pack…"></textarea></label>
         <label class="pack-form-wide">Photo<input type="file" accept="image/*" data-pack-photo="new" /></label>
       </div>
@@ -976,9 +975,9 @@ function renderPackCreateForm() {
     </section>`;
 }
 
-function renderPackEditForm(meta, packStock) {
+function renderPackEditForm(meta) {
   if (!meta.custom) {
-    return `<section class="pack-edit"><p class="pack-hint">« ${packEscape(meta.name)} » est un pack intégré au site : sa fiche se modifie dans le code. Gère sa recette et l'assemblage ci-dessous.</p></section>`;
+    return `<section class="pack-edit"><p class="pack-hint">« ${packEscape(meta.name)} » est un pack intégré au site : sa fiche se modifie dans le code. Gère sa recette ci-dessous.</p></section>`;
   }
   const data = meta.data;
   const image = editPackImage !== undefined ? editPackImage : data.image;
@@ -988,7 +987,6 @@ function renderPackEditForm(meta, packStock) {
       <div class="pack-form-grid">
         <label>Nom<input type="text" data-pack-edit="name" value="${packEscape(data.name)}" /></label>
         <label>Prix (€)<input type="number" min="0" step="0.1" data-pack-edit="price" value="${data.price}" /></label>
-        <label>Stock<input type="number" step="1" data-pack-edit="stock" value="${packStock}" /></label>
         <label class="pack-form-wide">Description<textarea data-pack-edit="description" rows="2">${packEscape(data.description || "")}</textarea></label>
         <label class="pack-form-wide">Photo<input type="file" accept="image/*" data-pack-photo="edit" /></label>
         <label class="pack-check"><input type="checkbox" data-pack-edit="active" ${data.active ? "checked" : ""} /> Visible en boutique</label>
@@ -1035,8 +1033,7 @@ function renderPackManager() {
   }
 
   const stock = loadStock();
-  const packStock = stock[currentPackId] ?? 0;
-  const editForm = renderPackEditForm(meta, packStock);
+  const editForm = renderPackEditForm(meta);
 
   const recipeRows = packRecipe.length
     ? packRecipe
@@ -1106,14 +1103,9 @@ function renderPackManager() {
     </section>
 
     <section class="pack-assemble">
-      <h3>Assembler des packs</h3>
-      <p class="pack-stock">Stock pack actuel : <strong>${packStock}</strong></p>
-      <p class="pack-max">Montables avec le stock actuel : <strong>${maxLabel}</strong></p>
-      <div class="pack-assemble-row">
-        <label>Monter <input type="number" min="1" step="1" value="1" data-pack-count /> pack(s)</label>
-        <button type="button" class="primary-btn" data-pack-assemble>Assembler</button>
-      </div>
-      <p class="pack-hint">L'assemblage ajoute au stock du pack et retire les composants. Refusé si un composant manque.</p>
+      <h3>Disponibilité</h3>
+      <p class="pack-max">Vendable selon le stock des ingrédients : <strong>${maxLabel}</strong></p>
+      <p class="pack-hint">Ce pack n'a pas de stock propre : il est composé à la commande. Chaque vente retire automatiquement ses ingrédients du stock. La dispo = le plus petit « stock ingrédient ÷ quantité par pack ».</p>
     </section>`;
 }
 
@@ -1169,7 +1161,6 @@ async function handlePackPhoto(kind, file) {
 async function createPack() {
   const name = (packManager.querySelector('[data-pack-new="name"]').value || "").trim();
   const price = Number(packManager.querySelector('[data-pack-new="price"]').value);
-  const stock = Math.max(0, Math.floor(Number(packManager.querySelector('[data-pack-new="stock"]').value) || 0));
   const description = (packManager.querySelector('[data-pack-new="description"]').value || "").trim();
   if (!name) {
     errorMessage.textContent = "Donne un nom au pack.";
@@ -1183,7 +1174,7 @@ async function createPack() {
   successMessage.textContent = "Création du pack…";
   try {
     const result = await createRemotePack(
-      { name, price, stock, description, image: newPackImage || "" },
+      { name, price, description, image: newPackImage || "" },
       adminSessionPin,
     );
     newPackImage = null;
@@ -1191,7 +1182,7 @@ async function createPack() {
     await refreshRemoteStock();
     renderStockTable();
     await openPackPanel();
-    successMessage.textContent = `Pack « ${name} » créé. Ajoute sa recette puis assemble, ou il est déjà vendable.`;
+    successMessage.textContent = `Pack « ${name} » créé. Ajoute sa recette : il devient vendable dès que ses ingrédients sont en stock.`;
   } catch (error) {
     console.error(error);
     errorMessage.textContent = "Impossible de créer le pack.";
@@ -1204,7 +1195,6 @@ async function updatePack() {
   if (!meta || !meta.custom) return;
   const name = (packManager.querySelector('[data-pack-edit="name"]').value || "").trim();
   const price = Number(packManager.querySelector('[data-pack-edit="price"]').value);
-  const stock = Math.floor(Number(packManager.querySelector('[data-pack-edit="stock"]').value) || 0);
   const description = (packManager.querySelector('[data-pack-edit="description"]').value || "").trim();
   const active = packManager.querySelector('[data-pack-edit="active"]').checked;
   errorMessage.textContent = "";
@@ -1213,7 +1203,6 @@ async function updatePack() {
     const payload = { id: currentPackId, name, price, description, active };
     if (editPackImage !== undefined) payload.image = editPackImage || "";
     await updateRemotePack(payload, adminSessionPin);
-    await updateRemoteProductStock(currentPackId, stock, adminSessionPin);
     editPackImage = undefined;
     await refreshRemoteStock();
     renderStockTable();
@@ -1277,48 +1266,6 @@ function autofillPackFiche() {
   successMessage.textContent = "Prix et description pré-remplis depuis la recette. Vérifie puis « Enregistrer la fiche ».";
 }
 
-async function assemblePack() {
-  const countInput = packManager.querySelector("[data-pack-count]");
-  const count = Math.max(0, Math.floor(Number(countInput && countInput.value) || 0));
-  if (count <= 0) {
-    errorMessage.textContent = "Indique combien de packs tu as montés.";
-    return;
-  }
-  if (!packRecipe.length) {
-    errorMessage.textContent = "Ajoute au moins un composant à la recette.";
-    return;
-  }
-  if (packRecipeDirty) {
-    errorMessage.textContent = "Enregistre la recette avant d'assembler.";
-    return;
-  }
-
-  errorMessage.textContent = "";
-  successMessage.textContent = "Assemblage en cours…";
-  try {
-    await assembleRemotePack(currentPackId, count, adminSessionPin);
-    await refreshRemoteStock();
-    renderStockTable();
-    renderPackManager();
-    successMessage.textContent = `${count} pack(s) monté(s) : stock pack et composants mis à jour.`;
-  } catch (error) {
-    const message = String((error && error.message) || "");
-    if (message.includes("component_insufficient")) {
-      const id = message.split("component_insufficient:")[1]?.split('"')[0]?.trim();
-      errorMessage.textContent = `Stock insuffisant : ${productName(id)} n'a pas assez de stock pour ${count} pack(s).`;
-    } else if (message.includes("component_not_available")) {
-      const id = message.split("component_not_available:")[1]?.split('"')[0]?.trim();
-      errorMessage.textContent = `Composant sans fiche stock : ${productName(id)}.`;
-    } else if (message.includes("pack_not_available")) {
-      errorMessage.textContent = "Ce pack n'a pas de fiche stock centrale.";
-    } else {
-      errorMessage.textContent = "Impossible d'assembler le pack. Vérifie le code admin ou la connexion.";
-    }
-    successMessage.textContent = "";
-    console.error(error);
-  }
-}
-
 if (packManager) {
   packManager.addEventListener("click", (event) => {
     if (event.target.closest("[data-pack-create]")) {
@@ -1356,10 +1303,6 @@ if (packManager) {
     }
     if (event.target.closest("[data-pack-save]")) {
       savePackRecipe();
-      return;
-    }
-    if (event.target.closest("[data-pack-assemble]")) {
-      assemblePack();
     }
   });
 

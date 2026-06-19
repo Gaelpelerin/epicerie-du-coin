@@ -1153,6 +1153,10 @@ async function loadCustomPacks() {
       images: pack.image ? [pack.image] : undefined,
       alcohol: Boolean(pack.alcohol),
     });
+    // Pack-formule : sa dispo est calculée par list_packs à partir du stock
+    // des ingrédients (plus petit floor(stock ÷ quantité_recette)). On la
+    // pousse dans le cache de stock pour que la boutique l'affiche/épuise.
+    setProductStock(pack.id, Math.max(0, Number(pack.stock) || 0));
   });
 
   refreshShopFromStock();
@@ -1312,6 +1316,7 @@ function restoreCartIfPaymentCancelled() {
 renderProducts();
 renderCart();
 setupDeliveryDateInput();
-refreshStockThenShop();
-loadCustomPacks();
+// On charge d'abord le stock central (réécrit tout le cache), PUIS les packs
+// (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
+refreshStockThenShop().then(loadCustomPacks);
 restoreCartIfPaymentCancelled();
