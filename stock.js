@@ -347,6 +347,85 @@ async function assembleRemotePack(packId, count, pin) {
   return response.json();
 }
 
+// Packs persos : liste publique des packs actifs (boutique, pas de PIN).
+async function listRemotePacks() {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_packs`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({}),
+  });
+
+  if (!response.ok) {
+    throw new Error("Impossible de charger les packs.");
+  }
+
+  return response.json();
+}
+
+// Packs persos : liste admin (tous les packs + stock, PIN requis).
+async function adminListPacks(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_packs`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger les packs.");
+  }
+
+  return response.json();
+}
+
+// Packs persos : crée un pack (catalogue + fiche stock + recette éventuelle).
+async function createRemotePack(pack, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_create_pack`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_pack: pack }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de créer le pack.");
+  }
+
+  return response.json();
+}
+
+// Packs persos : met à jour les champs catalogue d'un pack.
+async function updateRemotePack(pack, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_update_pack`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_pack: pack }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de modifier le pack.");
+  }
+
+  return response.json();
+}
+
+// Packs persos : supprime un pack (catalogue + fiche stock + recette).
+async function deleteRemotePack(packId, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_delete_pack`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_pack_id: packId }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de supprimer le pack.");
+  }
+
+  return response.json();
+}
+
 async function verifyRemoteAdminPin(pin) {
   const currentStock = await refreshRemoteStock();
   const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
@@ -501,6 +580,11 @@ window.verifyRemoteAdminPin = verifyRemoteAdminPin;
 window.getRemotePackRecipe = getRemotePackRecipe;
 window.saveRemotePackRecipe = saveRemotePackRecipe;
 window.assembleRemotePack = assembleRemotePack;
+window.listRemotePacks = listRemotePacks;
+window.adminListPacks = adminListPacks;
+window.createRemotePack = createRemotePack;
+window.updateRemotePack = updateRemotePack;
+window.deleteRemotePack = deleteRemotePack;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;
 window.saveSales = saveSales;

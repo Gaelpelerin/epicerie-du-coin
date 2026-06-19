@@ -1118,6 +1118,46 @@ async function refreshStockThenShop() {
   refreshShopFromStock();
 }
 
+// Packs personnalisés créés depuis l'admin : on les charge depuis Supabase
+// et on les fusionne dans le catalogue (filtre « Packs »). Tout le reste
+// (rendu, panier, paiement) fonctionne ensuite via products[] sans changement.
+const customPackIds = new Set();
+
+async function loadCustomPacks() {
+  if (typeof listRemotePacks !== "function") return;
+  let remotePacks;
+  try {
+    remotePacks = await listRemotePacks();
+  } catch (error) {
+    console.error("Chargement des packs impossible :", error);
+    return;
+  }
+  if (!Array.isArray(remotePacks)) return;
+
+  // Retire les anciens packs persos avant de réinjecter la liste fraîche.
+  for (let i = products.length - 1; i >= 0; i -= 1) {
+    if (customPackIds.has(products[i].id)) products.splice(i, 1);
+  }
+  customPackIds.clear();
+
+  remotePacks.forEach((pack) => {
+    if (!pack || !pack.id) return;
+    customPackIds.add(pack.id);
+    products.push({
+      id: pack.id,
+      name: pack.name,
+      category: "pack",
+      description: pack.description || "",
+      price: Number(pack.price) || 0,
+      icon: pack.icon || "🧺",
+      images: pack.image ? [pack.image] : undefined,
+      alcohol: Boolean(pack.alcohol),
+    });
+  });
+
+  refreshShopFromStock();
+}
+
 if ("BroadcastChannel" in window) {
   const stockChannel = new BroadcastChannel(STOCK_EVENT);
   stockChannel.addEventListener("message", refreshShopFromStock);
@@ -1273,4 +1313,5 @@ renderProducts();
 renderCart();
 setupDeliveryDateInput();
 refreshStockThenShop();
+loadCustomPacks();
 restoreCartIfPaymentCancelled();

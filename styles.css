@@ -2796,3 +2796,106 @@ main {
   font-size: 0.85rem;
   color: #8a7d6e;
 }
+
+.pack-create,
+.pack-edit {
+  background: #fff;
+  border: 1px solid #ede3d6;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pack-create h3,
+.pack-edit h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pack-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.pack-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #5f5246;
+}
+
+.pack-form-grid input,
+.pack-form-grid textarea {
+  padding: 10px 12px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.pack-form-wide {
+  grid-column: 1 / -1;
+}
+
+.pack-check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.pack-check input {
+  width: auto;
+}
+
+.pack-photo-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  border: 1px dashed #ddd0bf;
+  border-radius: 12px;
+  background: #faf6f0;
+  color: #8a7d6e;
+  font-size: 0.85rem;
+  overflow: hidden;
+}
+
+.pack-photo-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  display: block;
+}
+
+.pack-select-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #5f5246;
+}
+
+.pack-select-row select {
+  padding: 10px 12px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.pack-delete {
+  color: #b3433a;
+  border-color: #e7c4c0;
+}
+
+.pack-delete:hover {
+  background: #f7e6e4;
+}
+
+@media (max-width: 680px) {
+  .pack-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

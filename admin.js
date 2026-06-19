@@ -879,16 +879,37 @@ function findProduct(id) {
   return productsForAdmin.find((product) => product[0] === id);
 }
 
-/* --- Packs (recette éditable + assemblage) --- */
+/* --- Packs (création + recette éditable + assemblage) --- */
 const packManager = document.querySelector("[data-pack-manager]");
 const packProducts = productsForAdmin.filter((product) => product[3] === "pack");
+let customPacksData = []; // depuis admin_list_packs : packs persos créés par l'admin
 let currentPackId = packProducts.length ? packProducts[0][0] : null;
 let packRecipe = []; // [{ product_id, quantity }]
 let packRecipeDirty = false;
+let newPackImage = null; // photo (data URI) du pack en cours de création
+let editPackImage; // undefined = inchangé ; null/string = nouvelle photo du pack édité
+
+function packEscape(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function productName(id) {
   const product = findProduct(id);
   return product ? product[1] : id;
+}
+
+function allPacksList() {
+  const hard = packProducts.map((product) => ({ id: product[0], name: product[1], custom: false }));
+  const custom = customPacksData.map((pack) => ({ id: pack.id, name: pack.name, custom: true, data: pack }));
+  return [...hard, ...custom];
+}
+
+function currentPackMeta() {
+  return allPacksList().find((pack) => pack.id === currentPackId) || null;
 }
 
 function maxAssemblable(stock) {
@@ -899,15 +920,117 @@ function maxAssemblable(stock) {
   }, Infinity);
 }
 
+// Redimensionne une photo dans le navigateur → data URI JPEG (~800px) stockée en base.
+function resizePackImage(file, maxSize = 800) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width >= height && width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else if (height > width && height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPackCreateForm() {
+  return `
+    <section class="pack-create">
+      <h3>Créer un pack</h3>
+      <p class="pack-hint">Pack vendable en boutique (saisonnier, événement…). Tu définiras sa recette juste après l'avoir créé.</p>
+      <div class="pack-form-grid">
+        <label>Nom *<input type="text" data-pack-new="name" placeholder="Pack Noël" /></label>
+        <label>Prix (€) *<input type="number" min="0" step="0.1" data-pack-new="price" placeholder="24.9" /></label>
+        <label>Stock initial<input type="number" min="0" step="1" value="0" data-pack-new="stock" /></label>
+        <label class="pack-form-wide">Description<textarea data-pack-new="description" rows="2" placeholder="Ce que contient le pack…"></textarea></label>
+        <label class="pack-form-wide">Photo<input type="file" accept="image/*" data-pack-photo="new" /></label>
+      </div>
+      <div class="pack-photo-preview" data-pack-photo-preview="new">${
+        newPackImage ? `<img src="${newPackImage}" alt="" />` : "<span>Aucune photo</span>"
+      }</div>
+      <div class="admin-actions">
+        <button type="button" class="primary-btn" data-pack-create>Créer le pack</button>
+      </div>
+    </section>`;
+}
+
+function renderPackEditForm(meta, packStock) {
+  if (!meta.custom) {
+    return `<section class="pack-edit"><p class="pack-hint">« ${packEscape(meta.name)} » est un pack intégré au site : sa fiche se modifie dans le code. Gère sa recette et l'assemblage ci-dessous.</p></section>`;
+  }
+  const data = meta.data;
+  const image = editPackImage !== undefined ? editPackImage : data.image;
+  return `
+    <section class="pack-edit">
+      <h3>Fiche du pack</h3>
+      <div class="pack-form-grid">
+        <label>Nom<input type="text" data-pack-edit="name" value="${packEscape(data.name)}" /></label>
+        <label>Prix (€)<input type="number" min="0" step="0.1" data-pack-edit="price" value="${data.price}" /></label>
+        <label>Stock<input type="number" step="1" data-pack-edit="stock" value="${packStock}" /></label>
+        <label class="pack-form-wide">Description<textarea data-pack-edit="description" rows="2">${packEscape(data.description || "")}</textarea></label>
+        <label class="pack-form-wide">Photo<input type="file" accept="image/*" data-pack-photo="edit" /></label>
+        <label class="pack-check"><input type="checkbox" data-pack-edit="active" ${data.active ? "checked" : ""} /> Visible en boutique</label>
+      </div>
+      <div class="pack-photo-preview" data-pack-photo-preview="edit">${
+        image ? `<img src="${image}" alt="" />` : "<span>Aucune photo</span>"
+      }</div>
+      <div class="admin-actions">
+        <button type="button" class="primary-btn" data-pack-update>Enregistrer la fiche</button>
+        <button type="button" class="ghost-btn pack-delete" data-pack-delete>Supprimer le pack</button>
+      </div>
+    </section>`;
+}
+
 function renderPackManager() {
   if (!packManager) return;
-  if (!currentPackId) {
-    packManager.innerHTML = '<p class="empty-cart">Aucun pack dans le catalogue.</p>';
+
+  const packs = allPacksList();
+  const createForm = renderPackCreateForm();
+
+  if (!packs.length) {
+    packManager.innerHTML = createForm;
+    return;
+  }
+
+  const selector = `
+    <section class="pack-select-row">
+      <label>Pack à gérer
+        <select data-pack-select>
+          ${packs
+            .map(
+              (pack) =>
+                `<option value="${pack.id}" ${pack.id === currentPackId ? "selected" : ""}>${packEscape(pack.name)}${pack.custom ? "" : " (intégré)"}</option>`,
+            )
+            .join("")}
+        </select>
+      </label>
+    </section>`;
+
+  const meta = currentPackMeta();
+  if (!meta) {
+    packManager.innerHTML = createForm + selector;
     return;
   }
 
   const stock = loadStock();
   const packStock = stock[currentPackId] ?? 0;
+  const editForm = renderPackEditForm(meta, packStock);
 
   const recipeRows = packRecipe.length
     ? packRecipe
@@ -939,13 +1062,9 @@ function renderPackManager() {
   const maxLabel = max === null ? "—" : max;
 
   packManager.innerHTML = `
-    <div class="pack-head">
-      <div>
-        <p class="eyebrow">Pack</p>
-        <h2>${productName(currentPackId)}</h2>
-      </div>
-      <p class="pack-stock">Stock pack actuel : <strong>${packStock}</strong></p>
-    </div>
+    ${createForm}
+    ${selector}
+    ${editForm}
 
     <section class="pack-recipe">
       <h3>Recette — composants consommés par pack monté</h3>
@@ -965,6 +1084,7 @@ function renderPackManager() {
 
     <section class="pack-assemble">
       <h3>Assembler des packs</h3>
+      <p class="pack-stock">Stock pack actuel : <strong>${packStock}</strong></p>
       <p class="pack-max">Montables avec le stock actuel : <strong>${maxLabel}</strong></p>
       <div class="pack-assemble-row">
         <label>Monter <input type="number" min="1" step="1" value="1" data-pack-count /> pack(s)</label>
@@ -974,9 +1094,10 @@ function renderPackManager() {
     </section>`;
 }
 
-async function openPackPanel() {
+async function reloadPackRecipe() {
   if (!currentPackId) {
-    renderPackManager();
+    packRecipe = [];
+    packRecipeDirty = false;
     return;
   }
   try {
@@ -990,7 +1111,115 @@ async function openPackPanel() {
     console.error(error);
     errorMessage.textContent = "Impossible de charger la recette du pack.";
   }
+}
+
+async function openPackPanel() {
+  try {
+    const list = await adminListPacks(adminSessionPin);
+    customPacksData = Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error(error);
+    customPacksData = [];
+  }
+  const ids = allPacksList().map((pack) => pack.id);
+  if (!currentPackId || !ids.includes(currentPackId)) {
+    currentPackId = ids[0] || null;
+  }
+  await reloadPackRecipe();
   renderPackManager();
+}
+
+async function handlePackPhoto(kind, file) {
+  if (!file) return;
+  try {
+    const dataUrl = await resizePackImage(file);
+    if (kind === "new") newPackImage = dataUrl;
+    else editPackImage = dataUrl;
+    const preview = packManager.querySelector(`[data-pack-photo-preview="${kind}"]`);
+    if (preview) preview.innerHTML = `<img src="${dataUrl}" alt="" />`;
+  } catch (error) {
+    console.error(error);
+    errorMessage.textContent = "Photo illisible, réessaie avec une autre image.";
+  }
+}
+
+async function createPack() {
+  const name = (packManager.querySelector('[data-pack-new="name"]').value || "").trim();
+  const price = Number(packManager.querySelector('[data-pack-new="price"]').value);
+  const stock = Math.max(0, Math.floor(Number(packManager.querySelector('[data-pack-new="stock"]').value) || 0));
+  const description = (packManager.querySelector('[data-pack-new="description"]').value || "").trim();
+  if (!name) {
+    errorMessage.textContent = "Donne un nom au pack.";
+    return;
+  }
+  if (!(price > 0)) {
+    errorMessage.textContent = "Indique un prix valide.";
+    return;
+  }
+  errorMessage.textContent = "";
+  successMessage.textContent = "Création du pack…";
+  try {
+    const result = await createRemotePack(
+      { name, price, stock, description, image: newPackImage || "" },
+      adminSessionPin,
+    );
+    newPackImage = null;
+    currentPackId = result.id;
+    await refreshRemoteStock();
+    renderStockTable();
+    await openPackPanel();
+    successMessage.textContent = `Pack « ${name} » créé. Ajoute sa recette puis assemble, ou il est déjà vendable.`;
+  } catch (error) {
+    console.error(error);
+    errorMessage.textContent = "Impossible de créer le pack.";
+    successMessage.textContent = "";
+  }
+}
+
+async function updatePack() {
+  const meta = currentPackMeta();
+  if (!meta || !meta.custom) return;
+  const name = (packManager.querySelector('[data-pack-edit="name"]').value || "").trim();
+  const price = Number(packManager.querySelector('[data-pack-edit="price"]').value);
+  const stock = Math.floor(Number(packManager.querySelector('[data-pack-edit="stock"]').value) || 0);
+  const description = (packManager.querySelector('[data-pack-edit="description"]').value || "").trim();
+  const active = packManager.querySelector('[data-pack-edit="active"]').checked;
+  errorMessage.textContent = "";
+  successMessage.textContent = "Enregistrement…";
+  try {
+    const payload = { id: currentPackId, name, price, description, active };
+    if (editPackImage !== undefined) payload.image = editPackImage || "";
+    await updateRemotePack(payload, adminSessionPin);
+    await updateRemoteProductStock(currentPackId, stock, adminSessionPin);
+    editPackImage = undefined;
+    await refreshRemoteStock();
+    renderStockTable();
+    await openPackPanel();
+    successMessage.textContent = "Fiche du pack enregistrée.";
+  } catch (error) {
+    console.error(error);
+    errorMessage.textContent = "Impossible d'enregistrer la fiche.";
+    successMessage.textContent = "";
+  }
+}
+
+async function deletePack() {
+  const meta = currentPackMeta();
+  if (!meta || !meta.custom) return;
+  if (!window.confirm(`Supprimer définitivement le pack « ${meta.name} » ? Il disparaîtra de la boutique.`)) return;
+  errorMessage.textContent = "";
+  try {
+    await deleteRemotePack(currentPackId, adminSessionPin);
+    currentPackId = null;
+    editPackImage = undefined;
+    await refreshRemoteStock();
+    renderStockTable();
+    await openPackPanel();
+    successMessage.textContent = "Pack supprimé.";
+  } catch (error) {
+    console.error(error);
+    errorMessage.textContent = "Impossible de supprimer le pack.";
+  }
 }
 
 async function savePackRecipe() {
@@ -1050,6 +1279,18 @@ async function assemblePack() {
 
 if (packManager) {
   packManager.addEventListener("click", (event) => {
+    if (event.target.closest("[data-pack-create]")) {
+      createPack();
+      return;
+    }
+    if (event.target.closest("[data-pack-update]")) {
+      updatePack();
+      return;
+    }
+    if (event.target.closest("[data-pack-delete]")) {
+      deletePack();
+      return;
+    }
     if (event.target.closest("[data-pack-add]")) {
       const select = packManager.querySelector("[data-pack-add-select]");
       const qtyInput = packManager.querySelector("[data-pack-add-qty]");
@@ -1074,6 +1315,20 @@ if (packManager) {
     }
     if (event.target.closest("[data-pack-assemble]")) {
       assemblePack();
+    }
+  });
+
+  packManager.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-pack-select]");
+    if (select) {
+      currentPackId = select.value;
+      editPackImage = undefined;
+      reloadPackRecipe().then(renderPackManager);
+      return;
+    }
+    const photo = event.target.closest("[data-pack-photo]");
+    if (photo) {
+      handlePackPhoto(photo.dataset.packPhoto, photo.files && photo.files[0]);
     }
   });
 
