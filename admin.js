@@ -74,7 +74,6 @@ const productsForAdmin = [
   ["gin-tonic", "Gin Tonic prêt à boire 25 cl", 5.9, "apero", true],
   ["spritz", "Spritz prêt à boire 25 cl", 5.9, "apero", true],
   ["mojito", "Mojito prêt à boire 25 cl", 5.9, "apero", true],
-  ["pack-apero", "Pack Apéro Chalet", 24.9, "pack", true],
 ];
 
 const loginPanel = document.querySelector("[data-admin-login]");

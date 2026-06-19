@@ -666,15 +666,6 @@ const products = [
     icon: "🍹",
     alcohol: true,
   },
-  {
-    id: "pack-apero",
-    name: "Pack Apéro Chalet",
-    category: "pack",
-    description: "Bières artisanales, bretzel gratiné, chips premium et fromage.",
-    price: 24.9,
-    icon: "🧺",
-    alcohol: true,
-  },
 ];
 
 const ALCOHOL_SALES_ENABLED = true;
@@ -1276,7 +1267,6 @@ document.addEventListener("click", (event) => {
 document.querySelectorAll("[data-cart-open]").forEach((button) => button.addEventListener("click", openCart));
 document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEventListener("click", closeCart));
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
-document.querySelector("[data-add-pack]").addEventListener("click", () => addToCart("pack-apero"));
 document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
 window.addEventListener("focus", refreshStockThenShop);
 window.addEventListener(STOCK_EVENT, refreshShopFromStock);
