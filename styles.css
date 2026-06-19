@@ -2671,12 +2671,14 @@ main {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  color: #2b2118;
 }
 
 .pack-recipe h3,
 .pack-assemble h3 {
   margin: 0;
   font-size: 1.05rem;
+  color: #2b2118;
 }
 
 .pack-recipe-list {
@@ -2701,6 +2703,10 @@ main {
   gap: 2px;
   flex: 1;
   min-width: 0;
+}
+
+.pack-recipe-info strong {
+  color: #2b2118;
 }
 
 .pack-recipe-info small {
@@ -2806,12 +2812,14 @@ main {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  color: #2b2118;
 }
 
 .pack-create h3,
 .pack-edit h3 {
   margin: 0;
   font-size: 1.05rem;
+  color: #2b2118;
 }
 
 .pack-form-grid {
@@ -2875,7 +2883,7 @@ main {
   flex-direction: column;
   gap: 6px;
   font-size: 0.85rem;
-  color: #5f5246;
+  color: var(--cream);
 }
 
 .pack-select-row select {
