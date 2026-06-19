@@ -959,10 +959,10 @@ function renderPackCreateForm() {
   return `
     <section class="pack-create">
       <h3>Créer un pack</h3>
-      <p class="pack-hint">Pack vendable en boutique (saisonnier, événement…). Tu définiras sa recette juste après l'avoir créé.</p>
+      <p class="pack-hint">Pack vendable en boutique (saisonnier, événement…). Donne juste un nom, crée-le, puis ajoute sa recette : le prix se calcule automatiquement depuis les ingrédients (tu pourras l'ajuster).</p>
       <div class="pack-form-grid">
         <label>Nom *<input type="text" data-pack-new="name" placeholder="Pack Noël" /></label>
-        <label>Prix (€) *<input type="number" min="0" step="0.1" data-pack-new="price" placeholder="24.9" /></label>
+        <label>Prix (€)<input type="number" min="0" step="0.1" data-pack-new="price" placeholder="auto depuis la recette" /></label>
         <label class="pack-form-wide">Description<textarea data-pack-new="description" rows="2" placeholder="Ce que contient le pack…"></textarea></label>
         <label class="pack-form-wide">Photo<input type="file" accept="image/*" data-pack-photo="new" /></label>
       </div>
@@ -1160,14 +1160,11 @@ async function handlePackPhoto(kind, file) {
 
 async function createPack() {
   const name = (packManager.querySelector('[data-pack-new="name"]').value || "").trim();
-  const price = Number(packManager.querySelector('[data-pack-new="price"]').value);
+  const price = Number(packManager.querySelector('[data-pack-new="price"]').value) || 0;
   const description = (packManager.querySelector('[data-pack-new="description"]').value || "").trim();
   if (!name) {
     errorMessage.textContent = "Donne un nom au pack.";
-    return;
-  }
-  if (!(price > 0)) {
-    errorMessage.textContent = "Indique un prix valide.";
+    successMessage.textContent = "";
     return;
   }
   errorMessage.textContent = "";
@@ -1266,6 +1263,18 @@ function autofillPackFiche() {
   successMessage.textContent = "Prix et description pré-remplis depuis la recette. Vérifie puis « Enregistrer la fiche ».";
 }
 
+// Met le prix de la fiche à jour en direct quand la recette change (somme des
+// ingrédients × quantité). Silencieux : pas de message, ne touche pas la
+// description. Le prix reste éditable après (dernière action gagne).
+function syncPackPriceFromRecipe() {
+  const meta = currentPackMeta();
+  if (!meta || !meta.custom) return;
+  const priceInput = packManager.querySelector('[data-pack-edit="price"]');
+  if (!priceInput) return;
+  const total = packRecipe.reduce((sum, component) => sum + productPrice(component.product_id) * component.quantity, 0);
+  priceInput.value = (Math.round(total * 100) / 100).toFixed(2);
+}
+
 if (packManager) {
   packManager.addEventListener("click", (event) => {
     if (event.target.closest("[data-pack-create]")) {
@@ -1288,6 +1297,7 @@ if (packManager) {
       else packRecipe.push({ product_id: id, quantity: 1 });
       packRecipeDirty = true;
       renderPackManager();
+      syncPackPriceFromRecipe();
       return;
     }
     if (event.target.closest("[data-pack-autofill]")) {
@@ -1299,6 +1309,7 @@ if (packManager) {
       packRecipe = packRecipe.filter((component) => component.product_id !== remove.dataset.packRemove);
       packRecipeDirty = true;
       renderPackManager();
+      syncPackPriceFromRecipe();
       return;
     }
     if (event.target.closest("[data-pack-save]")) {
@@ -1337,6 +1348,7 @@ if (packManager) {
     if (entry) {
       entry.quantity = Math.max(1, Math.floor(Number(qtyField.value) || 1));
       packRecipeDirty = true;
+      syncPackPriceFromRecipe();
     }
   });
 }
