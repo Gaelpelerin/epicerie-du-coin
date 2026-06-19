@@ -886,6 +886,7 @@ let customPacksData = []; // depuis admin_list_packs : packs persos créés par 
 let currentPackId = packProducts.length ? packProducts[0][0] : null;
 let packRecipe = []; // [{ product_id, quantity }]
 let packRecipeDirty = false;
+let packTagSearch = ""; // filtre des étiquettes produits de la recette
 let newPackImage = null; // photo (data URI) du pack en cours de création
 let editPackImage; // undefined = inchangé ; null/string = nouvelle photo du pack édité
 
@@ -900,6 +901,11 @@ function packEscape(value) {
 function productName(id) {
   const product = findProduct(id);
   return product ? product[1] : id;
+}
+
+function productPrice(id) {
+  const product = findProduct(id);
+  return product ? Number(product[2]) || 0 : 0;
 }
 
 function allPacksList() {
@@ -1052,11 +1058,29 @@ function renderPackManager() {
         .join("")
     : '<p class="empty-cart">Aucun composant. Ajoute les produits qui composent ce pack.</p>';
 
-  const recipeIds = new Set(packRecipe.map((component) => component.product_id));
-  const options = productsForAdmin
-    .filter(([id]) => id !== currentPackId && !recipeIds.has(id))
-    .map(([id, name]) => `<option value="${id}">${name}</option>`)
+  const recipeByProduct = new Map(packRecipe.map((component) => [component.product_id, component.quantity]));
+  const term = packTagSearch.trim().toLowerCase();
+  const tagChips = productsForAdmin
+    .filter((product) => product[0] !== currentPackId && product[3] !== "pack")
+    .map((product) => {
+      const [id, name, price] = product;
+      const inRecipe = recipeByProduct.get(id);
+      const hidden = term && !name.toLowerCase().includes(term) ? ' style="display:none"' : "";
+      return `<button type="button" class="pack-tag${inRecipe ? " is-in" : ""}" data-pack-tag="${id}" data-pack-tag-name="${packEscape(name.toLowerCase())}"${hidden}>
+            <span class="pack-tag-label">${packEscape(name)}</span>
+            <span class="pack-tag-price">${formatPrice(price)}</span>
+            ${inRecipe ? `<span class="pack-tag-qty">×${inRecipe}</span>` : ""}
+          </button>`;
+    })
     .join("");
+
+  const autofillRow = meta.custom
+    ? `
+      <div class="pack-autofill-row">
+        <button type="button" class="ghost-btn" data-pack-autofill>Pré-remplir prix &amp; description depuis la recette</button>
+        <span class="pack-hint">Prix = somme des produits · description = liste. Ajustable avant « Enregistrer la fiche ».</span>
+      </div>`
+    : "";
 
   const max = maxAssemblable(stock);
   const maxLabel = max === null ? "—" : max;
@@ -1069,13 +1093,12 @@ function renderPackManager() {
     <section class="pack-recipe">
       <h3>Recette — composants consommés par pack monté</h3>
       <div class="pack-recipe-list">${recipeRows}</div>
-      <div class="pack-add">
-        <select data-pack-add-select ${options ? "" : "disabled"}>${
-          options || '<option value="">Tous les produits sont déjà dans la recette</option>'
-        }</select>
-        <input type="number" min="1" step="1" value="1" data-pack-add-qty aria-label="Quantité par pack" />
-        <button type="button" class="ghost-btn" data-pack-add ${options ? "" : "disabled"}>Ajouter</button>
+      <div class="pack-tags-head">
+        <p class="pack-hint">Clique une étiquette pour l'ajouter à la recette (re-clic = +1).</p>
+        <input type="search" class="pack-tag-search" data-pack-tag-search value="${packEscape(packTagSearch)}" placeholder="Filtrer les produits…" />
       </div>
+      <div class="pack-tags" data-pack-tags>${tagChips}</div>
+      ${autofillRow}
       <div class="admin-actions">
         <button type="button" class="primary-btn" data-pack-save>Enregistrer la recette</button>
         ${packRecipeDirty ? '<span class="pack-dirty">Recette modifiée — enregistre avant d\'assembler.</span>' : ""}
@@ -1235,6 +1258,25 @@ async function savePackRecipe() {
   }
 }
 
+function autofillPackFiche() {
+  const meta = currentPackMeta();
+  if (!meta || !meta.custom) return;
+  if (!packRecipe.length) {
+    errorMessage.textContent = "Ajoute des produits à la recette d'abord.";
+    return;
+  }
+  const total = packRecipe.reduce((sum, component) => sum + productPrice(component.product_id) * component.quantity, 0);
+  const description = packRecipe
+    .map((component) => `${component.quantity} × ${productName(component.product_id)}`)
+    .join(", ");
+  const priceInput = packManager.querySelector('[data-pack-edit="price"]');
+  const descInput = packManager.querySelector('[data-pack-edit="description"]');
+  if (priceInput) priceInput.value = (Math.round(total * 100) / 100).toFixed(2);
+  if (descInput) descInput.value = description;
+  errorMessage.textContent = "";
+  successMessage.textContent = "Prix et description pré-remplis depuis la recette. Vérifie puis « Enregistrer la fiche ».";
+}
+
 async function assemblePack() {
   const countInput = packManager.querySelector("[data-pack-count]");
   const count = Math.max(0, Math.floor(Number(countInput && countInput.value) || 0));
@@ -1291,15 +1333,18 @@ if (packManager) {
       deletePack();
       return;
     }
-    if (event.target.closest("[data-pack-add]")) {
-      const select = packManager.querySelector("[data-pack-add-select]");
-      const qtyInput = packManager.querySelector("[data-pack-add-qty]");
-      const id = select && select.value;
-      if (!id) return;
-      const quantity = Math.max(1, Math.floor(Number(qtyInput && qtyInput.value) || 1));
-      packRecipe.push({ product_id: id, quantity });
+    const tag = event.target.closest("[data-pack-tag]");
+    if (tag) {
+      const id = tag.dataset.packTag;
+      const entry = packRecipe.find((component) => component.product_id === id);
+      if (entry) entry.quantity += 1;
+      else packRecipe.push({ product_id: id, quantity: 1 });
       packRecipeDirty = true;
       renderPackManager();
+      return;
+    }
+    if (event.target.closest("[data-pack-autofill]")) {
+      autofillPackFiche();
       return;
     }
     const remove = event.target.closest("[data-pack-remove]");
@@ -1333,6 +1378,16 @@ if (packManager) {
   });
 
   packManager.addEventListener("input", (event) => {
+    const tagSearch = event.target.closest("[data-pack-tag-search]");
+    if (tagSearch) {
+      packTagSearch = tagSearch.value;
+      const term = packTagSearch.trim().toLowerCase();
+      packManager.querySelectorAll("[data-pack-tag]").forEach((chip) => {
+        const match = !term || chip.dataset.packTagName.includes(term);
+        chip.style.display = match ? "" : "none";
+      });
+      return;
+    }
     const qtyField = event.target.closest("[data-pack-qty]");
     if (!qtyField) return;
     const entry = packRecipe.find((component) => component.product_id === qtyField.dataset.packQty);
