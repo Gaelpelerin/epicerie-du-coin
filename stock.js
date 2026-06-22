@@ -268,6 +268,7 @@ async function loadRemoteSales(pin) {
     id: order.reference,
     orderId: order.id,
     createdAt: order.createdAt,
+    status: order.status || "pending",
     total: Number(order.total) || 0,
     customer: order.customer || {},
     items: (order.items || []).map((item) => ({
@@ -295,6 +296,22 @@ async function cancelRemoteOrderRequest(orderId, pin) {
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || "Impossible d'annuler la commande.");
+  }
+
+  return response.json();
+}
+
+// Commandes : fait avancer le statut (pending → confirmed → delivered).
+async function setRemoteOrderStatus(orderId, status, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_set_order_status`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_order_id: orderId, p_status: status }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de changer le statut de la commande.");
   }
 
   return response.json();
@@ -671,6 +688,7 @@ window.createRemoteManualOrder = createRemoteManualOrder;
 window.createCheckoutSession = createCheckoutSession;
 window.loadRemoteSales = loadRemoteSales;
 window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
+window.setRemoteOrderStatus = setRemoteOrderStatus;
 window.logQrScan = logQrScan;
 window.adminQrStats = adminQrStats;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;

@@ -469,6 +469,7 @@ function renderSalesDashboard() {
                     <details class="sales-order">
                       <summary class="sales-row">
                         <span>
+                          ${orderStatusBadge(sale.status)}
                           ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
                           ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
                           ${sale.customer?.phone ? `<small>${sale.customer.phone}</small>` : ""}
@@ -499,6 +500,29 @@ function renderSalesDashboard() {
   salesFilterOpenButton.textContent = `Filtrer · ${filtered.label}`;
 }
 
+const ORDER_STATUS_LABELS = {
+  pending: "En attente",
+  confirmed: "Confirmée",
+  delivered: "Livrée",
+  cancelled: "Annulée",
+};
+
+function orderStatusBadge(status) {
+  const key = ORDER_STATUS_LABELS[status] ? status : "pending";
+  return `<span class="order-status order-status--${key}">${ORDER_STATUS_LABELS[key]}</span>`;
+}
+
+function orderStatusButton(sale) {
+  if (!sale.orderId) return "";
+  if (sale.status === "pending") {
+    return `<button class="primary-btn order-status-btn" type="button" data-order-status="confirmed" data-order-id="${sale.orderId}">Confirmer la commande</button>`;
+  }
+  if (sale.status === "confirmed") {
+    return `<button class="primary-btn order-status-btn" type="button" data-order-status="delivered" data-order-id="${sale.orderId}">Marquer comme livrée</button>`;
+  }
+  return "";
+}
+
 function renderSalesHistory() {
   const sales = [...loadSales()].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   historySales = sales;
@@ -526,6 +550,7 @@ function renderSalesHistory() {
             <summary class="sales-row">
               <span>
                 ${sale.id ? `<strong class="sales-order-ref">${sale.id}</strong>` : ""}
+                ${orderStatusBadge(sale.status)}
                 ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
                 ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
                 ${sale.customer?.phone ? `<small>${sale.customer.phone}</small>` : ""}
@@ -542,6 +567,7 @@ function renderSalesHistory() {
               </ul>
               ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${sale.customer.notes}</p>` : ""}
               <div class="sales-order-actions">
+                ${orderStatusButton(sale)}
                 <button class="ghost-btn" type="button" data-recap-index="${index}">Télécharger le récapitulatif (PDF)</button>
                 ${sale.orderId ? `<button class="cancel-order-btn" type="button" data-cancel-order="${sale.orderId}">Annuler / Restaurer le stock</button>` : ""}
               </div>
@@ -651,6 +677,29 @@ async function handleCancelOrder(cancelButton) {
     cancelButton.disabled = false;
     successMessage.textContent = "";
     errorMessage.textContent = "Impossible d'annuler la commande. Vérifie le code admin ou la connexion.";
+    console.error(error);
+  }
+}
+
+async function handleAdvanceStatus(statusButton) {
+  const orderId = statusButton.dataset.orderId;
+  const status = statusButton.dataset.orderStatus;
+  if (!orderId || !status) return;
+
+  statusButton.disabled = true;
+  successMessage.textContent = "Mise à jour du statut...";
+  errorMessage.textContent = "";
+
+  try {
+    await setRemoteOrderStatus(orderId, status, adminSessionPin);
+    await loadRemoteSales(adminSessionPin);
+    renderSalesDashboard();
+    renderSalesHistory();
+    successMessage.textContent = status === "confirmed" ? "Commande confirmée." : "Commande marquée comme livrée.";
+  } catch (error) {
+    statusButton.disabled = false;
+    successMessage.textContent = "";
+    errorMessage.textContent = "Impossible de changer le statut. Vérifie le code admin ou la connexion.";
     console.error(error);
   }
 }
@@ -832,6 +881,12 @@ salesHistory.addEventListener("click", async (event) => {
     return;
   }
 
+  const statusButton = event.target.closest("[data-order-status]");
+  if (statusButton) {
+    await handleAdvanceStatus(statusButton);
+    return;
+  }
+
   const cancelButton = event.target.closest("[data-cancel-order]");
   if (cancelButton) await handleCancelOrder(cancelButton);
 });
@@ -840,6 +895,12 @@ salesDashboard.addEventListener("click", async (event) => {
   const openButton = event.target.closest("[data-sales-chart-open]");
   if (openButton) {
     openSalesModal();
+    return;
+  }
+
+  const statusButton = event.target.closest("[data-order-status]");
+  if (statusButton) {
+    await handleAdvanceStatus(statusButton);
     return;
   }
 

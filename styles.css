@@ -1953,6 +1953,52 @@ main {
   cursor: progress;
 }
 
+.order-status {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--line-soft);
+}
+
+.order-status--pending {
+  color: var(--copper-light);
+  background: rgba(215, 122, 34, 0.16);
+  border-color: var(--line);
+}
+
+.order-status--confirmed {
+  color: #8fd3b6;
+  background: rgba(60, 160, 120, 0.16);
+  border-color: rgba(60, 160, 120, 0.5);
+}
+
+.order-status--delivered {
+  color: var(--cream);
+  background: rgba(255, 243, 223, 0.12);
+  border-color: var(--line-soft);
+}
+
+.order-status--cancelled {
+  color: var(--muted);
+  background: rgba(3, 7, 6, 0.28);
+  border-color: var(--line-soft);
+}
+
+.order-status-btn {
+  align-self: flex-start;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+}
+
+.order-status-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
 .sales-row small {
   display: block;
   margin-top: 4px;
