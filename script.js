@@ -1360,6 +1360,25 @@ function restoreCartIfPaymentCancelled() {
   history.replaceState(null, "", window.location.pathname);
 }
 
+// Visites boutique : on compte chaque arrivée (QR du flyer ou accès direct),
+// une fois par session (dédupe sessionStorage). Si l'URL contient ?src=qr on
+// tague la source 'qr', sinon 'direct', puis on nettoie l'URL.
+function trackVisit() {
+  const params = new URLSearchParams(window.location.search);
+  const source = params.get("src") === "qr" ? "qr" : "direct";
+
+  if (!sessionStorage.getItem("epicerie-visit-counted")) {
+    sessionStorage.setItem("epicerie-visit-counted", "1");
+    logQrScan(source).catch((error) => console.warn(error));
+  }
+
+  if (params.has("src")) {
+    params.delete("src");
+    const query = params.toString();
+    history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
+  }
+}
+
 renderProducts();
 renderCart();
 setupDeliveryDateInput();
@@ -1367,4 +1386,5 @@ setupDeliveryDateInput();
 // (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
 refreshStockThenShop().then(loadCustomPacks);
 loadDeliveryClosures();
+trackVisit();
 restoreCartIfPaymentCancelled();

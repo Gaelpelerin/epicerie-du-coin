@@ -80,6 +80,7 @@ const loginPanel = document.querySelector("[data-admin-login]");
 const stockPanel = document.querySelector("[data-admin-stock]");
 const stockTable = document.querySelector("[data-stock-table]");
 const salesDashboard = document.querySelector("[data-sales-dashboard]");
+const qrStats = document.querySelector("[data-qr-stats]");
 const salesHistory = document.querySelector("[data-sales-history]");
 const salesFilterOpenButton = document.querySelector("[data-sales-filter-open]");
 const salesModal = document.querySelector("[data-sales-modal]");
@@ -766,6 +767,26 @@ document.querySelector("[data-stock-reset]").addEventListener("click", () => {
   renderStockTable();
 });
 
+async function renderQrStats() {
+  if (!qrStats) return;
+  qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint">Chargement…</p>`;
+  try {
+    const stats = await adminQrStats(adminSessionPin);
+    qrStats.innerHTML = `
+      <h2>Visites boutique</h2>
+      <p class="qr-stats-hint">Arrivées sur la boutique (QR du flyer ou accès direct), une par session.</p>
+      <div class="qr-stats-grid">
+        <div class="qr-stat"><strong>${stats.total ?? 0}</strong><small>Total</small></div>
+        <div class="qr-stat"><strong>${stats.today ?? 0}</strong><small>Aujourd'hui</small></div>
+        <div class="qr-stat"><strong>${stats.last7 ?? 0}</strong><small>7 derniers jours</small></div>
+        <div class="qr-stat"><strong>${stats.last30 ?? 0}</strong><small>30 derniers jours</small></div>
+      </div>`;
+  } catch (error) {
+    console.warn(error);
+    qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint is-error">Impossible de charger les visites.</p>`;
+  }
+}
+
 document.querySelectorAll("[data-admin-view]").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll("[data-admin-view]").forEach((tab) => tab.classList.remove("active"));
@@ -773,7 +794,10 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     button.classList.add("active");
     document.querySelector(`[data-admin-panel="${button.dataset.adminView}"]`).classList.remove("hidden");
     salesFilterOpenButton.classList.toggle("hidden", button.dataset.adminView !== "sales");
-    if (button.dataset.adminView === "sales") renderSalesDashboard();
+    if (button.dataset.adminView === "sales") {
+      renderSalesDashboard();
+      renderQrStats();
+    }
     if (button.dataset.adminView === "history") renderSalesHistory();
     if (button.dataset.adminView === "manual") renderManualPanel();
     if (button.dataset.adminView === "packs") openPackPanel();

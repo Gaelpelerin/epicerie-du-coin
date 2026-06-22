@@ -490,6 +490,37 @@ async function adminDeleteClosure(id, pin) {
   return response.json();
 }
 
+// QR : enregistre un scan (arrivée via le flyer). Pas de PIN.
+async function logQrScan(source = "qr") {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/log_qr_scan`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_source: source || "qr" }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Impossible d'enregistrer le scan QR.");
+  }
+
+  return response.json();
+}
+
+// QR : statistiques de scans (total + aujourd'hui + 7j + 30j, PIN requis).
+async function adminQrStats(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_qr_stats`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger les statistiques QR.");
+  }
+
+  return response.json();
+}
+
 async function verifyRemoteAdminPin(pin) {
   const currentStock = await refreshRemoteStock();
   const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
@@ -640,6 +671,8 @@ window.createRemoteManualOrder = createRemoteManualOrder;
 window.createCheckoutSession = createCheckoutSession;
 window.loadRemoteSales = loadRemoteSales;
 window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
+window.logQrScan = logQrScan;
+window.adminQrStats = adminQrStats;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;
 window.getRemotePackRecipe = getRemotePackRecipe;
 window.saveRemotePackRecipe = saveRemotePackRecipe;

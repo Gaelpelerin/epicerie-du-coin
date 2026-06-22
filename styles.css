@@ -2768,6 +2768,64 @@ main {
   font-weight: 600;
 }
 
+/* Encart scans QR (admin, en tête du Suivi CA). */
+.qr-stats {
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1px solid #efe3cf;
+  border-radius: 16px;
+  background: #fffaf1;
+}
+
+.qr-stats h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.qr-stats-hint {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: #9b8c73;
+}
+
+.qr-stats-hint.is-error {
+  color: #b3433a;
+}
+
+.qr-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.qr-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #f0e6d4;
+}
+
+.qr-stat strong {
+  font-size: 1.6rem;
+  color: #b3433a;
+}
+
+.qr-stat small {
+  font-size: 0.74rem;
+  color: #8c7d64;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .qr-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* Onglet Fermetures (admin). */
 .closures-manager {
   display: flex;
