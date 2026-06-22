@@ -806,6 +806,14 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
 });
 
 document.querySelector("[data-sales-reset]").addEventListener("click", () => {
+  const confirmPin = window.prompt("⚠️ Réinitialiser le suivi CA effacera l'historique local des ventes et les statistiques produits. Retape ton code admin pour confirmer :");
+  if (confirmPin === null) return;
+  if (confirmPin.trim() !== adminSessionPin) {
+    errorMessage.textContent = "Code incorrect : réinitialisation annulée.";
+    return;
+  }
+
+  errorMessage.textContent = "";
   saveSales([]);
   saveProductAnalytics({});
   successMessage.textContent = "Suivi CA réinitialisé.";
