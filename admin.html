@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=manual-7" />
+    <link rel="stylesheet" href="styles.css?v=manual-8" />
   </head>
   <body class="admin-page">
     <main class="admin-shell">
@@ -39,6 +39,7 @@
           <button class="active" type="button" data-admin-view="stock">Stock</button>
           <button type="button" data-admin-view="manual">Commande manuelle</button>
           <button type="button" data-admin-view="packs">Packs</button>
+          <button type="button" data-admin-view="closures">Fermetures</button>
           <button type="button" data-admin-view="sales">Suivi CA</button>
           <button type="button" data-admin-view="history">Historique de ventes</button>
           <button class="hidden" type="button" data-sales-filter-open>Filtrer</button>
@@ -88,6 +89,10 @@
           <div class="pack-manager" data-pack-manager></div>
         </div>
 
+        <div class="hidden" data-admin-panel="closures">
+          <div class="closures-manager" data-closures-manager></div>
+        </div>
+
         <div class="hidden" data-admin-panel="sales">
           <div class="sales-dashboard" data-sales-dashboard></div>
           <div class="admin-actions">
@@ -117,7 +122,7 @@
       </div>
     </div>
 
-    <script src="stock.js?v=manual-6"></script>
-    <script src="admin.js?v=manual-11"></script>
+    <script src="stock.js?v=manual-7"></script>
+    <script src="admin.js?v=manual-12"></script>
   </body>
 </html>

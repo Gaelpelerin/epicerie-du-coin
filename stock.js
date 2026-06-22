@@ -223,6 +223,7 @@ async function createCheckoutSession(cartItems, customer, reference) {
       email: customer.email || "",
       date: customer.date,
       time: customer.time,
+      delivery_at: customer.deliveryAt || "",
       notes: customer.notes || "",
     },
     items: cartItems.map((item) => ({
@@ -426,6 +427,69 @@ async function deleteRemotePack(packId, pin) {
   return response.json();
 }
 
+// Fermetures : créneaux à venir où la livraison est bloquée (boutique, pas de PIN).
+async function listClosures() {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_closures`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({}),
+  });
+
+  if (!response.ok) {
+    throw new Error("Impossible de charger les fermetures.");
+  }
+
+  return response.json();
+}
+
+// Fermetures : liste admin (toutes, PIN requis).
+async function adminListClosures(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_closures`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger les fermetures.");
+  }
+
+  return response.json();
+}
+
+// Fermetures : ajoute un créneau (PIN requis). starts/ends en ISO.
+async function adminAddClosure(starts, ends, reason, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_add_closure`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_starts: starts, p_ends: ends, p_reason: reason || "" }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible d'ajouter la fermeture.");
+  }
+
+  return response.json();
+}
+
+// Fermetures : supprime un créneau (PIN requis).
+async function adminDeleteClosure(id, pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_delete_closure`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_id: id }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de supprimer la fermeture.");
+  }
+
+  return response.json();
+}
+
 async function verifyRemoteAdminPin(pin) {
   const currentStock = await refreshRemoteStock();
   const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
@@ -585,6 +649,10 @@ window.adminListPacks = adminListPacks;
 window.createRemotePack = createRemotePack;
 window.updateRemotePack = updateRemotePack;
 window.deleteRemotePack = deleteRemotePack;
+window.listClosures = listClosures;
+window.adminListClosures = adminListClosures;
+window.adminAddClosure = adminAddClosure;
+window.adminDeleteClosure = adminDeleteClosure;
 window.subtractStock = subtractStock;
 window.loadSales = loadSales;
 window.saveSales = saveSales;

@@ -743,6 +743,53 @@ function setupDeliveryDateInput() {
   updateDeliveryTimeConstraints();
 }
 
+// Fermetures de livraison : créneaux où le client ne peut pas se faire livrer
+// (ex : pas de livreur ce soir). Chargées depuis Supabase au boot, re-vérifiées
+// à la commande. Chaque entrée : { startsAt:Date, endsAt:Date, reason:string }.
+let deliveryClosures = [];
+
+function formatClosureLabel(closure) {
+  const dayOpts = { weekday: "long", day: "numeric", month: "long" };
+  const t = (d) => (d.getMinutes() ? `${pad2(d.getHours())}h${pad2(d.getMinutes())}` : `${pad2(d.getHours())}h`);
+  const day1 = closure.startsAt.toLocaleDateString("fr-FR", dayOpts);
+  if (closure.startsAt.toDateString() === closure.endsAt.toDateString()) {
+    return `${day1} de ${t(closure.startsAt)} à ${t(closure.endsAt)}`;
+  }
+  const day2 = closure.endsAt.toLocaleDateString("fr-FR", dayOpts);
+  return `du ${day1} ${t(closure.startsAt)} au ${day2} ${t(closure.endsAt)}`;
+}
+
+function closureForDate(deliveryAt) {
+  return deliveryClosures.find((closure) => deliveryAt >= closure.startsAt && deliveryAt < closure.endsAt) || null;
+}
+
+function renderDeliveryClosuresHint() {
+  if (!deliveryHint) return;
+  const base = "Livraison 7j/7, 24h/24 — commandez au moins 1 heure à l'avance.";
+  if (!deliveryClosures.length) {
+    deliveryHint.textContent = base;
+    return;
+  }
+  const list = deliveryClosures.slice(0, 4).map(formatClosureLabel).join(" · ");
+  deliveryHint.innerHTML = `${base}<br><span class="delivery-closed-note">Pas de livraison : ${list}.</span>`;
+}
+
+async function loadDeliveryClosures() {
+  try {
+    const rows = await listClosures();
+    deliveryClosures = (Array.isArray(rows) ? rows : [])
+      .map((closure) => ({
+        startsAt: new Date(closure.starts_at),
+        endsAt: new Date(closure.ends_at),
+        reason: closure.reason || "",
+      }))
+      .filter((closure) => !Number.isNaN(closure.startsAt.getTime()) && !Number.isNaN(closure.endsAt.getTime()));
+    renderDeliveryClosuresHint();
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
 function isAlcoholLocked(product) {
   return Boolean(product.alcohol) && !ALCOHOL_SALES_ENABLED;
 }
@@ -1063,6 +1110,16 @@ async function checkoutCart() {
     return;
   }
 
+  // Re-vérifie les fermetures (au cas où une nouvelle serait ajoutée pendant
+  // que la page est ouverte), puis bloque si le créneau choisi tombe dedans.
+  await loadDeliveryClosures();
+  const closure = closureForDate(deliveryAt);
+  if (closure) {
+    cartMessage.textContent = `Pas de livraison possible ${formatClosureLabel(closure)}${closure.reason ? ` (${closure.reason})` : ""}. Merci de choisir un autre créneau.`;
+    return;
+  }
+  customer.deliveryAt = deliveryAt.toISOString();
+
   if (hasAlcohol && formData.get("alcoholAge") !== "on") {
     cartMessage.textContent = "Merci de confirmer votre majorité pour les boissons alcoolisées.";
     return;
@@ -1309,4 +1366,5 @@ setupDeliveryDateInput();
 // On charge d'abord le stock central (réécrit tout le cache), PUIS les packs
 // (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
 refreshStockThenShop().then(loadCustomPacks);
+loadDeliveryClosures();
 restoreCartIfPaymentCancelled();

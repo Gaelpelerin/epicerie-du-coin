@@ -2760,6 +2760,119 @@ main {
   color: #b3433a;
 }
 
+/* Avis fermeture côté boutique (sous le rappel de délai). */
+.delivery-closed-note {
+  display: inline-block;
+  margin-top: 4px;
+  color: #b3433a;
+  font-weight: 600;
+}
+
+/* Onglet Fermetures (admin). */
+.closures-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.closures-msg {
+  min-height: 1.2em;
+  margin: 0;
+  color: #cdbfa6;
+  font-weight: 600;
+}
+
+.closures-msg.is-error {
+  color: #e6a39b;
+}
+
+.closures-hint {
+  color: #8a7d6e;
+  font-size: 0.9rem;
+}
+
+.closures-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.closures-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.closures-fields .closures-wide {
+  grid-column: 1 / -1;
+}
+
+.closures-fields input {
+  padding: 9px 11px;
+  border: 1px solid #ddd0bf;
+  border-radius: 8px;
+}
+
+.closures-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.closure-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #f0e7da;
+  border-radius: 12px;
+  background: #faf6f0;
+}
+
+.closure-row.is-past {
+  opacity: 0.55;
+}
+
+.closure-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.closure-info strong {
+  color: #2b2118;
+  text-transform: capitalize;
+}
+
+.closure-info small {
+  color: #8a7d6e;
+}
+
+.closure-remove {
+  border: none;
+  background: #f3e2e2;
+  color: #b3433a;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closure-remove:hover {
+  background: #eccfcf;
+}
+
+@media (max-width: 560px) {
+  .closures-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 .pack-add {
   display: flex;
   gap: 10px;

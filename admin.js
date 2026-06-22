@@ -777,6 +777,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     if (button.dataset.adminView === "history") renderSalesHistory();
     if (button.dataset.adminView === "manual") renderManualPanel();
     if (button.dataset.adminView === "packs") openPackPanel();
+    if (button.dataset.adminView === "closures") openClosuresPanel();
   });
 });
 
@@ -1379,6 +1380,154 @@ if (packManager) {
       entry.quantity = Math.max(1, Math.floor(Number(qtyField.value) || 1));
       packRecipeDirty = true;
       syncPackPriceFromRecipe();
+    }
+  });
+}
+
+// ───────────────────────────── Fermetures ─────────────────────────────
+// Créneaux où la livraison est bloquée côté boutique (ex : pas de livreur).
+const closuresManager = document.querySelector("[data-closures-manager]");
+let closuresData = [];
+let closuresMessage = "";
+let closuresMessageError = false;
+
+function notifyClosures(text, isError = false) {
+  closuresMessage = text || "";
+  closuresMessageError = Boolean(isError);
+  const el = closuresManager && closuresManager.querySelector("[data-closures-msg]");
+  if (el) {
+    el.textContent = closuresMessage;
+    el.classList.toggle("is-error", closuresMessageError);
+  }
+}
+
+function closurePad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatClosureRange(startsAt, endsAt) {
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+  const dayOpts = { weekday: "long", day: "numeric", month: "long" };
+  const t = (d) => (d.getMinutes() ? `${closurePad2(d.getHours())}h${closurePad2(d.getMinutes())}` : `${closurePad2(d.getHours())}h`);
+  if (start.toDateString() === end.toDateString()) {
+    return `${start.toLocaleDateString("fr-FR", dayOpts)} de ${t(start)} à ${t(end)}`;
+  }
+  return `du ${start.toLocaleDateString("fr-FR", dayOpts)} ${t(start)} au ${end.toLocaleDateString("fr-FR", dayOpts)} ${t(end)}`;
+}
+
+function renderClosuresPanel() {
+  if (!closuresManager) return;
+  const todayValue = new Date().toISOString().slice(0, 10);
+  const now = Date.now();
+
+  const rows = closuresData.length
+    ? closuresData
+        .map((closure) => {
+          const past = new Date(closure.ends_at).getTime() <= now;
+          return `
+        <div class="closure-row${past ? " is-past" : ""}">
+          <div class="closure-info">
+            <strong>${packEscape(formatClosureRange(closure.starts_at, closure.ends_at))}</strong>
+            ${closure.reason ? `<small>${packEscape(closure.reason)}</small>` : ""}
+            ${past ? '<small class="closure-past-tag">passée</small>' : ""}
+          </div>
+          <button type="button" class="closure-remove" data-closure-delete="${closure.id}" aria-label="Supprimer">×</button>
+        </div>`;
+        })
+        .join("")
+    : '<p class="empty-cart">Aucune fermeture enregistrée. La livraison est ouverte en continu.</p>';
+
+  closuresManager.innerHTML = `
+    <p class="closures-msg${closuresMessageError ? " is-error" : ""}" data-closures-msg>${packEscape(closuresMessage)}</p>
+    <section class="closures-add">
+      <h2>Ajouter une fermeture</h2>
+      <p class="closures-hint">Le client ne pourra pas réserver une livraison dans ce créneau. Ex : pas de livreur ce soir → début aujourd'hui 18:00, fin aujourd'hui 23:00.</p>
+      <div class="closures-fields">
+        <label>Début — jour *<input type="date" data-closure="start-date" value="${todayValue}" /></label>
+        <label>Début — heure *<input type="time" data-closure="start-time" /></label>
+        <label>Fin — jour *<input type="date" data-closure="end-date" value="${todayValue}" /></label>
+        <label>Fin — heure *<input type="time" data-closure="end-time" /></label>
+        <label class="closures-wide">Motif (optionnel)<input type="text" data-closure="reason" placeholder="ex : pas de livreur" /></label>
+      </div>
+      <div class="admin-actions">
+        <button type="button" class="primary-btn" data-closure-add>Ajouter la fermeture</button>
+      </div>
+    </section>
+    <section class="closures-list">
+      <h2>Fermetures enregistrées</h2>
+      <div class="closures-rows">${rows}</div>
+    </section>`;
+}
+
+async function openClosuresPanel() {
+  try {
+    const list = await adminListClosures(adminSessionPin);
+    closuresData = Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error(error);
+    closuresData = [];
+    closuresMessage = "Impossible de charger les fermetures.";
+    closuresMessageError = true;
+  }
+  renderClosuresPanel();
+}
+
+async function addClosure() {
+  const get = (key) => {
+    const field = closuresManager.querySelector(`[data-closure="${key}"]`);
+    return field ? field.value : "";
+  };
+  const startDate = get("start-date");
+  const startTime = get("start-time");
+  const endDate = get("end-date");
+  const endTime = get("end-time");
+  const reason = get("reason").trim();
+
+  if (!startDate || !startTime || !endDate || !endTime) {
+    notifyClosures("Renseigne le jour et l'heure de début et de fin.", true);
+    return;
+  }
+
+  const starts = new Date(`${startDate}T${startTime}`);
+  const ends = new Date(`${endDate}T${endTime}`);
+  if (Number.isNaN(starts.getTime()) || Number.isNaN(ends.getTime()) || ends <= starts) {
+    notifyClosures("La fin doit être après le début.", true);
+    return;
+  }
+
+  try {
+    await adminAddClosure(starts.toISOString(), ends.toISOString(), reason, adminSessionPin);
+    closuresMessage = "Fermeture ajoutée. Les clients ne pourront pas réserver ce créneau.";
+    closuresMessageError = false;
+    await openClosuresPanel();
+  } catch (error) {
+    console.error(error);
+    notifyClosures("Impossible d'ajouter la fermeture (PIN ou créneau invalide).", true);
+  }
+}
+
+async function deleteClosure(id) {
+  try {
+    await adminDeleteClosure(id, adminSessionPin);
+    closuresMessage = "Fermeture supprimée.";
+    closuresMessageError = false;
+    await openClosuresPanel();
+  } catch (error) {
+    console.error(error);
+    notifyClosures("Impossible de supprimer la fermeture.", true);
+  }
+}
+
+if (closuresManager) {
+  closuresManager.addEventListener("click", (event) => {
+    if (event.target.closest("[data-closure-add]")) {
+      addClosure();
+      return;
+    }
+    const del = event.target.closest("[data-closure-delete]");
+    if (del) {
+      deleteClosure(del.dataset.closureDelete);
     }
   });
 }
