@@ -1097,7 +1097,10 @@ function renderPackEditForm(meta) {
         <label class="pack-form-wide">Description<textarea data-pack-edit="description" rows="2">${packEscape(data.description || "")}</textarea></label>
         <label class="pack-form-wide">Photo<input type="file" accept="image/*" data-pack-photo="edit" /></label>
         <label class="pack-check"><input type="checkbox" data-pack-edit="active" ${data.active ? "checked" : ""} /> Visible en boutique</label>
+        <label class="pack-check"><input type="checkbox" data-pack-edit="scalable" ${data.scalable ? "checked" : ""} /> Adaptable au nombre de personnes</label>
+        <label>Personnes par défaut<input type="number" min="1" max="10" step="1" data-pack-edit="default_persons" value="${Number(data.default_persons) || 2}" /></label>
       </div>
+      <p class="pack-hint">Si « adaptable » est coché : le <strong>prix</strong> et les <strong>quantités de la recette</strong> sont <strong>par personne</strong>. En boutique, le client choisit le nombre de personnes (1 à 10) et tout est multiplié.</p>
       <div class="pack-photo-preview" data-pack-photo-preview="edit">${
         image ? `<img src="${image}" alt="" />` : "<span>Aucune photo</span>"
       }</div>
@@ -1142,6 +1145,8 @@ function renderPackManager() {
 
   const stock = loadStock();
   const editForm = renderPackEditForm(meta);
+  const packScalable = Boolean(meta.custom && meta.data && meta.data.scalable);
+  const qtyUnitLabel = packScalable ? "par personne" : "par pack";
 
   const outOfStock = packRecipe.filter((component) => (stock[component.product_id] ?? 0) <= 0);
   const recipeRows = packRecipe.length
@@ -1156,7 +1161,7 @@ function renderPackManager() {
             <small>stock ${available}${isOut ? " · rupture" : ""}</small>
           </div>
           <label class="pack-recipe-qty">
-            <span>par pack</span>
+            <span>${qtyUnitLabel}</span>
             <input type="number" min="1" step="1" value="${component.quantity}" data-pack-qty="${component.product_id}" />
           </label>
           <button type="button" class="pack-recipe-remove" data-pack-remove="${component.product_id}" aria-label="Retirer">×</button>
@@ -1203,7 +1208,7 @@ function renderPackManager() {
     ${editForm}
 
     <section class="pack-recipe">
-      <h3>Recette — composants consommés par pack monté</h3>
+      <h3>Recette — composants consommés ${packScalable ? "par personne" : "par pack monté"}</h3>
       <div class="pack-recipe-list">${recipeRows}</div>
       ${removeOutRow}
       <div class="pack-tags-head">
@@ -1308,9 +1313,11 @@ async function updatePack() {
   const price = Number(packManager.querySelector('[data-pack-edit="price"]').value);
   const description = (packManager.querySelector('[data-pack-edit="description"]').value || "").trim();
   const active = packManager.querySelector('[data-pack-edit="active"]').checked;
+  const scalable = packManager.querySelector('[data-pack-edit="scalable"]').checked;
+  const defaultPersons = Math.min(10, Math.max(1, Number(packManager.querySelector('[data-pack-edit="default_persons"]').value) || 2));
   notifyPack("Enregistrement…");
   try {
-    const payload = { id: currentPackId, name, price, description, active };
+    const payload = { id: currentPackId, name, price, description, active, scalable, default_persons: defaultPersons };
     if (editPackImage !== undefined) payload.image = editPackImage || "";
     await updateRemotePack(payload, adminSessionPin);
     editPackImage = undefined;

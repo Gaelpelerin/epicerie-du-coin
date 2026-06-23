@@ -816,6 +816,91 @@ main {
   line-height: 1;
 }
 
+/* Packs adaptables au nombre de personnes */
+.pack-persons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 8px;
+  flex-wrap: wrap;
+}
+
+.pack-persons-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pack-persons-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pack-persons-stepper strong {
+  min-width: 20px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--cream);
+}
+
+.pack-persons-stepper button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.pack-persons-stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pack-contents {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: rgba(3, 7, 6, 0.28);
+  display: grid;
+  gap: 4px;
+  font-size: 0.86rem;
+  color: var(--cream);
+}
+
+.pack-price-unit {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.add-btn.pack-add-btn {
+  width: auto;
+  height: auto;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--copper);
+  border-color: var(--copper);
+  color: #1a0f06;
+}
+
+.add-btn.pack-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .feature-band {
   display: flex;
   align-items: center;

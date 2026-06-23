@@ -803,8 +803,10 @@ function renderProducts(filter = "all") {
 
   grid.innerHTML = `
     ${visibleProducts
-    .map(
-      (product) => `
+    .map((product) =>
+      product.scalable
+        ? renderScalablePackCard(product)
+        : `
         <article class="product-card ${getProductStock(product.id) <= 0 ? "is-sold-out" : ""}" data-product-card="${product.id}">
           ${getProductStock(product.id) <= 0 ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
           ${renderProductCardImage(product)}
@@ -823,6 +825,109 @@ function renderProducts(filter = "all") {
     )
     .join("")}
   `;
+}
+
+// Packs adaptables au nombre de personnes : le client choisit 1..10 personnes,
+// le contenu et le prix sont multipliés. La dispo (getProductStock) = nombre max
+// de personnes assemblable (calculé par list_packs). État UI : packPersons[id].
+const packPersons = {};
+
+function packComponentName(productId) {
+  const found = products.find((item) => item.id === productId);
+  return found ? found.name : productId;
+}
+
+function clampPackPersons(product, value) {
+  const stockMax = getProductStock(product.id);
+  const max = Math.max(0, Math.min(10, stockMax));
+  if (max <= 0) return 0;
+  return Math.min(max, Math.max(1, Math.round(value) || 1));
+}
+
+function getPackPersons(product) {
+  const stored = packPersons[product.id];
+  const base = stored !== undefined ? stored : product.defaultPersons || 2;
+  const persons = clampPackPersons(product, base);
+  packPersons[product.id] = persons;
+  return persons;
+}
+
+function renderScalablePackCard(product) {
+  const stockMax = getProductStock(product.id);
+  const soldOut = stockMax <= 0;
+  const persons = getPackPersons(product);
+  const total = product.price * Math.max(1, persons);
+  const contents = (product.components || [])
+    .map((component) => `<li>${component.quantity * Math.max(1, persons)} × ${packComponentName(component.product_id)}</li>`)
+    .join("");
+  const inCart = getCartQuantity(product.id) > 0;
+
+  return `
+    <article class="product-card pack-card ${soldOut ? "is-sold-out" : ""}" data-product-card="${product.id}">
+      ${soldOut ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
+      ${renderProductCardImage(product)}
+      <div class="product-body">
+        <h3>${product.name}</h3>
+        <p>${product.description}</p>
+        ${renderStockBadge(product)}
+        ${
+          soldOut
+            ? ""
+            : `
+        <div class="pack-persons">
+          <span class="pack-persons-label">Nombre de personnes</span>
+          <div class="pack-persons-stepper" data-pack-persons="${product.id}">
+            <button type="button" data-pack-person="${product.id}" data-pack-person-delta="-1" aria-label="Moins une personne" ${persons <= 1 ? "disabled" : ""}>−</button>
+            <strong>${persons}</strong>
+            <button type="button" data-pack-person="${product.id}" data-pack-person-delta="1" aria-label="Plus une personne" ${persons >= Math.min(10, stockMax) ? "disabled" : ""}>+</button>
+          </div>
+        </div>
+        ${contents ? `<ul class="pack-contents">${contents}</ul>` : ""}`
+        }
+        <div class="product-meta">
+          <span class="price">${soldOut ? formatPrice(product.price) : formatPrice(total)}${!soldOut ? `<small class="pack-price-unit">${formatPrice(product.price)}/pers.</small>` : ""}</span>
+          <button class="add-btn pack-add-btn" type="button" data-pack-add="${product.id}" ${soldOut ? "disabled" : ""}>${inCart ? "Mettre à jour" : "Ajouter"}</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+// Ajoute / met à jour un pack adaptable dans le panier : la quantité de ligne
+// = le nombre de personnes (sémantique « remplacer », pas « +1 »). La commande
+// décrémente recette(par personne) × personnes côté serveur.
+function setPackPersonsInCart(packId) {
+  const product = products.find((item) => item.id === packId);
+  if (!product) return;
+
+  if (isAlcoholLocked(product)) {
+    cartMessage.textContent = `${product.name} sera disponible après validation de la licence alcool.`;
+    showCartToast("Licence alcool en validation");
+    openCart();
+    return;
+  }
+
+  const persons = clampPackPersons(product, getPackPersons(product));
+  if (persons <= 0) {
+    cartMessage.textContent = `${product.name} est indisponible.`;
+    showCartToast("Produit indisponible");
+    openCart();
+    return;
+  }
+
+  packPersons[packId] = persons;
+  cart.set(packId, { product, quantity: persons });
+  recordProductAdd(product, 1);
+  cartMessage.textContent = "";
+  renderCart();
+  refreshAddButtons();
+  rerenderPackCard(product);
+  showCartToast(`${product.name} (${persons} pers.) au panier`);
+}
+
+function rerenderPackCard(product) {
+  const card = grid.querySelector(`[data-product-card="${product.id}"]`);
+  if (card) card.outerHTML = renderScalablePackCard(product);
 }
 
 function renderStockBadge(product) {
@@ -1000,6 +1105,10 @@ function refreshAddButtons() {
   document.querySelectorAll("[data-card-control]").forEach((control) => {
     const product = products.find((item) => item.id === control.dataset.cardControl);
     if (product) control.outerHTML = renderProductCardControl(product);
+  });
+  grid.querySelectorAll(".pack-card[data-product-card]").forEach((card) => {
+    const product = products.find((item) => item.id === card.dataset.productCard);
+    if (product && product.scalable) card.outerHTML = renderScalablePackCard(product);
   });
 }
 
@@ -1200,6 +1309,9 @@ async function loadCustomPacks() {
       icon: pack.icon || "🧺",
       images: pack.image ? [pack.image] : undefined,
       alcohol: Boolean(pack.alcohol),
+      scalable: Boolean(pack.scalable),
+      defaultPersons: Math.min(10, Math.max(1, Number(pack.default_persons) || 2)),
+      components: Array.isArray(pack.components) ? pack.components : [],
     });
     // Pack-formule : sa dispo est calculée par list_packs à partir du stock
     // des ingrédients (plus petit floor(stock ÷ quantité_recette)). On la
@@ -1237,7 +1349,7 @@ function renderCart() {
         <div class="cart-line">
           <div>
             <strong>${product.name}</strong>
-            <span>${formatPrice(product.price)} / unité</span>
+            <span>${product.scalable ? `${formatPrice(product.price)} / pers. · ${quantity} pers.` : `${formatPrice(product.price)} / unité`}</span>
           </div>
           <div class="qty-controls">
             <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="Retirer un ${product.name}">−</button>
@@ -1278,6 +1390,26 @@ document.addEventListener("click", (event) => {
   const featuredAddButton = event.target.closest("[data-featured-add]");
   const featuredCard = event.target.closest("[data-featured-card]");
   const productCard = event.target.closest("[data-product-card]");
+  const packPersonButton = event.target.closest("[data-pack-person]");
+  const packAddButton = event.target.closest("[data-pack-add]");
+
+  if (packPersonButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const product = products.find((item) => item.id === packPersonButton.dataset.packPerson);
+    if (product) {
+      packPersons[product.id] = clampPackPersons(product, getPackPersons(product) + Number(packPersonButton.dataset.packPersonDelta));
+      rerenderPackCard(product);
+    }
+    return;
+  }
+
+  if (packAddButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    setPackPersonsInCart(packAddButton.dataset.packAdd);
+    return;
+  }
 
   if (addButton) {
     event.preventDefault();
@@ -1295,6 +1427,7 @@ document.addEventListener("click", (event) => {
 
   if (productCard && !event.target.closest("button")) {
     const product = products.find((item) => item.id === productCard.dataset.productCard);
+    if (product && product.scalable) return;
     recordProductClick(product);
     openProductModal(productCard.dataset.productCard);
   }
