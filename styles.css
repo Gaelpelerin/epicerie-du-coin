@@ -260,6 +260,10 @@ h2 {
   font-weight: 800;
 }
 
+.invoice-btn {
+  text-decoration: none;
+}
+
 .primary-btn:disabled,
 .add-btn:disabled {
   opacity: 0.48;

@@ -485,6 +485,7 @@ function renderSalesDashboard() {
                             .join("")}
                         </ul>
                         ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${sale.customer.notes}</p>` : ""}
+                        ${invoiceLink(sale)}
                         ${sale.orderId ? `<button class="cancel-order-btn" type="button" data-cancel-order="${sale.orderId}">Annuler / Restaurer le stock</button>` : ""}
                       </div>
                     </details>
@@ -510,6 +511,11 @@ const ORDER_STATUS_LABELS = {
 function orderStatusBadge(status) {
   const key = ORDER_STATUS_LABELS[status] ? status : "pending";
   return `<span class="order-status order-status--${key}">${ORDER_STATUS_LABELS[key]}</span>`;
+}
+
+function invoiceLink(sale) {
+  if (!sale.invoiceUrl) return "";
+  return `<a class="ghost-btn invoice-btn" href="${sale.invoiceUrl}" target="_blank" rel="noopener">Facture Stripe (PDF)</a>`;
 }
 
 function orderStatusButton(sale) {
@@ -569,6 +575,7 @@ function renderSalesHistory() {
               <div class="sales-order-actions">
                 ${orderStatusButton(sale)}
                 <button class="ghost-btn" type="button" data-recap-index="${index}">Télécharger le récapitulatif (PDF)</button>
+                ${invoiceLink(sale)}
                 ${sale.orderId ? `<button class="cancel-order-btn" type="button" data-cancel-order="${sale.orderId}">Annuler / Restaurer le stock</button>` : ""}
               </div>
             </div>

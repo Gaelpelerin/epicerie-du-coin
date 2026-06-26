@@ -269,6 +269,7 @@ async function loadRemoteSales(pin) {
     orderId: order.id,
     createdAt: order.createdAt,
     status: order.status || "pending",
+    invoiceUrl: order.invoiceUrl || null,
     total: Number(order.total) || 0,
     customer: order.customer || {},
     items: (order.items || []).map((item) => ({
