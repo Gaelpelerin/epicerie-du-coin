@@ -214,6 +214,8 @@ function createRemoteManualOrder(cartItems, customer, reference) {
 }
 
 async function createCheckoutSession(cartItems, customer, reference) {
+  logProductEvent("checkout", null, 1);
+
   const payload = {
     reference,
     customer: {
@@ -523,6 +525,22 @@ async function logQrScan(source = "qr") {
   return response.json();
 }
 
+// Entonnoir de conversion sur 30 jours (PIN requis).
+async function adminFunnel(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_funnel`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger l'entonnoir.");
+  }
+
+  return response.json();
+}
+
 // QR : statistiques de scans (total + aujourd'hui + 7j + 30j, PIN requis).
 async function adminQrStats(pin) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_qr_stats`, {
@@ -635,8 +653,31 @@ function saveProductAnalytics(analytics) {
   }
 }
 
+// Entonnoir de conversion : remonte un événement boutique au serveur
+// (clic produit, ajout panier, clic Payer). Best-effort, ne bloque jamais
+// l'UX et ignore silencieusement les erreurs réseau.
+function logProductEvent(event, product = null, quantity = 1) {
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/log_product_event`, {
+      method: "POST",
+      headers: supabaseHeaders,
+      keepalive: true,
+      body: JSON.stringify({
+        p_event: event,
+        p_product_id: product?.id ?? null,
+        p_name: product?.name ?? null,
+        p_category: product?.category ?? null,
+        p_quantity: Number(quantity) || 1,
+      }),
+    }).catch(() => {});
+  } catch {
+    /* no-op */
+  }
+}
+
 function recordProductClick(product) {
   if (!product?.id) return;
+  logProductEvent("click", product, 1);
 
   const analytics = loadProductAnalytics();
   const current = analytics[product.id] || {
@@ -658,6 +699,7 @@ function recordProductClick(product) {
 
 function recordProductAdd(product, quantity = 1) {
   if (!product?.id) return;
+  logProductEvent("add", product, Number(quantity) || 1);
 
   const analytics = loadProductAnalytics();
   const current = analytics[product.id] || {
@@ -712,6 +754,8 @@ window.recordSale = recordSale;
 window.loadProductAnalytics = loadProductAnalytics;
 window.saveProductAnalytics = saveProductAnalytics;
 window.recordProductClick = recordProductClick;
+window.logProductEvent = logProductEvent;
+window.adminFunnel = adminFunnel;
 window.recordProductAdd = recordProductAdd;
 window.STOCK_EVENT = STOCK_EVENT;
 window.SALES_EVENT = SALES_EVENT;

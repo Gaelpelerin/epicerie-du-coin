@@ -823,11 +823,62 @@ document.querySelector("[data-stock-reset]").addEventListener("click", () => {
   renderStockTable();
 });
 
+function funnelHtml(funnel) {
+  const stages = [
+    { key: "visits", label: "Visites" },
+    { key: "clicks", label: "Clics produit" },
+    { key: "adds", label: "Ajouts panier" },
+    { key: "checkouts", label: "Clics « Payer »" },
+    { key: "sales", label: "Ventes" },
+  ].map((stage) => ({ ...stage, value: Number(funnel[stage.key]) || 0 }));
+
+  const base = stages[0].value || 0;
+  const globalRate = base ? Math.round((stages[stages.length - 1].value / base) * 100) : 0;
+
+  const rows = stages
+    .map((stage, index) => {
+      const width = base ? Math.max(2, Math.round((stage.value / base) * 100)) : 0;
+      const prev = index > 0 ? stages[index - 1].value : null;
+      const step =
+        prev && prev > 0
+          ? `<span class="funnel-step">${Math.round((stage.value / prev) * 100)}%</span>`
+          : "";
+      return `
+        <div class="funnel-row">
+          <div class="funnel-row-head">
+            <span>${stage.label}</span>
+            <strong>${stage.value}${step}</strong>
+          </div>
+          <div class="funnel-track" aria-hidden="true"><span style="width:${width}%"></span></div>
+        </div>`;
+    })
+    .join("");
+
+  const topClicked = Array.isArray(funnel.top_clicked) ? funnel.top_clicked : [];
+  const topHtml = topClicked.length
+    ? `<div class="funnel-top">
+         <h3>Produits les plus cliqués (30 j)</h3>
+         <ul>${topClicked
+           .map((p) => `<li><span>${p.name}</span><strong>${p.clicks}</strong></li>`)
+           .join("")}</ul>
+       </div>`
+    : "";
+
+  return `
+    <h2>Entonnoir de conversion</h2>
+    <p class="qr-stats-hint">Parcours des visiteurs sur 30 jours. Taux global visites → ventes : <strong>${globalRate}%</strong>.</p>
+    <div class="funnel">${rows}</div>
+    ${topHtml}`;
+}
+
 async function renderQrStats() {
   if (!qrStats) return;
   qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint">Chargement…</p>`;
   try {
-    const stats = await adminQrStats(adminSessionPin);
+    const [stats, funnel] = await Promise.all([
+      adminQrStats(adminSessionPin),
+      adminFunnel(adminSessionPin).catch(() => null),
+    ]);
     qrStats.innerHTML = `
       <h2>Visites boutique</h2>
       <p class="qr-stats-hint">Arrivées sur la boutique (QR du flyer ou accès direct), une par session.</p>
@@ -836,7 +887,8 @@ async function renderQrStats() {
         <div class="qr-stat"><strong>${stats.today ?? 0}</strong><small>Aujourd'hui</small></div>
         <div class="qr-stat"><strong>${stats.last7 ?? 0}</strong><small>7 derniers jours</small></div>
         <div class="qr-stat"><strong>${stats.last30 ?? 0}</strong><small>30 derniers jours</small></div>
-      </div>`;
+      </div>
+      ${funnel ? funnelHtml(funnel) : ""}`;
   } catch (error) {
     console.warn(error);
     qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint is-error">Impossible de charger les visites.</p>`;
