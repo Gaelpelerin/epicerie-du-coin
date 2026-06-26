@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Confirmation newsletter - L'Épicerie du Coin</title>
+    <link rel="stylesheet" href="styles.css?v=news-1" />
+  </head>
+  <body class="legal-page">
+    <main>
+      <article class="legal-document" style="text-align: center">
+        <p class="eyebrow">Newsletter</p>
+        <h1 data-confirm-title>Confirmation en cours…</h1>
+        <p data-confirm-message>Merci de patienter pendant que nous validons votre inscription.</p>
+        <p><a class="ghost-btn" href="index.html#catalogue">Retour à la boutique</a></p>
+      </article>
+    </main>
+
+    <script>
+      (function () {
+        var SUPABASE_URL = "https://uqlqgfmlvyejenxbxjnx.supabase.co";
+        var SUPABASE_KEY = "sb_publishable_IeCEj5v9LP9GQ-3DZVw_sg__IBZtvxg";
+
+        var titleEl = document.querySelector("[data-confirm-title]");
+        var messageEl = document.querySelector("[data-confirm-message]");
+        var token = new URLSearchParams(window.location.search).get("token");
+
+        function show(title, message) {
+          titleEl.textContent = title;
+          messageEl.textContent = message;
+        }
+
+        if (!token) {
+          show("Lien invalide", "Ce lien de confirmation est incomplet. Réessayez depuis l'email reçu.");
+          return;
+        }
+
+        fetch(SUPABASE_URL + "/rest/v1/rpc/confirm_newsletter", {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ p_token: token }),
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (result) {
+            if (result && result.ok && (result.status === "confirmed" || result.status === "already_confirmed")) {
+              show(
+                "Inscription confirmée !",
+                "Merci, votre adresse est bien enregistrée. Vous recevrez nos nouveautés et offres gourmandes."
+              );
+            } else {
+              show(
+                "Lien expiré ou invalide",
+                "Nous n'avons pas pu valider cette confirmation. Réinscrivez-vous depuis la boutique si besoin."
+              );
+            }
+          })
+          .catch(function () {
+            show(
+              "Une erreur est survenue",
+              "Impossible de confirmer pour le moment. Réessayez dans quelques minutes."
+            );
+          });
+      })();
+    </script>
+  </body>
+</html>

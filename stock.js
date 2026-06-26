@@ -557,17 +557,24 @@ async function adminQrStats(pin) {
   return response.json();
 }
 
-// Inscription newsletter (double opt-in : statut "pending" tant que non confirmé).
+// Inscription newsletter (double opt-in). Passe par l'edge function qui
+// enregistre le consentement puis envoie l'email de confirmation.
 async function subscribeNewsletter(email, consent, source = "shop_footer") {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/subscribe_newsletter`, {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/newsletter-subscribe`, {
     method: "POST",
     headers: supabaseHeaders,
-    body: JSON.stringify({ p_email: email, p_consent: consent === true, p_source: source }),
+    body: JSON.stringify({ email, consent: consent === true, source }),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Inscription impossible pour le moment.");
+    let message = "Inscription impossible pour le moment.";
+    try {
+      const body = await response.json();
+      if (body && body.error) message = body.error;
+    } catch (_error) {
+      /* ignore */
+    }
+    throw new Error(message);
   }
 
   return response.json();
