@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=email-7" />
+  <link rel="stylesheet" href="styles.css?v=news-1" />
   </head>
   <body>
     <div class="app-shell">
@@ -122,6 +122,33 @@
             Les boissons alcoolisées sont désactivées tant que la licence de vente à emporter n'est pas confirmée. L'abus d'alcool est dangereux pour la santé.
           </p>
         </section>
+        <section class="newsletter" id="newsletter" aria-label="Newsletter">
+          <div class="newsletter-inner">
+            <p class="eyebrow">Restons en contact</p>
+            <h2>Nos nouveautés &amp; offres gourmandes</h2>
+            <p class="newsletter-lead">
+              Recevez en avant-première nos nouveaux produits, packs de saison et petites attentions. Pas de spam, désinscription en un clic.
+            </p>
+            <form class="newsletter-form" data-newsletter-form novalidate>
+              <div class="newsletter-row">
+                <input
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  placeholder="vous@exemple.fr"
+                  aria-label="Votre email"
+                  required
+                />
+                <button class="primary-btn" type="submit">Je m'inscris</button>
+              </div>
+              <label class="newsletter-consent">
+                <input type="checkbox" name="consent" />
+                <span>J'accepte de recevoir la newsletter de L'Épicerie du Coin et que mon email soit utilisé à cette fin. <a href="confidentialite.html">En savoir plus</a>.</span>
+              </label>
+              <p class="newsletter-message" data-newsletter-message aria-live="polite"></p>
+            </form>
+          </div>
+        </section>
         <footer class="legal-footer">
           <a href="mentions-legales.html">Mentions légales</a>
           <a href="cgv.html">CGV</a>
@@ -207,7 +234,7 @@
     <div class="scrim" data-cart-close data-product-modal-close></div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="stock.js?v=packs-4"></script>
-  <script src="script.js?v=packs-6"></script>
+  <script src="stock.js?v=news-1"></script>
+  <script src="script.js?v=news-1"></script>
   </body>
 </html>

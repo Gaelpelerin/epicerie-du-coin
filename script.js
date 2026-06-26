@@ -1458,6 +1458,58 @@ document.querySelectorAll("[data-cart-open]").forEach((button) => button.addEven
 document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEventListener("click", closeCart));
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
 document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
+
+// Inscription newsletter (double opt-in côté Supabase).
+const newsletterForm = document.querySelector("[data-newsletter-form]");
+if (newsletterForm) {
+  const newsletterMessage = newsletterForm.querySelector("[data-newsletter-message]");
+  newsletterForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = newsletterForm.email.value.trim();
+    const consent = newsletterForm.consent.checked;
+    const submitButton = newsletterForm.querySelector("button[type='submit']");
+
+    newsletterMessage.classList.remove("is-error", "is-success");
+
+    if (!email) {
+      newsletterMessage.textContent = "Merci d'indiquer votre email.";
+      newsletterMessage.classList.add("is-error");
+      return;
+    }
+    if (!consent) {
+      newsletterMessage.textContent = "Merci de cocher la case de consentement.";
+      newsletterMessage.classList.add("is-error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    try {
+      const result = await window.subscribeNewsletter(email, consent, "shop_footer");
+      if (result && result.ok) {
+        if (result.status === "already_confirmed") {
+          newsletterMessage.textContent = "Vous êtes déjà inscrit, merci !";
+        } else {
+          newsletterMessage.textContent = "Presque fini : un email de confirmation vous a été envoyé.";
+        }
+        newsletterMessage.classList.add("is-success");
+        newsletterForm.reset();
+      } else {
+        const reason = result && result.error === "invalid_email"
+          ? "Cet email ne semble pas valide."
+          : "Inscription impossible pour le moment.";
+        newsletterMessage.textContent = reason;
+        newsletterMessage.classList.add("is-error");
+      }
+    } catch (error) {
+      console.warn(error);
+      newsletterMessage.textContent = "Une erreur est survenue, réessayez plus tard.";
+      newsletterMessage.classList.add("is-error");
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
+
 window.addEventListener("focus", refreshStockThenShop);
 window.addEventListener(STOCK_EVENT, refreshShopFromStock);
 window.addEventListener("pageshow", refreshStockThenShop);

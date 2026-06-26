@@ -557,6 +557,38 @@ async function adminQrStats(pin) {
   return response.json();
 }
 
+// Inscription newsletter (double opt-in : statut "pending" tant que non confirmé).
+async function subscribeNewsletter(email, consent, source = "shop_footer") {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/subscribe_newsletter`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_email: email, p_consent: consent === true, p_source: source }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Inscription impossible pour le moment.");
+  }
+
+  return response.json();
+}
+
+// Liste des abonnés newsletter (PIN requis).
+async function adminListSubscribers(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_subscribers`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger les abonnés.");
+  }
+
+  return response.json();
+}
+
 async function verifyRemoteAdminPin(pin) {
   const currentStock = await refreshRemoteStock();
   const checkQuantity = currentStock["quiche-lorraine"] ?? stockDefaults["quiche-lorraine"] ?? 0;
@@ -734,6 +766,8 @@ window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
 window.setRemoteOrderStatus = setRemoteOrderStatus;
 window.logQrScan = logQrScan;
 window.adminQrStats = adminQrStats;
+window.subscribeNewsletter = subscribeNewsletter;
+window.adminListSubscribers = adminListSubscribers;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;
 window.getRemotePackRecipe = getRemotePackRecipe;
 window.saveRemotePackRecipe = saveRemotePackRecipe;
