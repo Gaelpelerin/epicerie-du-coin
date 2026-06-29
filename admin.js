@@ -871,13 +871,46 @@ function funnelHtml(funnel) {
     ${topHtml}`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function subscribersHtml(data) {
+  const list = Array.isArray(data.subscribers) ? data.subscribers : [];
+  const confirmed = list.filter((s) => s.status === "confirmed").slice(0, 8);
+  const recentHtml = confirmed.length
+    ? `<div class="funnel-top">
+         <h3>Derniers inscrits confirmés</h3>
+         <ul>${confirmed
+           .map((s) => `<li><span>${escapeHtml(s.email)}</span></li>`)
+           .join("")}</ul>
+       </div>`
+    : `<p class="qr-stats-hint">Aucun abonné confirmé pour l'instant.</p>`;
+
+  return `
+    <h2>Newsletter</h2>
+    <p class="qr-stats-hint">Abonnés à la newsletter (double opt-in RGPD).</p>
+    <div class="qr-stats-grid">
+      <div class="qr-stat"><strong>${data.confirmed ?? 0}</strong><small>Confirmés</small></div>
+      <div class="qr-stat"><strong>${data.pending ?? 0}</strong><small>En attente</small></div>
+      <div class="qr-stat"><strong>${data.unsubscribed ?? 0}</strong><small>Désinscrits</small></div>
+      <div class="qr-stat"><strong>${data.total ?? 0}</strong><small>Total</small></div>
+    </div>
+    ${recentHtml}`;
+}
+
 async function renderQrStats() {
   if (!qrStats) return;
   qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint">Chargement…</p>`;
   try {
-    const [stats, funnel] = await Promise.all([
+    const [stats, funnel, subscribers] = await Promise.all([
       adminQrStats(adminSessionPin),
       adminFunnel(adminSessionPin).catch(() => null),
+      adminListSubscribers(adminSessionPin).catch(() => null),
     ]);
     qrStats.innerHTML = `
       <h2>Visites boutique</h2>
@@ -888,7 +921,8 @@ async function renderQrStats() {
         <div class="qr-stat"><strong>${stats.last7 ?? 0}</strong><small>7 derniers jours</small></div>
         <div class="qr-stat"><strong>${stats.last30 ?? 0}</strong><small>30 derniers jours</small></div>
       </div>
-      ${funnel ? funnelHtml(funnel) : ""}`;
+      ${funnel ? funnelHtml(funnel) : ""}
+      ${subscribers ? subscribersHtml(subscribers) : ""}`;
   } catch (error) {
     console.warn(error);
     qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint is-error">Impossible de charger les visites.</p>`;
