@@ -1280,6 +1280,60 @@ async function refreshStockThenShop() {
   refreshShopFromStock();
 }
 
+// Traduction automatique des packs via MyMemory (fr→en/de).
+// Résultats mis en cache dans localStorage ; re-traduit si le contenu change.
+async function translatePackText(text, targetLang) {
+  if (!text) return "";
+  try {
+    const res = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=fr|${targetLang}&de=contact@epicerieducoin.fr`
+    );
+    if (!res.ok) return text;
+    const data = await res.json();
+    return data.responseData?.translatedText || text;
+  } catch {
+    return text;
+  }
+}
+
+function packI18nCacheKey(pack) {
+  let h = 0;
+  const s = (pack.name || "") + "|" + (pack.description || "");
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return `epicerie-pack-i18n-${pack.id}-${h.toString(36)}`;
+}
+
+async function translateAndRegisterPacks(packs) {
+  await Promise.all(
+    packs.map(async (pack) => {
+      const cacheKey = packI18nCacheKey(pack);
+      let cached = null;
+      try {
+        cached = JSON.parse(localStorage.getItem(cacheKey));
+      } catch {}
+      if (cached && cached.en && cached.de) {
+        if (typeof registerPackI18n === "function") registerPackI18n(pack.id, cached.en, cached.de);
+        return;
+      }
+      const [nameEn, descEn, nameDe, descDe] = await Promise.all([
+        pack.name ? translatePackText(pack.name, "en") : Promise.resolve(""),
+        pack.description ? translatePackText(pack.description, "en") : Promise.resolve(""),
+        pack.name ? translatePackText(pack.name, "de") : Promise.resolve(""),
+        pack.description ? translatePackText(pack.description, "de") : Promise.resolve(""),
+      ]);
+      const en = { name: nameEn || pack.name, description: descEn || pack.description };
+      const de = { name: nameDe || pack.name, description: descDe || pack.description };
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ en, de }));
+      } catch {}
+      if (typeof registerPackI18n === "function") registerPackI18n(pack.id, en, de);
+    })
+  );
+  if (typeof getLang === "function" && getLang() !== "fr" && typeof window.onI18nChange === "function") {
+    window.onI18nChange();
+  }
+}
+
 // Packs personnalisés créés depuis l'admin : on les charge depuis Supabase
 // et on les fusionne dans le catalogue (filtre « Packs »). Tout le reste
 // (rendu, panier, paiement) fonctionne ensuite via products[] sans changement.
@@ -1325,6 +1379,8 @@ async function loadCustomPacks() {
   });
 
   refreshShopFromStock();
+  // Lancement asynchrone sans bloquer l'affichage ; re-render auto si lang ≠ fr.
+  translateAndRegisterPacks(remotePacks.filter((p) => p && p.id));
 }
 
 if ("BroadcastChannel" in window) {

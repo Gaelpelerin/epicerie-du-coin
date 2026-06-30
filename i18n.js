@@ -833,6 +833,9 @@
   };
   window.setLang = setLang;
   window.applyStaticI18n = applyStaticI18n;
+  window.registerPackI18n = function (id, en, de) {
+    PRODUCT_I18N[id] = { en: en || {}, de: de || {} };
+  };
 
   document.documentElement.lang = currentLang;
   if (document.readyState === "loading") {
