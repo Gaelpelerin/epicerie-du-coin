@@ -1464,6 +1464,19 @@ document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEve
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
 document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
 
+document.querySelectorAll('[href="#packs"]').forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const packTab = document.querySelector('[data-filter="pack"]');
+    if (packTab) {
+      tabs.forEach((b) => b.classList.remove("active"));
+      packTab.classList.add("active");
+      renderProducts("pack");
+    }
+    document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth" });
+  });
+});
+
 // Inscription newsletter (double opt-in côté Supabase).
 const newsletterForm = document.querySelector("[data-newsletter-form]");
 if (newsletterForm) {
