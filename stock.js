@@ -512,10 +512,11 @@ async function adminDeleteClosure(id, pin) {
 
 // QR : enregistre un scan (arrivée via le flyer). Pas de PIN.
 async function logQrScan(source = "qr") {
+  const lang = typeof getLang === "function" ? getLang() : (localStorage.getItem("epicerie-lang") || "fr");
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/log_qr_scan`, {
     method: "POST",
     headers: supabaseHeaders,
-    body: JSON.stringify({ p_source: source || "qr" }),
+    body: JSON.stringify({ p_source: source || "qr", p_lang: lang }),
   });
 
   if (!response.ok) {
@@ -552,6 +553,21 @@ async function adminQrStats(pin) {
   if (!response.ok) {
     const message = await response.text();
     throw new Error(message || "Impossible de charger les statistiques QR.");
+  }
+
+  return response.json();
+}
+
+async function adminLangStats(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_lang_stats`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Impossible de charger les statistiques de langue.");
   }
 
   return response.json();
@@ -773,6 +789,7 @@ window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
 window.setRemoteOrderStatus = setRemoteOrderStatus;
 window.logQrScan = logQrScan;
 window.adminQrStats = adminQrStats;
+window.adminLangStats = adminLangStats;
 window.subscribeNewsletter = subscribeNewsletter;
 window.adminListSubscribers = adminListSubscribers;
 window.verifyRemoteAdminPin = verifyRemoteAdminPin;

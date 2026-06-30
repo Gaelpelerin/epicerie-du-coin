@@ -907,11 +907,21 @@ async function renderQrStats() {
   if (!qrStats) return;
   qrStats.innerHTML = `<h2>Visites boutique</h2><p class="qr-stats-hint">Chargement…</p>`;
   try {
-    const [stats, funnel, subscribers] = await Promise.all([
+    const [stats, funnel, subscribers, langStats] = await Promise.all([
       adminQrStats(adminSessionPin),
       adminFunnel(adminSessionPin).catch(() => null),
       adminListSubscribers(adminSessionPin).catch(() => null),
+      adminLangStats(adminSessionPin).catch(() => null),
     ]);
+    const totalLang = langStats ? (langStats.fr ?? 0) + (langStats.en ?? 0) + (langStats.de ?? 0) : 0;
+    const langPct = (n) => totalLang > 0 ? Math.round((n / totalLang) * 100) : 0;
+    const langHtml = langStats ? `
+      <h3>Langues des visiteurs</h3>
+      <div class="qr-stats-grid">
+        <div class="qr-stat"><strong>${langStats.fr ?? 0}</strong><small>🇫🇷 FR (${langPct(langStats.fr ?? 0)}%)</small></div>
+        <div class="qr-stat"><strong>${langStats.en ?? 0}</strong><small>🇬🇧 EN (${langPct(langStats.en ?? 0)}%)</small></div>
+        <div class="qr-stat"><strong>${langStats.de ?? 0}</strong><small>🇩🇪 DE (${langPct(langStats.de ?? 0)}%)</small></div>
+      </div>` : "";
     qrStats.innerHTML = `
       <h2>Visites boutique</h2>
       <p class="qr-stats-hint">Arrivées sur la boutique (QR du flyer ou accès direct), une par session.</p>
@@ -921,6 +931,7 @@ async function renderQrStats() {
         <div class="qr-stat"><strong>${stats.last7 ?? 0}</strong><small>7 derniers jours</small></div>
         <div class="qr-stat"><strong>${stats.last30 ?? 0}</strong><small>30 derniers jours</small></div>
       </div>
+      ${langHtml}
       ${funnel ? funnelHtml(funnel) : ""}
       ${subscribers ? subscribersHtml(subscribers) : ""}`;
   } catch (error) {
