@@ -447,6 +447,47 @@ async function deleteRemotePack(packId, pin) {
   return response.json();
 }
 
+// Promotions : prix barrés temporaires sur les produits du catalogue.
+async function listPromos() {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_promos`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) throw new Error("Impossible de charger les promotions.");
+  return response.json();
+}
+
+async function adminListPromos(pin) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_promos`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin }),
+  });
+  if (!response.ok) { const m = await response.text(); throw new Error(m || "Impossible de charger les promotions."); }
+  return response.json();
+}
+
+async function adminCreatePromo(pin, promo) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_create_promo`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_promo: promo }),
+  });
+  if (!response.ok) { const m = await response.text(); throw new Error(m || "Impossible de créer la promotion."); }
+  return response.json();
+}
+
+async function adminDeletePromo(pin, promoId) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_delete_promo`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_promo_id: promoId }),
+  });
+  if (!response.ok) { const m = await response.text(); throw new Error(m || "Impossible de supprimer la promotion."); }
+  return response.json();
+}
+
 // Fermetures : créneaux à venir où la livraison est bloquée (boutique, pas de PIN).
 async function listClosures() {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_closures`, {
@@ -801,6 +842,10 @@ window.adminListPacks = adminListPacks;
 window.createRemotePack = createRemotePack;
 window.updateRemotePack = updateRemotePack;
 window.deleteRemotePack = deleteRemotePack;
+window.listPromos = listPromos;
+window.adminListPromos = adminListPromos;
+window.adminCreatePromo = adminCreatePromo;
+window.adminDeletePromo = adminDeletePromo;
 window.listClosures = listClosures;
 window.adminListClosures = adminListClosures;
 window.adminAddClosure = adminAddClosure;

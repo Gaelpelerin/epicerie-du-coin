@@ -955,6 +955,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     if (button.dataset.adminView === "manual") renderManualPanel();
     if (button.dataset.adminView === "packs") openPackPanel();
     if (button.dataset.adminView === "closures") openClosuresPanel();
+    if (button.dataset.adminView === "promos") openPromosPanel();
   });
 });
 
@@ -1733,6 +1734,154 @@ if (closuresManager) {
     if (del) {
       deleteClosure(del.dataset.closureDelete);
     }
+  });
+}
+
+// ─── PANNEAU PROMOS ────────────────────────────────────────────────────────────
+const promosManager = document.querySelector("[data-promos-manager]");
+let promosData = [];
+let promosMessage = "";
+let promosMessageError = false;
+
+function notifyPromos(text, isError = false) {
+  promosMessage = text || "";
+  promosMessageError = Boolean(isError);
+  const el = promosManager && promosManager.querySelector("[data-promos-msg]");
+  if (el) {
+    el.textContent = promosMessage;
+    el.classList.toggle("is-error", promosMessageError);
+  }
+}
+
+function formatPromoDate(isoStr) {
+  if (!isoStr) return "—";
+  return new Date(isoStr).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function renderPromosPanel() {
+  if (!promosManager) return;
+  const today = new Date().toISOString().slice(0, 16);
+  const productOptions = productsForAdmin
+    .filter((p) => p[3] !== "pack")
+    .map((p) => `<option value="${p[0]}">${packEscape(p[1])}</option>`)
+    .join("");
+
+  const rows = promosData.length
+    ? promosData.map((promo) => {
+        const productEntry = productsForAdmin.find((p) => p[0] === promo.product_id);
+        const productName = productEntry ? productEntry[1] : promo.product_id;
+        const originalPrice = productEntry ? productEntry[2] : null;
+        const pct = originalPrice ? Math.round((1 - Number(promo.promo_price) / originalPrice) * 100) : null;
+        const isActive = new Date(promo.start_at) <= new Date() && (!promo.end_at || new Date(promo.end_at) >= new Date());
+        return `
+          <div class="promo-row${isActive ? " is-active-promo" : ""}">
+            <div class="promo-row-info">
+              <strong>${packEscape(productName)}</strong>
+              <span>${promo.label || (pct ? `-${pct}%` : "")}</span>
+              <small>Prix promo : <strong>${Number(promo.promo_price).toFixed(2)} €</strong>${originalPrice ? ` (habituel : ${Number(originalPrice).toFixed(2)} €)` : ""}</small>
+              <small>Du ${formatPromoDate(promo.start_at)} au ${formatPromoDate(promo.end_at)}</small>
+              ${isActive ? '<span class="promo-active-tag">● Active</span>' : ""}
+            </div>
+            <button type="button" class="closure-remove" data-promo-delete="${promo.id}" aria-label="Supprimer">×</button>
+          </div>`;
+      }).join("")
+    : '<p class="empty-cart">Aucune promotion enregistrée.</p>';
+
+  promosManager.innerHTML = `
+    <p class="closures-msg${promosMessageError ? " is-error" : ""}" data-promos-msg>${packEscape(promosMessage)}</p>
+    <section class="closures-add">
+      <h2>Ajouter une promotion</h2>
+      <p class="closures-hint">Le prix barré s'affiche automatiquement sur la boutique. Indiquez un label court comme « -10% ce week-end » ou laissez vide pour le % calculé automatiquement.</p>
+      <div class="closures-fields">
+        <label class="closures-wide">Produit *
+          <select data-promo="product_id">
+            <option value="">— choisir un produit —</option>
+            ${productOptions}
+          </select>
+        </label>
+        <label>Prix promo (€) *<input type="number" step="0.01" min="0" data-promo="promo_price" placeholder="ex: 8.01" /></label>
+        <label>Label (optionnel)<input type="text" data-promo="label" placeholder="ex: -10% ce week-end" /></label>
+        <label>Début *<input type="datetime-local" data-promo="start_at" value="${today}" /></label>
+        <label>Fin (vide = permanent)<input type="datetime-local" data-promo="end_at" /></label>
+      </div>
+      <div class="admin-actions">
+        <button type="button" class="primary-btn" data-promo-add>Ajouter la promotion</button>
+      </div>
+    </section>
+    <section class="closures-list">
+      <h2>Promotions enregistrées</h2>
+      <div class="closures-rows">${rows}</div>
+    </section>`;
+}
+
+async function openPromosPanel() {
+  try {
+    const list = await adminListPromos(adminSessionPin);
+    promosData = Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error(error);
+    promosData = [];
+    promosMessage = "Impossible de charger les promotions.";
+    promosMessageError = true;
+  }
+  renderPromosPanel();
+}
+
+async function addPromo() {
+  const get = (key) => {
+    const field = promosManager.querySelector(`[data-promo="${key}"]`);
+    return field ? field.value : "";
+  };
+  const productId = get("product_id");
+  const promoPriceRaw = get("promo_price");
+  const label = get("label").trim();
+  const startAt = get("start_at");
+  const endAt = get("end_at");
+
+  if (!productId) { notifyPromos("Sélectionne un produit.", true); return; }
+  if (!promoPriceRaw || isNaN(Number(promoPriceRaw)) || Number(promoPriceRaw) <= 0) {
+    notifyPromos("Indique un prix promo valide (en €).", true); return;
+  }
+
+  const productEntry = productsForAdmin.find((p) => p[0] === productId);
+  if (productEntry && Number(promoPriceRaw) >= productEntry[2]) {
+    notifyPromos(`Le prix promo doit être inférieur au prix normal (${Number(productEntry[2]).toFixed(2)} €).`, true); return;
+  }
+
+  try {
+    await adminCreatePromo(adminSessionPin, {
+      product_id: productId,
+      promo_price: Number(promoPriceRaw).toFixed(2),
+      label,
+      start_at: startAt ? new Date(startAt).toISOString() : null,
+      end_at: endAt ? new Date(endAt).toISOString() : null,
+    });
+    promosMessage = "Promotion créée. Elle apparaît sur la boutique dès maintenant.";
+    promosMessageError = false;
+    await openPromosPanel();
+  } catch (error) {
+    console.error(error);
+    notifyPromos("Impossible de créer la promotion.", true);
+  }
+}
+
+async function deletePromo(id) {
+  try {
+    await adminDeletePromo(adminSessionPin, id);
+    promosMessage = "Promotion supprimée.";
+    promosMessageError = false;
+    await openPromosPanel();
+  } catch (error) {
+    console.error(error);
+    notifyPromos("Impossible de supprimer la promotion.", true);
+  }
+}
+
+if (promosManager) {
+  promosManager.addEventListener("click", (event) => {
+    if (event.target.closest("[data-promo-add]")) { addPromo(); return; }
+    const del = event.target.closest("[data-promo-delete]");
+    if (del) deletePromo(del.dataset.promoDelete);
   });
 }
 

@@ -40,6 +40,7 @@
           <button type="button" data-admin-view="manual">Commande manuelle</button>
           <button type="button" data-admin-view="packs">Packs</button>
           <button type="button" data-admin-view="closures">Fermetures</button>
+          <button type="button" data-admin-view="promos">Promos</button>
           <button type="button" data-admin-view="sales">Suivi CA</button>
           <button type="button" data-admin-view="history">Historique de ventes</button>
           <button class="hidden" type="button" data-sales-filter-open>Filtrer</button>
@@ -93,6 +94,10 @@
           <div class="closures-manager" data-closures-manager></div>
         </div>
 
+        <div class="hidden" data-admin-panel="promos">
+          <div class="promos-manager" data-promos-manager></div>
+        </div>
+
         <div class="hidden" data-admin-panel="sales">
           <div class="qr-stats" data-qr-stats></div>
           <div class="sales-dashboard" data-sales-dashboard></div>
@@ -123,7 +128,7 @@
       </div>
     </div>
 
-    <script src="stock.js?v=lang-1"></script>
-    <script src="admin.js?v=lang-1"></script>
+    <script src="stock.js?v=promo-1"></script>
+    <script src="admin.js?v=promo-1"></script>
   </body>
 </html>

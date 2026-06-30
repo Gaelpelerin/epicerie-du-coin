@@ -696,6 +696,24 @@ const featuredState = {
   productId: null,
 };
 let checkoutFormVisible = false;
+let activePromos = [];
+
+function getPromoForProduct(productId) {
+  return activePromos.find((p) => p.product_id === productId) || null;
+}
+
+function getEffectivePrice(product) {
+  const promo = getPromoForProduct(product.id);
+  return promo ? Number(promo.promo_price) : product.price;
+}
+
+function renderPromoPrice(product) {
+  const promo = getPromoForProduct(product.id);
+  if (!promo) return `<span class="price">${formatPrice(product.price)}</span>`;
+  return `
+    <span class="price is-promo">${formatPrice(Number(promo.promo_price))}</span>
+    <span class="price-was" title="${t("price_was")}">${formatPrice(product.price)}</span>`;
+}
 
 const formatPrice = (price) =>
   new Intl.NumberFormat(typeof i18nLocale === "function" ? i18nLocale() : "fr-FR", {
@@ -802,10 +820,41 @@ function isPurchasable(product) {
   return getProductStock(product.id) > 0 && !isAlcoholLocked(product);
 }
 
+function renderPromoSection() {
+  const promoProducts = products.filter((p) => getPromoForProduct(p.id));
+  if (!promoProducts.length) return "";
+  return `
+    <div class="promo-section">
+      <div class="section-heading">
+        <p class="eyebrow">${t("promo_eyebrow")}</p>
+        <h2>${t("promo_title")}</h2>
+      </div>
+      <div class="promo-strip">
+        ${promoProducts.map((product) => {
+          const promo = getPromoForProduct(product.id);
+          const pct = Math.round((1 - Number(promo.promo_price) / product.price) * 100);
+          return `
+            <article class="promo-card" data-product-card="${product.id}">
+              <div class="promo-badge">${promo.label || `-${pct}%`}</div>
+              <div class="promo-card-body">
+                <span class="promo-icon">${product.icon || "🛒"}</span>
+                <strong>${pName(product)}</strong>
+                <div class="promo-prices">
+                  <span class="price is-promo">${formatPrice(Number(promo.promo_price))}</span>
+                  <span class="price-was">${formatPrice(product.price)}</span>
+                </div>
+              </div>
+            </article>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
 function renderProducts(filter = "all") {
   const visibleProducts = filter === "all" ? products : products.filter((product) => product.category === filter);
 
   grid.innerHTML = `
+    ${filter === "all" ? renderPromoSection() : ""}
     ${visibleProducts
     .map((product) =>
       product.scalable
@@ -813,6 +862,7 @@ function renderProducts(filter = "all") {
         : `
         <article class="product-card ${getProductStock(product.id) <= 0 ? "is-sold-out" : ""}" data-product-card="${product.id}">
           ${getProductStock(product.id) <= 0 ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
+          ${getPromoForProduct(product.id) ? `<div class="promo-ribbon product-ribbon"><span>${getPromoForProduct(product.id).label || t("badge_promo")}</span></div>` : ""}
           ${renderProductCardImage(product)}
           <div class="product-body">
             <h3>${pName(product)}</h3>
@@ -820,7 +870,7 @@ function renderProducts(filter = "all") {
             ${renderStockBadge(product)}
             ${renderAllergens(product)}
             <div class="product-meta">
-              <span class="price">${formatPrice(product.price)}</span>
+              ${renderPromoPrice(product)}
               ${renderProductCardControl(product)}
             </div>
           </div>
@@ -994,7 +1044,7 @@ function renderFeaturedProduct(product) {
         ${renderStockBadge(product)}
         ${renderAllergens(product)}
         <div class="product-meta">
-          <span class="price">${formatPrice(product.price)}</span>
+          ${renderPromoPrice(product)}
           <button class="add-btn" type="button" data-add="${product.id}" aria-label="${t("add_aria", { name: pName(product) })}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
         </div>
       </div>
@@ -1045,7 +1095,7 @@ function renderProductModal(product) {
           ${highlights.map((highlight) => `<li><span aria-hidden="true">✦</span>${highlight}</li>`).join("")}
         </ul>
         <div class="featured-buy">
-          <strong class="featured-price">${formatPrice(product.price)}</strong>
+          <strong class="featured-price">${renderPromoPrice(product)}</strong>
           <div class="featured-quantity" aria-label="${t("modal_qty_aria")}">
             <button type="button" data-featured-delta="-1" aria-label="${t("modal_qty_less")}">−</button>
             <span data-featured-quantity>${featuredState.quantity}</span>
@@ -1239,8 +1289,12 @@ async function checkoutCart() {
     return;
   }
 
-  const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const lines = items.map((item) => `- ${item.quantity} x ${item.product.name} (${formatPrice(item.product.price)})`);
+  const totalPrice = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
+  const lines = items.map((item) => {
+    const effPrice = getEffectivePrice(item.product);
+    const promoNote = effPrice < item.product.price ? ` [promo ${formatPrice(effPrice)}]` : "";
+    return `- ${item.quantity} x ${item.product.name} (${formatPrice(item.product.price)}${promoNote})`;
+  });
   const orderReference = `EDC-${Date.now().toString().slice(-6)}`;
 
   // Mémorise la commande : la page "Merci" en aura besoin pour le message
@@ -1391,7 +1445,7 @@ if ("BroadcastChannel" in window) {
 function renderCart() {
   const items = [...cart.values()];
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const totalPrice = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
   cartCount.textContent = totalQuantity;
@@ -1410,7 +1464,7 @@ function renderCart() {
         <div class="cart-line">
           <div>
             <strong>${pName(product)}</strong>
-            <span>${product.scalable ? `${formatPrice(product.price)} ${t("price_per_person")} · ${quantity}${t("pack_per_person")}` : `${formatPrice(product.price)} ${t("price_per_unit")}`}</span>
+            <span>${product.scalable ? `${formatPrice(getEffectivePrice(product))} ${t("price_per_person")} · ${quantity}${t("pack_per_person")}` : `${formatPrice(getEffectivePrice(product))} ${t("price_per_unit")}`}</span>
           </div>
           <div class="qty-controls">
             <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="${t("remove_aria", { name: pName(product) })}">−</button>
@@ -1646,6 +1700,16 @@ window.onI18nChange = function () {
   renderDeliveryClosuresHint();
 };
 
+async function loadPromos() {
+  if (typeof listPromos !== "function") return;
+  try {
+    activePromos = await listPromos();
+  } catch {
+    activePromos = [];
+  }
+  renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+}
+
 renderProducts();
 renderCart();
 setupDeliveryDateInput();
@@ -1653,5 +1717,6 @@ setupDeliveryDateInput();
 // (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
 refreshStockThenShop().then(loadCustomPacks);
 loadDeliveryClosures();
+loadPromos();
 trackVisit();
 restoreCartIfPaymentCancelled();
