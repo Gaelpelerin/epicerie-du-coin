@@ -698,7 +698,10 @@ const featuredState = {
 let checkoutFormVisible = false;
 
 const formatPrice = (price) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
+  new Intl.NumberFormat(typeof i18nLocale === "function" ? i18nLocale() : "fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(price);
 
 function formatDateInput(date) {
   const year = date.getFullYear();
@@ -737,7 +740,7 @@ function setupDeliveryDateInput() {
   const minDate = today > FIRST_DELIVERY_DATE ? today : FIRST_DELIVERY_DATE;
   deliveryDateInput.min = minDate;
   if (deliveryDateInput.value && deliveryDateInput.value < minDate) deliveryDateInput.value = minDate;
-  deliveryHint.textContent = "Livraison 7j/7, 24h/24 — commandez au moins 1 heure à l'avance.";
+  deliveryHint.textContent = t("delivery_hint_base");
   deliveryDateInput.addEventListener("change", updateDeliveryTimeConstraints);
   deliveryTimeInput.addEventListener("change", updateDeliveryTimeConstraints);
   updateDeliveryTimeConstraints();
@@ -750,13 +753,14 @@ let deliveryClosures = [];
 
 function formatClosureLabel(closure) {
   const dayOpts = { weekday: "long", day: "numeric", month: "long" };
-  const t = (d) => (d.getMinutes() ? `${pad2(d.getHours())}h${pad2(d.getMinutes())}` : `${pad2(d.getHours())}h`);
-  const day1 = closure.startsAt.toLocaleDateString("fr-FR", dayOpts);
+  const loc = typeof i18nLocale === "function" ? i18nLocale() : "fr-FR";
+  const hm = (d) => (d.getMinutes() ? `${pad2(d.getHours())}h${pad2(d.getMinutes())}` : `${pad2(d.getHours())}h`);
+  const day1 = closure.startsAt.toLocaleDateString(loc, dayOpts);
   if (closure.startsAt.toDateString() === closure.endsAt.toDateString()) {
-    return `${day1} de ${t(closure.startsAt)} à ${t(closure.endsAt)}`;
+    return t("closure_same_day", { day: day1, from: hm(closure.startsAt), to: hm(closure.endsAt) });
   }
-  const day2 = closure.endsAt.toLocaleDateString("fr-FR", dayOpts);
-  return `du ${day1} ${t(closure.startsAt)} au ${day2} ${t(closure.endsAt)}`;
+  const day2 = closure.endsAt.toLocaleDateString(loc, dayOpts);
+  return t("closure_range", { day1, from: hm(closure.startsAt), day2, to: hm(closure.endsAt) });
 }
 
 function closureForDate(deliveryAt) {
@@ -765,13 +769,13 @@ function closureForDate(deliveryAt) {
 
 function renderDeliveryClosuresHint() {
   if (!deliveryHint) return;
-  const base = "Livraison 7j/7, 24h/24 — commandez au moins 1 heure à l'avance.";
+  const base = t("delivery_hint_base");
   if (!deliveryClosures.length) {
     deliveryHint.textContent = base;
     return;
   }
   const list = deliveryClosures.slice(0, 4).map(formatClosureLabel).join(" · ");
-  deliveryHint.innerHTML = `${base}<br><span class="delivery-closed-note">Pas de livraison : ${list}.</span>`;
+  deliveryHint.innerHTML = `${base}<br><span class="delivery-closed-note">${t("delivery_closed_prefix", { list })}</span>`;
 }
 
 async function loadDeliveryClosures() {
@@ -808,11 +812,11 @@ function renderProducts(filter = "all") {
         ? renderScalablePackCard(product)
         : `
         <article class="product-card ${getProductStock(product.id) <= 0 ? "is-sold-out" : ""}" data-product-card="${product.id}">
-          ${getProductStock(product.id) <= 0 ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
+          ${getProductStock(product.id) <= 0 ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
           ${renderProductCardImage(product)}
           <div class="product-body">
-            <h3>${product.name}</h3>
-            <p>${product.description}</p>
+            <h3>${pName(product)}</h3>
+            <p>${pDesc(product)}</p>
             ${renderStockBadge(product)}
             ${renderAllergens(product)}
             <div class="product-meta">
@@ -864,29 +868,29 @@ function renderScalablePackCard(product) {
 
   return `
     <article class="product-card pack-card ${soldOut ? "is-sold-out" : ""}" data-product-card="${product.id}">
-      ${soldOut ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
+      ${soldOut ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
       ${renderProductCardImage(product)}
       <div class="product-body">
-        <h3>${product.name}</h3>
-        <p>${product.description}</p>
+        <h3>${pName(product)}</h3>
+        <p>${pDesc(product)}</p>
         ${renderStockBadge(product)}
         ${
           soldOut
             ? ""
             : `
         <div class="pack-persons">
-          <span class="pack-persons-label">Nombre de personnes</span>
+          <span class="pack-persons-label">${t("pack_persons_label")}</span>
           <div class="pack-persons-stepper" data-pack-persons="${product.id}">
-            <button type="button" data-pack-person="${product.id}" data-pack-person-delta="-1" aria-label="Moins une personne" ${persons <= 1 ? "disabled" : ""}>−</button>
+            <button type="button" data-pack-person="${product.id}" data-pack-person-delta="-1" aria-label="${t("pack_less_aria")}" ${persons <= 1 ? "disabled" : ""}>−</button>
             <strong>${persons}</strong>
-            <button type="button" data-pack-person="${product.id}" data-pack-person-delta="1" aria-label="Plus une personne" ${persons >= Math.min(10, stockMax) ? "disabled" : ""}>+</button>
+            <button type="button" data-pack-person="${product.id}" data-pack-person-delta="1" aria-label="${t("pack_more_aria")}" ${persons >= Math.min(10, stockMax) ? "disabled" : ""}>+</button>
           </div>
         </div>
         ${contents ? `<ul class="pack-contents">${contents}</ul>` : ""}`
         }
         <div class="product-meta">
-          <span class="price">${soldOut ? formatPrice(product.price) : formatPrice(total)}${!soldOut ? `<small class="pack-price-unit">${formatPrice(product.price)}/pers.</small>` : ""}</span>
-          <button class="add-btn pack-add-btn" type="button" data-pack-add="${product.id}" ${soldOut ? "disabled" : ""}>${inCart ? "Mettre à jour" : "Ajouter"}</button>
+          <span class="price">${soldOut ? formatPrice(product.price) : formatPrice(total)}${!soldOut ? `<small class="pack-price-unit">${formatPrice(product.price)}${t("pack_per_person")}</small>` : ""}</span>
+          <button class="add-btn pack-add-btn" type="button" data-pack-add="${product.id}" ${soldOut ? "disabled" : ""}>${inCart ? t("pack_update") : t("pack_add")}</button>
         </div>
       </div>
     </article>
@@ -901,16 +905,16 @@ function setPackPersonsInCart(packId) {
   if (!product) return;
 
   if (isAlcoholLocked(product)) {
-    cartMessage.textContent = `${product.name} sera disponible après validation de la licence alcool.`;
-    showCartToast("Licence alcool en validation");
+    cartMessage.textContent = t("msg_alcohol_pending", { name: pName(product) });
+    showCartToast(t("toast_alcohol_pending"));
     openCart();
     return;
   }
 
   const persons = clampPackPersons(product, getPackPersons(product));
   if (persons <= 0) {
-    cartMessage.textContent = `${product.name} est indisponible.`;
-    showCartToast("Produit indisponible");
+    cartMessage.textContent = t("msg_unavailable", { name: pName(product) });
+    showCartToast(t("toast_unavailable"));
     openCart();
     return;
   }
@@ -922,7 +926,7 @@ function setPackPersonsInCart(packId) {
   renderCart();
   refreshAddButtons();
   rerenderPackCard(product);
-  showCartToast(`${product.name} (${persons} pers.) au panier`);
+  showCartToast(t("toast_pack_added", { name: pName(product), n: persons }));
 }
 
 function rerenderPackCard(product) {
@@ -931,19 +935,19 @@ function rerenderPackCard(product) {
 }
 
 function renderStockBadge(product) {
-  if (isAlcoholLocked(product)) return '<span class="stock-badge hold">Licence en validation</span>';
+  if (isAlcoholLocked(product)) return `<span class="stock-badge hold">${t("badge_hold")}</span>`;
   const stock = getProductStock(product.id);
-  if (stock <= 0) return '<span class="stock-badge out">Épuisé</span>';
-  if (stock <= 3) return `<span class="stock-badge low">Plus que ${stock}</span>`;
-  return `<span class="stock-badge">En stock</span>`;
+  if (stock <= 0) return `<span class="stock-badge out">${t("badge_out")}</span>`;
+  if (stock <= 3) return `<span class="stock-badge low">${t("badge_low", { n: stock })}</span>`;
+  return `<span class="stock-badge">${t("badge_instock")}</span>`;
 }
 
 function renderAllergens(product) {
   if (!product.allergens?.length) return "";
 
   return `
-    <div class="allergen-tags" aria-label="Allergènes ${product.name}">
-      ${product.allergens.map((allergen) => `<span>${allergen}</span>`).join("")}
+    <div class="allergen-tags" aria-label="${t("allergens_aria", { name: pName(product) })}">
+      ${product.allergens.map((allergen) => `<span>${tAllergen(allergen)}</span>`).join("")}
     </div>
   `;
 }
@@ -980,18 +984,18 @@ function renderFeaturedProduct(product) {
 
   return `
     <article class="featured-product ${stock <= 0 ? "is-sold-out" : ""}" data-featured-card="${product.id}">
-      ${stock <= 0 ? '<div class="sold-out-ribbon product-ribbon"><span>Victime de son succès</span></div>' : ""}
+      ${stock <= 0 ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
       <div class="featured-gallery">
-        <img class="featured-main-image" src="${activeImage}" alt="${product.name}" />
+        <img class="featured-main-image" src="${activeImage}" alt="${pName(product)}" />
       </div>
       <div class="featured-details product-body">
-        <h3>${product.name}</h3>
-        <p class="featured-description">${product.description}</p>
+        <h3>${pName(product)}</h3>
+        <p class="featured-description">${pDesc(product)}</p>
         ${renderStockBadge(product)}
         ${renderAllergens(product)}
         <div class="product-meta">
           <span class="price">${formatPrice(product.price)}</span>
-          <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
+          <button class="add-btn" type="button" data-add="${product.id}" aria-label="${t("add_aria", { name: pName(product) })}" ${!isPurchasable(product) ? "disabled" : ""}>${renderCartQuantityLabel(product.id)}</button>
         </div>
       </div>
     </article>
@@ -1002,7 +1006,7 @@ function renderProductModal(product) {
   const stock = getProductStock(product.id);
   const productImages = product.images || [];
   const activeImage = productImages.includes(featuredState.activeImage) ? featuredState.activeImage : productImages[0];
-  const highlights = product.highlights || ["Produit sélectionné avec soin", "Prêt à savourer", "Livraison à votre adresse"];
+  const highlights = pHigh(product);
   const selectedQuantity = Math.min(featuredState.quantity, Math.max(1, stock));
   featuredState.quantity = selectedQuantity;
 
@@ -1011,17 +1015,17 @@ function renderProductModal(product) {
       <div class="modal-gallery">
         ${
           activeImage
-            ? `<img class="modal-main-image" src="${activeImage}" alt="${product.name}" />`
+            ? `<img class="modal-main-image" src="${activeImage}" alt="${pName(product)}" />`
             : `<div class="modal-main-image modal-icon-image" aria-hidden="true">${product.icon}</div>`
         }
-        ${stock <= 0 ? '<div class="sold-out-ribbon modal-ribbon"><span>Victime de son succès</span></div>' : ""}
+        ${stock <= 0 ? `<div class="sold-out-ribbon modal-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
         ${
           productImages.length > 1
-            ? `<div class="featured-thumbs" aria-label="Photos ${product.name}">
+            ? `<div class="featured-thumbs" aria-label="${t("modal_photos_aria", { name: pName(product) })}">
                 ${productImages
                   .map(
                     (image, index) => `
-                      <button class="${image === activeImage ? "active" : ""}" type="button" data-featured-image="${image}" aria-label="Voir la photo ${index + 1} de ${product.name}">
+                      <button class="${image === activeImage ? "active" : ""}" type="button" data-featured-image="${image}" aria-label="${t("modal_photo_view_aria", { n: index + 1, name: pName(product) })}">
                         <img src="${image}" alt="" />
                       </button>
                     `
@@ -1033,8 +1037,8 @@ function renderProductModal(product) {
       </div>
       <div class="modal-product-info">
         <div class="featured-icon" aria-hidden="true">${product.icon}</div>
-        <h3>${product.name}</h3>
-        <p class="featured-description">${product.description}</p>
+        <h3>${pName(product)}</h3>
+        <p class="featured-description">${pDesc(product)}</p>
         ${renderStockBadge(product)}
         ${renderAllergens(product)}
         <ul class="featured-highlights">
@@ -1042,14 +1046,14 @@ function renderProductModal(product) {
         </ul>
         <div class="featured-buy">
           <strong class="featured-price">${formatPrice(product.price)}</strong>
-          <div class="featured-quantity" aria-label="Quantité">
-            <button type="button" data-featured-delta="-1" aria-label="Réduire la quantité">−</button>
+          <div class="featured-quantity" aria-label="${t("modal_qty_aria")}">
+            <button type="button" data-featured-delta="-1" aria-label="${t("modal_qty_less")}">−</button>
             <span data-featured-quantity>${featuredState.quantity}</span>
-            <button type="button" data-featured-delta="1" aria-label="Augmenter la quantité">+</button>
+            <button type="button" data-featured-delta="1" aria-label="${t("modal_qty_more")}">+</button>
           </div>
         </div>
         <button class="primary-btn featured-cart-btn" type="button" data-featured-add="${product.id}" ${!isPurchasable(product) ? "disabled" : ""}>
-          ${isAlcoholLocked(product) ? "Licence en validation" : stock <= 0 ? "Épuisé" : "Ajouter au panier"}
+          ${isAlcoholLocked(product) ? t("badge_hold") : stock <= 0 ? t("badge_out") : t("modal_add_cart")}
         </button>
       </div>
     </article>
@@ -1089,15 +1093,15 @@ function renderProductCardControl(product) {
   if (quantity > 0) {
     return `
       <div class="card-qty" data-card-control="${product.id}">
-        <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="Retirer un ${product.name}">−</button>
+        <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="${t("remove_aria", { name: pName(product) })}">−</button>
         <strong>${quantity}</strong>
-        <button type="button" data-qty="${product.id}" data-delta="1" aria-label="Ajouter un ${product.name}">+</button>
+        <button type="button" data-qty="${product.id}" data-delta="1" aria-label="${t("addone_aria", { name: pName(product) })}">+</button>
       </div>`;
   }
 
   return `
     <div class="card-qty" data-card-control="${product.id}">
-      <button class="add-btn" type="button" data-add="${product.id}" aria-label="Ajouter ${product.name}" ${!isPurchasable(product) ? "disabled" : ""}>+</button>
+      <button class="add-btn" type="button" data-add="${product.id}" aria-label="${t("add_aria", { name: pName(product) })}" ${!isPurchasable(product) ? "disabled" : ""}>+</button>
     </div>`;
 }
 
@@ -1131,15 +1135,15 @@ function addToCart(productId, quantity = 1) {
   const allowedQuantity = Math.min(stock, requestedQuantity);
 
   if (isAlcoholLocked(product)) {
-    cartMessage.textContent = `${product.name} sera disponible après validation de la licence alcool.`;
-    showCartToast("Licence alcool en validation");
+    cartMessage.textContent = t("msg_alcohol_pending", { name: pName(product) });
+    showCartToast(t("toast_alcohol_pending"));
     openCart();
     return;
   }
 
   if (stock <= 0 || allowedQuantity <= 0) {
-    cartMessage.textContent = `${product.name} est indisponible.`;
-    showCartToast("Produit indisponible");
+    cartMessage.textContent = t("msg_unavailable", { name: pName(product) });
+    showCartToast(t("toast_unavailable"));
     openCart();
     return;
   }
@@ -1147,11 +1151,11 @@ function addToCart(productId, quantity = 1) {
   cart.set(productId, { product, quantity: allowedQuantity });
   recordProductAdd(product, quantity);
   cartMessage.textContent =
-    requestedQuantity > stock ? `Stock limité : ${stock} disponible pour ${product.name}.` : "";
+    requestedQuantity > stock ? t("msg_stock_limited", { n: stock, name: pName(product) }) : "";
   renderCart();
   refreshAddButtons();
   if (productModal.classList.contains("open")) closeProductModal();
-  showCartToast(`${product.name} ajouté au panier`);
+  showCartToast(t("toast_added", { name: pName(product) }));
 }
 
 function updateQuantity(productId, delta) {
@@ -1172,15 +1176,15 @@ function updateQuantity(productId, delta) {
 function setCheckoutFormVisible(isVisible) {
   checkoutFormVisible = isVisible;
   checkoutForm.classList.toggle("hidden", !checkoutFormVisible);
-  checkoutButton.textContent = checkoutFormVisible ? "Envoyer la demande" : "Finaliser ma commande";
-  if (checkoutFormVisible) cartMessage.textContent = "Complétez vos informations pour envoyer la demande.";
+  checkoutButton.textContent = checkoutFormVisible ? t("checkout_send") : t("checkout_btn");
+  if (checkoutFormVisible) cartMessage.textContent = t("checkout_fill");
 }
 
 async function checkoutCart() {
   const items = [...cart.values()];
 
   if (!items.length) {
-    cartMessage.textContent = "Votre panier est vide.";
+    cartMessage.textContent = t("cart_empty");
     return;
   }
 
@@ -1208,14 +1212,14 @@ async function checkoutCart() {
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
   if (!customer.name || !customer.phone || !street || !postalCode || !city || !customer.date || !customer.time) {
-    cartMessage.textContent = "Merci de compléter nom, téléphone, adresse, code postal, ville, jour et heure de livraison.";
+    cartMessage.textContent = t("msg_fill_fields");
     return;
   }
 
   const deliveryAt = new Date(`${customer.date}T${customer.time}`);
   const earliestDelivery = new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
   if (Number.isNaN(deliveryAt.getTime()) || deliveryAt < earliestDelivery) {
-    cartMessage.textContent = "Choisissez un créneau au moins 1 heure après votre commande, le temps de préparer et livrer.";
+    cartMessage.textContent = t("msg_slot_too_soon");
     return;
   }
 
@@ -1224,13 +1228,14 @@ async function checkoutCart() {
   await loadDeliveryClosures();
   const closure = closureForDate(deliveryAt);
   if (closure) {
-    cartMessage.textContent = `Pas de livraison possible ${formatClosureLabel(closure)}${closure.reason ? ` (${closure.reason})` : ""}. Merci de choisir un autre créneau.`;
+    const windowLabel = `${formatClosureLabel(closure)}${closure.reason ? ` (${closure.reason})` : ""}`;
+    cartMessage.textContent = t("msg_no_delivery", { window: windowLabel });
     return;
   }
   customer.deliveryAt = deliveryAt.toISOString();
 
   if (hasAlcohol && formData.get("alcoholAge") !== "on") {
-    cartMessage.textContent = "Merci de confirmer votre majorité pour les boissons alcoolisées.";
+    cartMessage.textContent = t("msg_confirm_age");
     return;
   }
 
@@ -1253,7 +1258,7 @@ async function checkoutCart() {
     console.warn(error);
   }
 
-  cartMessage.textContent = "Redirection vers le paiement sécurisé...";
+  cartMessage.textContent = t("msg_redirect_payment");
 
   try {
     const session = await createCheckoutSession(items, customer, orderReference);
@@ -1261,7 +1266,7 @@ async function checkoutCart() {
     window.location.href = session.url;
   } catch (error) {
     console.warn(error);
-    cartMessage.textContent = "Le paiement n'a pas pu démarrer. Merci de réessayer dans un instant.";
+    cartMessage.textContent = t("msg_payment_failed");
   }
 }
 
@@ -1338,7 +1343,7 @@ function renderCart() {
   alcoholConfirm.classList.toggle("hidden", !hasAlcohol);
 
   if (!items.length) {
-    cartItems.innerHTML = '<p class="empty-cart">Votre panier est vide.</p>';
+    cartItems.innerHTML = `<p class="empty-cart">${t("cart_empty")}</p>`;
     setCheckoutFormVisible(false);
     return;
   }
@@ -1348,13 +1353,13 @@ function renderCart() {
       ({ product, quantity }) => `
         <div class="cart-line">
           <div>
-            <strong>${product.name}</strong>
-            <span>${product.scalable ? `${formatPrice(product.price)} / pers. · ${quantity} pers.` : `${formatPrice(product.price)} / unité`}</span>
+            <strong>${pName(product)}</strong>
+            <span>${product.scalable ? `${formatPrice(product.price)} ${t("price_per_person")} · ${quantity}${t("pack_per_person")}` : `${formatPrice(product.price)} ${t("price_per_unit")}`}</span>
           </div>
           <div class="qty-controls">
-            <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="Retirer un ${product.name}">−</button>
+            <button type="button" data-qty="${product.id}" data-delta="-1" aria-label="${t("remove_aria", { name: pName(product) })}">−</button>
             <strong>${quantity}</strong>
-            <button type="button" data-qty="${product.id}" data-delta="1" aria-label="Ajouter un ${product.name}">+</button>
+            <button type="button" data-qty="${product.id}" data-delta="1" aria-label="${t("addone_aria", { name: pName(product) })}">+</button>
           </div>
         </div>
       `
@@ -1472,12 +1477,12 @@ if (newsletterForm) {
     newsletterMessage.classList.remove("is-error", "is-success");
 
     if (!email) {
-      newsletterMessage.textContent = "Merci d'indiquer votre email.";
+      newsletterMessage.textContent = t("news_need_email");
       newsletterMessage.classList.add("is-error");
       return;
     }
     if (!consent) {
-      newsletterMessage.textContent = "Merci de cocher la case de consentement.";
+      newsletterMessage.textContent = t("news_need_consent");
       newsletterMessage.classList.add("is-error");
       return;
     }
@@ -1487,22 +1492,22 @@ if (newsletterForm) {
       const result = await window.subscribeNewsletter(email, consent, "shop_footer");
       if (result && result.ok) {
         if (result.status === "already_confirmed") {
-          newsletterMessage.textContent = "Vous êtes déjà inscrit, merci !";
+          newsletterMessage.textContent = t("news_already");
         } else {
-          newsletterMessage.textContent = "Presque fini : un email de confirmation vous a été envoyé.";
+          newsletterMessage.textContent = t("news_almost");
         }
         newsletterMessage.classList.add("is-success");
         newsletterForm.reset();
       } else {
         const reason = result && result.error === "invalid_email"
-          ? "Cet email ne semble pas valide."
-          : "Inscription impossible pour le moment.";
+          ? t("news_invalid")
+          : t("news_fail");
         newsletterMessage.textContent = reason;
         newsletterMessage.classList.add("is-error");
       }
     } catch (error) {
       console.warn(error);
-      newsletterMessage.textContent = "Une erreur est survenue, réessayez plus tard.";
+      newsletterMessage.textContent = t("news_error");
       newsletterMessage.classList.add("is-error");
     } finally {
       submitButton.disabled = false;
@@ -1538,7 +1543,7 @@ function restoreCartIfPaymentCancelled() {
     renderCart();
     refreshAddButtons();
     openCart();
-    cartMessage.textContent = "Paiement annulé : votre panier a été conservé.";
+    cartMessage.textContent = t("msg_payment_cancelled");
   }
 
   localStorage.removeItem("epicerie-pending-cart");
@@ -1563,6 +1568,14 @@ function trackVisit() {
     history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
   }
 }
+
+// Appelé par i18n.js quand la langue change : on re-rend tout le contenu
+// dynamique (cartes produits, panier, indice de livraison) dans la langue active.
+window.onI18nChange = function () {
+  renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+  renderCart();
+  renderDeliveryClosuresHint();
+};
 
 renderProducts();
 renderCart();

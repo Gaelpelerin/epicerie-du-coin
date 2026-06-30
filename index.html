@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=news-1" />
+  <link rel="stylesheet" href="styles.css?v=i18n-1" />
   </head>
   <body>
     <div class="app-shell">
@@ -24,10 +24,15 @@
             </span>
           </a>
           <div class="nav-actions">
-            <a href="#catalogue">Catalogue</a>
-            <a href="#livraison">Livraison</a>
+            <a href="#catalogue" data-i18n="nav_catalogue">Catalogue</a>
+            <a href="#livraison" data-i18n="nav_delivery">Livraison</a>
+            <div class="lang-switch" role="group" data-i18n-aria="lang_aria" aria-label="Choisir la langue">
+              <button type="button" data-lang-set="fr" aria-pressed="false">FR</button>
+              <button type="button" data-lang-set="en" aria-pressed="false">EN</button>
+              <button type="button" data-lang-set="de" aria-pressed="false">DE</button>
+            </div>
             <button class="cart-chip" type="button" data-cart-open>
-              Panier
+              <span data-i18n="nav_cart">Panier</span>
               <span data-cart-count>0</span>
             </button>
           </div>
@@ -36,7 +41,7 @@
         <section class="hero-cover" aria-label="L'Épicerie du Coin">
           <img src="assets/hero-cover-room-service.png" alt="L'Épicerie du Coin Room Service des Vosges - Le bon, tout près de chez vous." />
           <div class="hero-note">
-            <p>
+            <p data-i18n="hero_note">
               Nos produits ont été sélectionnés avec soin et pensés pour faciliter le confort de votre séjour par notre service de livraison.
             </p>
           </div>
@@ -47,86 +52,86 @@
         <section class="service-strip" id="livraison" aria-label="Services">
           <article class="service-order">
             <span aria-hidden="true"><img src="assets/service-clock.svg" alt="" /></span>
-            <strong>Commander<br />à l'avance</strong>
-            <p>Pour être sûr que vos produits soient disponibles et livrés dans les meilleures conditions !</p>
+            <strong data-i18n-html="svc_order_title">Commander<br />à l'avance</strong>
+            <p data-i18n="svc_order_text">Pour être sûr que vos produits soient disponibles et livrés dans les meilleures conditions !</p>
           </article>
           <article class="service-delivery">
             <span aria-hidden="true"><img src="assets/service-address.svg" alt="" /></span>
-            <strong>Livraison à votre adresse<br />7 jours sur 7</strong>
-            <p>Profitez, on s'occupe du reste !</p>
+            <strong data-i18n-html="svc_delivery_title">Livraison à votre adresse<br />7 jours sur 7</strong>
+            <p data-i18n="svc_delivery_text">Profitez, on s'occupe du reste !</p>
           </article>
           <article class="service-treat">
-            <strong>Une envie gourmande après votre journée ?</strong>
-            <p>On est là pour vous régaler !</p>
+            <strong data-i18n="svc_treat_title">Une envie gourmande après votre journée ?</strong>
+            <p data-i18n="svc_treat_text">On est là pour vous régaler !</p>
           </article>
         </section>
 
         <div class="main-actions" aria-label="Actions principales">
-          <a class="primary-btn" href="#catalogue">Voir notre boutique</a>
-          <a class="ghost-btn" href="#packs">Voir nos packs</a>
+          <a class="primary-btn" href="#catalogue" data-i18n="cta_shop">Voir notre boutique</a>
+          <a class="ghost-btn" href="#packs" data-i18n="cta_packs">Voir nos packs</a>
         </div>
 
         <section class="catalogue" id="catalogue">
           <div class="section-heading">
-            <p class="eyebrow">Catalogue</p>
-            <h2>Vos essentiels gourmands</h2>
+            <p class="eyebrow" data-i18n="cat_eyebrow">Catalogue</p>
+            <h2 data-i18n="cat_title">Vos essentiels gourmands</h2>
           </div>
 
           <div class="category-tabs" role="tablist" aria-label="Catégories produits">
-            <button class="active" type="button" data-filter="all">Tout</button>
-            <button type="button" data-filter="quiches">Quiches</button>
-            <button type="button" data-filter="snacking">Snacking</button>
-            <button type="button" data-filter="pizzas">Pizzas</button>
-            <button type="button" data-filter="pizza-pincees">Pizzas pincées</button>
-            <button type="button" data-filter="panwichs">Panwichs</button>
-            <button type="button" data-filter="douceurs">Douceurs</button>
-            <button type="button" data-filter="softs">Softs</button>
-            <button type="button" data-filter="eaux">Eaux</button>
-            <button type="button" data-filter="jus">Jus premium</button>
-            <button type="button" data-filter="bieres">Bières</button>
-            <button type="button" data-filter="vins">Vins</button>
-            <button type="button" data-filter="bulles">Bulles</button>
-            <button type="button" data-filter="apero">Apéro</button>
-            <button type="button" data-filter="pack">Packs</button>
+            <button class="active" type="button" data-filter="all" data-i18n-cat="all">Tout</button>
+            <button type="button" data-filter="quiches" data-i18n-cat="quiches">Quiches</button>
+            <button type="button" data-filter="snacking" data-i18n-cat="snacking">Snacking</button>
+            <button type="button" data-filter="pizzas" data-i18n-cat="pizzas">Pizzas</button>
+            <button type="button" data-filter="pizza-pincees" data-i18n-cat="pizza-pincees">Pizzas pincées</button>
+            <button type="button" data-filter="panwichs" data-i18n-cat="panwichs">Panwichs</button>
+            <button type="button" data-filter="douceurs" data-i18n-cat="douceurs">Douceurs</button>
+            <button type="button" data-filter="softs" data-i18n-cat="softs">Softs</button>
+            <button type="button" data-filter="eaux" data-i18n-cat="eaux">Eaux</button>
+            <button type="button" data-filter="jus" data-i18n-cat="jus">Jus premium</button>
+            <button type="button" data-filter="bieres" data-i18n-cat="bieres">Bières</button>
+            <button type="button" data-filter="vins" data-i18n-cat="vins">Vins</button>
+            <button type="button" data-filter="bulles" data-i18n-cat="bulles">Bulles</button>
+            <button type="button" data-filter="apero" data-i18n-cat="apero">Apéro</button>
+            <button type="button" data-filter="pack" data-i18n-cat="pack">Packs</button>
           </div>
 
           <div class="product-grid" data-product-grid></div>
         </section>
 
         <section class="allergen-panel" aria-label="Légende allergènes">
-          <p class="eyebrow">Allergènes</p>
-          <h2>Légende à valider avant publication</h2>
+          <p class="eyebrow" data-i18n="allergen_eyebrow">Allergènes</p>
+          <h2 data-i18n="allergen_title">Légende à valider avant publication</h2>
           <div class="allergen-legend">
-            <span>Gluten</span>
-            <span>Œufs</span>
-            <span>Lait</span>
-            <span>Fruits à coque</span>
-            <span>Soja</span>
-            <span>Sésame</span>
-            <span>Moutarde</span>
-            <span>Céleri</span>
-            <span>Sulfites</span>
-            <span>Poisson</span>
-            <span>Lupin</span>
-            <span>Arachides</span>
-            <span>Mollusques</span>
+            <span data-i18n-allergen="Gluten">Gluten</span>
+            <span data-i18n-allergen="Œufs">Œufs</span>
+            <span data-i18n-allergen="Lait">Lait</span>
+            <span data-i18n-allergen="Fruits à coque">Fruits à coque</span>
+            <span data-i18n-allergen="Soja">Soja</span>
+            <span data-i18n-allergen="Sésame">Sésame</span>
+            <span data-i18n-allergen="Moutarde">Moutarde</span>
+            <span data-i18n-allergen="Céleri">Céleri</span>
+            <span data-i18n-allergen="Sulfites">Sulfites</span>
+            <span data-i18n-allergen="Poisson">Poisson</span>
+            <span data-i18n-allergen="Lupin">Lupin</span>
+            <span data-i18n-allergen="Arachides">Arachides</span>
+            <span data-i18n-allergen="Mollusques">Mollusques</span>
           </div>
-          <p>
+          <p data-i18n="allergen_note">
             Les allergènes affichés sont une base de travail issue du flyer. Avant toute mise en ligne publique, ils doivent être confirmés avec les fiches produits ou fournisseurs.
           </p>
         </section>
 
         <section class="notice">
-          <strong>Vente d'alcool réglementée</strong>
-          <p>
+          <strong data-i18n="notice_title">Vente d'alcool réglementée</strong>
+          <p data-i18n="notice_text">
             Les boissons alcoolisées sont désactivées tant que la licence de vente à emporter n'est pas confirmée. L'abus d'alcool est dangereux pour la santé.
           </p>
         </section>
         <section class="newsletter" id="newsletter" aria-label="Newsletter">
           <div class="newsletter-inner">
-            <p class="eyebrow">Restons en contact</p>
-            <h2>Nos nouveautés &amp; offres gourmandes</h2>
-            <p class="newsletter-lead">
+            <p class="eyebrow" data-i18n="news_eyebrow">Restons en contact</p>
+            <h2 data-i18n-html="news_title">Nos nouveautés &amp; offres gourmandes</h2>
+            <p class="newsletter-lead" data-i18n="news_lead">
               Recevez en avant-première nos nouveaux produits, packs de saison et petites attentions. Pas de spam, désinscription en un clic.
             </p>
             <form class="newsletter-form" data-newsletter-form novalidate>
@@ -136,23 +141,25 @@
                   name="email"
                   autocomplete="email"
                   placeholder="vous@exemple.fr"
+                  data-i18n-ph="news_email_ph"
                   aria-label="Votre email"
+                  data-i18n-aria="news_email_aria"
                   required
                 />
-                <button class="primary-btn" type="submit">Je m'inscris</button>
+                <button class="primary-btn" type="submit" data-i18n="news_submit">Je m'inscris</button>
               </div>
               <label class="newsletter-consent">
                 <input type="checkbox" name="consent" />
-                <span>J'accepte de recevoir la newsletter de L'Épicerie du Coin et que mon email soit utilisé à cette fin. <a href="confidentialite.html">En savoir plus</a>.</span>
+                <span data-i18n-html="news_consent">J'accepte de recevoir la newsletter de L'Épicerie du Coin et que mon email soit utilisé à cette fin. <a href="confidentialite.html">En savoir plus</a>.</span>
               </label>
               <p class="newsletter-message" data-newsletter-message aria-live="polite"></p>
             </form>
           </div>
         </section>
         <footer class="legal-footer">
-          <a href="mentions-legales.html">Mentions légales</a>
-          <a href="cgv.html">CGV</a>
-          <a href="confidentialite.html">Confidentialité</a>
+          <a href="mentions-legales.html" data-i18n="footer_legal">Mentions légales</a>
+          <a href="cgv.html" data-i18n="footer_cgv">CGV</a>
+          <a href="confidentialite.html" data-i18n="footer_privacy">Confidentialité</a>
         </footer>
       </main>
     </div>
@@ -160,67 +167,67 @@
     <aside class="cart-panel" data-cart-panel aria-label="Panier">
       <div class="cart-header">
         <div>
-          <p class="eyebrow">Commande</p>
-          <h2>Votre panier</h2>
+          <p class="eyebrow" data-i18n="cart_eyebrow">Commande</p>
+          <h2 data-i18n="cart_title">Votre panier</h2>
         </div>
-        <button class="icon-btn" type="button" data-cart-close aria-label="Fermer le panier">×</button>
+        <button class="icon-btn" type="button" data-cart-close aria-label="Fermer le panier" data-i18n-aria="cart_close_aria">×</button>
       </div>
       <div class="cart-items" data-cart-items>
-        <p class="empty-cart">Votre panier est vide.</p>
+        <p class="empty-cart" data-i18n="cart_empty">Votre panier est vide.</p>
       </div>
       <div class="cart-footer">
         <form class="checkout-form hidden" data-checkout-form>
           <label>
-            Nom
-            <input type="text" name="name" autocomplete="name" placeholder="Votre nom" />
+            <span data-i18n="f_name">Nom</span>
+            <input type="text" name="name" autocomplete="name" placeholder="Votre nom" data-i18n-ph="f_name_ph" />
           </label>
           <label>
-            Téléphone
+            <span data-i18n="f_phone">Téléphone</span>
             <input type="tel" name="phone" autocomplete="tel" placeholder="+33 ..." />
           </label>
           <label class="full-field">
-            Adresse ou logement
-            <input type="text" name="address" autocomplete="address-line1" placeholder="N° et rue, résidence, chambre..." />
+            <span data-i18n="f_address">Adresse ou logement</span>
+            <input type="text" name="address" autocomplete="address-line1" placeholder="N° et rue, résidence, chambre..." data-i18n-ph="f_address_ph" />
           </label>
           <div class="checkout-grid">
             <label>
-              Code postal
+              <span data-i18n="f_postal">Code postal</span>
               <input type="text" name="postalCode" autocomplete="postal-code" inputmode="numeric" placeholder="88160" />
             </label>
             <label>
-              Ville
+              <span data-i18n="f_city">Ville</span>
               <input type="text" name="city" autocomplete="address-level2" placeholder="Le Thillot" />
             </label>
           </div>
           <label class="full-field">
-            Email (facultatif, pour recevoir votre reçu)
-            <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" />
+            <span data-i18n="f_email">Email (facultatif, pour recevoir votre reçu)</span>
+            <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" data-i18n-ph="news_email_ph" />
           </label>
           <div class="checkout-grid">
             <label>
-              Jour souhaité
+              <span data-i18n="f_date">Jour souhaité</span>
               <input type="date" name="date" />
             </label>
             <label>
-              Heure souhaitée
+              <span data-i18n="f_time">Heure souhaitée</span>
               <input type="time" name="time" />
             </label>
           </div>
           <p class="checkout-note compact" data-delivery-hint></p>
           <label class="full-field">
-            Notes
-            <textarea name="notes" rows="3" placeholder="Digicode, précision de livraison, allergie à signaler..."></textarea>
+            <span data-i18n="f_notes">Notes</span>
+            <textarea name="notes" rows="3" placeholder="Digicode, précision de livraison, allergie à signaler..." data-i18n-ph="f_notes_ph"></textarea>
           </label>
           <label class="checkbox-field hidden" data-alcohol-confirm>
             <input type="checkbox" name="alcoholAge" />
-            Je confirme avoir 18 ans ou plus pour les boissons alcoolisées.
+            <span data-i18n="f_alcohol_confirm">Je confirme avoir 18 ans ou plus pour les boissons alcoolisées.</span>
           </label>
-          <p class="checkout-note">
+          <p class="checkout-note" data-i18n="checkout_reheat_note">
             Produits livrés froids, prêts à réchauffer. Pensez à préchauffer votre four 10 à 15 minutes avant dégustation.
           </p>
         </form>
         <div class="cart-total">
-          <span>Total estimé</span>
+          <span data-i18n="cart_total">Total estimé</span>
           <strong data-cart-total>0,00 €</strong>
         </div>
         <button class="primary-btn full" type="button" data-checkout>Finaliser ma commande</button>
@@ -228,13 +235,14 @@
       </div>
     </aside>
     <section class="product-modal" data-product-modal aria-label="Détail produit" aria-modal="true">
-      <button class="icon-btn modal-close" type="button" data-product-modal-close aria-label="Fermer le détail produit">×</button>
+      <button class="icon-btn modal-close" type="button" data-product-modal-close aria-label="Fermer le détail produit" data-i18n-aria="product_modal_close_aria">×</button>
       <div data-product-modal-content></div>
     </section>
     <div class="scrim" data-cart-close data-product-modal-close></div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
+  <script src="i18n.js?v=i18n-1"></script>
   <script src="stock.js?v=news-2"></script>
-  <script src="script.js?v=news-1"></script>
+  <script src="script.js?v=i18n-1"></script>
   </body>
 </html>
