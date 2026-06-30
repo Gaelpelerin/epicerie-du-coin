@@ -821,32 +821,34 @@ function isPurchasable(product) {
 }
 
 function renderPromoSection() {
-  const promoProducts = products.filter((p) => getPromoForProduct(p.id));
+  const promoProducts = products.filter((p) => getPromoForProduct(p.id) && getProductStock(p.id) > 0);
   if (!promoProducts.length) return "";
+  const cards = promoProducts.map((product) =>
+    product.scalable ? renderScalablePackCard(product) : `
+      <article class="product-card" data-product-card="${product.id}">
+        <div class="promo-ribbon product-ribbon"><span>${getPromoForProduct(product.id).label || t("badge_promo")}</span></div>
+        ${renderProductCardImage(product)}
+        <div class="product-body">
+          <h3>${pName(product)}</h3>
+          <p>${pDesc(product)}</p>
+          ${renderStockBadge(product)}
+          ${renderAllergens(product)}
+          <div class="product-meta">
+            ${renderPromoPrice(product)}
+            ${renderProductCardControl(product)}
+          </div>
+        </div>
+      </article>`
+  ).join("");
   return `
     <div class="promo-section">
       <div class="section-heading">
-        <p class="eyebrow">${t("promo_eyebrow")}</p>
-        <h2>${t("promo_title")}</h2>
+        <div>
+          <p class="eyebrow">${t("promo_eyebrow")}</p>
+          <h2>${t("promo_title")}</h2>
+        </div>
       </div>
-      <div class="promo-strip">
-        ${promoProducts.map((product) => {
-          const promo = getPromoForProduct(product.id);
-          const pct = Math.round((1 - Number(promo.promo_price) / product.price) * 100);
-          return `
-            <article class="promo-card" data-product-card="${product.id}">
-              <div class="promo-badge">${promo.label || `-${pct}%`}</div>
-              <div class="promo-card-body">
-                <span class="promo-icon">${product.icon || "🛒"}</span>
-                <strong>${pName(product)}</strong>
-                <div class="promo-prices">
-                  <span class="price is-promo">${formatPrice(Number(promo.promo_price))}</span>
-                  <span class="price-was">${formatPrice(product.price)}</span>
-                </div>
-              </div>
-            </article>`;
-        }).join("")}
-      </div>
+      <div class="product-grid">${cards}</div>
     </div>`;
 }
 
