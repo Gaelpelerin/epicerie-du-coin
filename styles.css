@@ -3356,6 +3356,311 @@ main {
   }
 }
 
+/* ─── Panneau Promos (admin) — thème sombre / cuivre ─────────────── */
+.promos-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.promo-msg {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--copper-light);
+  font-weight: 600;
+}
+
+.promo-msg.is-error {
+  color: #e6a39b;
+}
+
+.promo-add,
+.promo-list {
+  background: var(--panel-strong);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.promo-add h2,
+.promo-list h2 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  color: var(--cream);
+}
+
+.promo-hint {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.promo-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.promo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.promo-field-wide {
+  grid-column: 1 / -1;
+}
+
+.promo-field-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.promo-form select,
+.promo-form input {
+  padding: 11px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: rgba(255, 243, 223, 0.05);
+  color: var(--cream);
+  font-size: 0.95rem;
+  color-scheme: dark;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.promo-form select:focus,
+.promo-form input:focus {
+  outline: none;
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(215, 122, 34, 0.18);
+}
+
+.promo-form select option {
+  color: #1a1a1a;
+}
+
+.promo-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.promo-preset-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--copper-light);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.promo-preset-btn:hover {
+  background: var(--copper);
+  color: #1a0f04;
+}
+
+.promo-preview {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(215, 122, 34, 0.08);
+  border: 1px dashed var(--line);
+}
+
+.promo-preview.is-invalid {
+  background: rgba(179, 67, 58, 0.12);
+  border-color: rgba(179, 67, 58, 0.5);
+}
+
+.promo-preview-old {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.promo-preview-arrow {
+  color: var(--copper-light);
+  font-weight: 700;
+}
+
+.promo-preview-new {
+  color: var(--cream);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.promo-preview-pct {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--copper);
+  color: #1a0f04;
+  font-weight: 800;
+}
+
+.promo-preview-original {
+  color: var(--muted);
+}
+
+.promo-preview-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.promo-preview-bad {
+  color: #e6a39b;
+  font-weight: 600;
+}
+
+.promo-actions {
+  margin-top: 16px;
+}
+
+.promo-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.promo-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: rgba(255, 243, 223, 0.03);
+}
+
+.promo-card.is-active {
+  border-color: var(--line);
+  background: rgba(215, 122, 34, 0.09);
+}
+
+.promo-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.promo-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.promo-card-head strong {
+  color: var(--cream);
+  font-size: 1rem;
+}
+
+.promo-pct {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--copper);
+  color: #1a0f04;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.promo-badge-active {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(46, 193, 107, 0.16);
+  color: #57d98a;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.promo-badge-scheduled {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(255, 243, 223, 0.08);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.promo-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.promo-new {
+  color: var(--copper-light);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.promo-old {
+  color: var(--muted);
+  text-decoration: line-through;
+  font-size: 0.9rem;
+}
+
+.promo-label-chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(255, 243, 223, 0.08);
+  color: var(--cream);
+  font-size: 0.8rem;
+}
+
+.promo-dates {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.promo-remove {
+  border: none;
+  background: rgba(179, 67, 58, 0.16);
+  color: #e6a39b;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.promo-remove:hover {
+  background: rgba(179, 67, 58, 0.3);
+}
+
+.promo-empty {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  padding: 20px;
+}
+
+@media (max-width: 560px) {
+  .promo-form {
+    grid-template-columns: 1fr;
+  }
+  .promo-preview-pct {
+    margin-left: 0;
+  }
+}
+
 .pack-add {
   display: flex;
   gap: 10px;

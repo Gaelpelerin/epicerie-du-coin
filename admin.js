@@ -1774,44 +1774,106 @@ function renderPromosPanel() {
         const pct = originalPrice ? Math.round((1 - Number(promo.promo_price) / originalPrice) * 100) : null;
         const isActive = new Date(promo.start_at) <= new Date() && (!promo.end_at || new Date(promo.end_at) >= new Date());
         return `
-          <div class="promo-row${isActive ? " is-active-promo" : ""}">
-            <div class="promo-row-info">
-              <strong>${packEscape(productName)}</strong>
-              <span>${promo.label || (pct ? `-${pct}%` : "")}</span>
-              <small>Prix promo : <strong>${Number(promo.promo_price).toFixed(2)} €</strong>${originalPrice ? ` (habituel : ${Number(originalPrice).toFixed(2)} €)` : ""}</small>
-              <small>Du ${formatPromoDate(promo.start_at)} au ${formatPromoDate(promo.end_at)}</small>
-              ${isActive ? '<span class="promo-active-tag">● Active</span>' : ""}
+          <div class="promo-card${isActive ? " is-active" : ""}">
+            <div class="promo-card-main">
+              <div class="promo-card-head">
+                <strong>${packEscape(productName)}</strong>
+                ${pct ? `<span class="promo-pct">-${pct}%</span>` : ""}
+                ${isActive ? '<span class="promo-badge-active">● Active</span>' : '<span class="promo-badge-scheduled">Programmée</span>'}
+              </div>
+              <div class="promo-card-price">
+                <span class="promo-new">${Number(promo.promo_price).toFixed(2)} €</span>
+                ${originalPrice ? `<span class="promo-old">${Number(originalPrice).toFixed(2)} €</span>` : ""}
+                ${promo.label ? `<span class="promo-label-chip">${packEscape(promo.label)}</span>` : ""}
+              </div>
+              <small class="promo-dates">Du ${formatPromoDate(promo.start_at)} au ${formatPromoDate(promo.end_at)}</small>
             </div>
-            <button type="button" class="closure-remove" data-promo-delete="${promo.id}" aria-label="Supprimer">×</button>
+            <button type="button" class="promo-remove" data-promo-delete="${promo.id}" aria-label="Supprimer">×</button>
           </div>`;
       }).join("")
-    : '<p class="empty-cart">Aucune promotion enregistrée.</p>';
+    : '<p class="promo-empty">Aucune promotion enregistrée.</p>';
 
   promosManager.innerHTML = `
-    <p class="closures-msg${promosMessageError ? " is-error" : ""}" data-promos-msg>${packEscape(promosMessage)}</p>
-    <section class="closures-add">
+    <p class="promo-msg${promosMessageError ? " is-error" : ""}" data-promos-msg>${packEscape(promosMessage)}</p>
+    <section class="promo-add">
       <h2>Ajouter une promotion</h2>
-      <p class="closures-hint">Le prix barré s'affiche automatiquement sur la boutique. Indiquez un label court comme « -10% ce week-end » ou laissez vide pour le % calculé automatiquement.</p>
-      <div class="closures-fields">
-        <label class="closures-wide">Produit *
+      <p class="promo-hint">Choisis un produit, applique une réduction rapide (ou saisis le prix promo). Le prix barré s'affiche automatiquement sur la boutique.</p>
+      <div class="promo-form">
+        <label class="promo-field promo-field-wide">Produit *
           <select data-promo="product_id">
             <option value="">— choisir un produit —</option>
             ${productOptions}
           </select>
         </label>
-        <label>Prix promo (€) *<input type="number" step="0.01" min="0" data-promo="promo_price" placeholder="ex: 8.01" /></label>
-        <label>Label (optionnel)<input type="text" data-promo="label" placeholder="ex: -10% ce week-end" /></label>
-        <label>Début *<input type="datetime-local" data-promo="start_at" value="${today}" /></label>
-        <label>Fin (vide = permanent)<input type="datetime-local" data-promo="end_at" /></label>
+        <div class="promo-preview" data-promo-preview hidden></div>
+        <div class="promo-field promo-field-wide">
+          <span class="promo-field-label">Réduction rapide</span>
+          <div class="promo-presets">
+            <button type="button" class="promo-preset-btn" data-promo-preset="10">-10%</button>
+            <button type="button" class="promo-preset-btn" data-promo-preset="15">-15%</button>
+            <button type="button" class="promo-preset-btn" data-promo-preset="20">-20%</button>
+            <button type="button" class="promo-preset-btn" data-promo-preset="30">-30%</button>
+            <button type="button" class="promo-preset-btn" data-promo-preset="50">-50%</button>
+          </div>
+        </div>
+        <label class="promo-field">Prix promo (€) *<input type="number" step="0.01" min="0" data-promo="promo_price" placeholder="ex: 8.01" /></label>
+        <label class="promo-field">Label (optionnel)<input type="text" data-promo="label" placeholder="ex: -10% ce week-end" /></label>
+        <label class="promo-field">Début *<input type="datetime-local" data-promo="start_at" value="${today}" /></label>
+        <label class="promo-field">Fin (vide = permanent)<input type="datetime-local" data-promo="end_at" /></label>
       </div>
-      <div class="admin-actions">
+      <div class="promo-actions">
         <button type="button" class="primary-btn" data-promo-add>Ajouter la promotion</button>
       </div>
     </section>
-    <section class="closures-list">
+    <section class="promo-list">
       <h2>Promotions enregistrées</h2>
-      <div class="closures-rows">${rows}</div>
+      <div class="promo-rows">${rows}</div>
     </section>`;
+}
+
+// Aperçu live : prix habituel → prix promo (-X%). Se met à jour au choix du
+// produit et à la saisie du prix. Rend le bug "promo > prix normal" visible tout de suite.
+function updatePromoPreview() {
+  if (!promosManager) return;
+  const preview = promosManager.querySelector("[data-promo-preview]");
+  if (!preview) return;
+  const productId = promosManager.querySelector('[data-promo="product_id"]')?.value || "";
+  const priceRaw = promosManager.querySelector('[data-promo="promo_price"]')?.value || "";
+  const entry = productsForAdmin.find((p) => p[0] === productId);
+  if (!entry) {
+    preview.hidden = true;
+    return;
+  }
+  const original = Number(entry[2]);
+  preview.hidden = false;
+  const promo = Number(priceRaw);
+  if (!priceRaw || isNaN(promo) || promo <= 0) {
+    preview.classList.remove("is-invalid");
+    preview.innerHTML = `<span class="promo-preview-original">Prix habituel : <strong>${original.toFixed(2)} €</strong></span><span class="promo-preview-hint">Choisis une réduction rapide ou saisis le prix promo.</span>`;
+    return;
+  }
+  if (promo >= original) {
+    preview.classList.add("is-invalid");
+    preview.innerHTML = `<span class="promo-preview-bad">⚠ Le prix promo (${promo.toFixed(2)} €) doit être inférieur au prix habituel (${original.toFixed(2)} €).</span>`;
+    return;
+  }
+  const pct = Math.round((1 - promo / original) * 100);
+  preview.classList.remove("is-invalid");
+  preview.innerHTML = `<span class="promo-preview-old">${original.toFixed(2)} €</span><span class="promo-preview-arrow">→</span><span class="promo-preview-new">${promo.toFixed(2)} €</span><span class="promo-preview-pct">-${pct}%</span>`;
+}
+
+// Réduction rapide : calcule le prix promo à partir du % et du prix normal du produit.
+function applyPromoPreset(pct) {
+  const productId = promosManager.querySelector('[data-promo="product_id"]')?.value || "";
+  const entry = productsForAdmin.find((p) => p[0] === productId);
+  if (!entry) {
+    notifyPromos("Choisis d'abord un produit.", true);
+    return;
+  }
+  const original = Number(entry[2]);
+  const input = promosManager.querySelector('[data-promo="promo_price"]');
+  if (input) input.value = (original * (1 - pct / 100)).toFixed(2);
+  updatePromoPreview();
 }
 
 async function openPromosPanel() {
@@ -1879,9 +1941,17 @@ async function deletePromo(id) {
 
 if (promosManager) {
   promosManager.addEventListener("click", (event) => {
+    const preset = event.target.closest("[data-promo-preset]");
+    if (preset) { applyPromoPreset(Number(preset.dataset.promoPreset)); return; }
     if (event.target.closest("[data-promo-add]")) { addPromo(); return; }
     const del = event.target.closest("[data-promo-delete]");
     if (del) deletePromo(del.dataset.promoDelete);
+  });
+  promosManager.addEventListener("input", (event) => {
+    if (event.target.matches('[data-promo="promo_price"]')) updatePromoPreview();
+  });
+  promosManager.addEventListener("change", (event) => {
+    if (event.target.matches('[data-promo="product_id"]')) updatePromoPreview();
   });
 }
 
