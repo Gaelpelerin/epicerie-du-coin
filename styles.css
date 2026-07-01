@@ -835,7 +835,17 @@ main {
   line-height: 1.2;
 }
 
-/* Ribbon promo : même gabarit que sold-out, dégradé cuivre inversé */
+/* Ribbon promo : même gabarit que sold-out, dégradé cuivre inversé.
+   Le conteneur doit être positionné comme .sold-out-ribbon (centré sur
+   l'image), sinon le ruban retombe en flux normal collé en haut à gauche. */
+.promo-ribbon {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-6deg);
+}
+
 .promo-ribbon span {
   display: block;
   padding: 10px 16px 12px;
@@ -862,8 +872,11 @@ main {
 .promo-ribbon span::before { margin-bottom: 7px; }
 .promo-ribbon span::after  { margin-top: 7px; }
 
-/* Section "Promos du moment" : séparée du catalogue principal par une ligne */
+/* Section "Promos du moment" : séparée du catalogue principal par une ligne.
+   Elle est injectée comme item du grid catalogue (repeat 4) : on la force à
+   occuper toute la largeur, sinon elle est comprimée dans une seule colonne. */
 .promo-section {
+  grid-column: 1 / -1;
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
   border-bottom: 1px solid var(--line-soft, var(--line));
