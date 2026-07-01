@@ -835,42 +835,37 @@ main {
   line-height: 1.2;
 }
 
-/* Ribbon promo : même gabarit que sold-out, dégradé cuivre inversé.
-   Le conteneur doit être positionné comme .sold-out-ribbon (centré sur
-   l'image), sinon le ruban retombe en flux normal collé en haut à gauche. */
+/* Badge promo : petite pastille coin haut-droit. Contrairement au sold-out
+   (produit en rupture → on peut masquer), la promo est EN STOCK : le client
+   doit voir la photo, la description, les allergènes et le prix. On n'obstrue
+   donc PAS la carte — on override le top:36%/width hérités de .product-ribbon. */
 .promo-ribbon {
   position: absolute;
   z-index: 5;
-  left: 50%;
+  top: 10px;
+  right: 10px;
+  left: auto;
+  width: auto;
+  max-width: 60%;
   pointer-events: none;
-  transform: translate(-50%, -50%) rotate(-6deg);
+  transform: none;
 }
 
 .promo-ribbon span {
-  display: block;
-  padding: 10px 16px 12px;
-  border: 2px solid rgba(23, 17, 11, 0.55);
-  border-radius: 7px;
+  display: inline-block;
+  padding: 5px 12px 6px;
+  border: 1px solid rgba(23, 17, 11, 0.45);
+  border-radius: 999px;
   background: linear-gradient(135deg, #fff3df, #f0a242);
   color: #17110b;
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
-  font-size: clamp(0.82rem, 1.3vw, 1.1rem);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  font-size: 0.72rem;
   font-weight: 900;
-  line-height: 1.05;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
   text-align: center;
   text-transform: uppercase;
 }
-
-.promo-ribbon span::before,
-.promo-ribbon span::after {
-  content: "";
-  display: block;
-  height: 2px;
-  background: rgba(23, 17, 11, 0.42);
-}
-
-.promo-ribbon span::before { margin-bottom: 7px; }
-.promo-ribbon span::after  { margin-top: 7px; }
 
 /* Section "Promos du moment" : séparée du catalogue principal par une ligne.
    Elle est injectée comme item du grid catalogue (repeat 4) : on la force à
