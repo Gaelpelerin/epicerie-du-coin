@@ -228,15 +228,20 @@ async function createCheckoutSession(cartItems, customer, reference) {
       delivery_at: customer.deliveryAt || "",
       notes: customer.notes || "",
     },
-    items: cartItems.map((item) => ({
-      product_id: item.product.id,
-      name: item.product.name,
-      category: item.product.category,
-      price: item.product.price,
-      quantity: item.quantity,
-      total: item.product.price * item.quantity,
-      alcohol: Boolean(item.product.alcohol),
-    })),
+    items: cartItems.map((item) => {
+      // Prix réellement facturé = prix promo si une promo est active, sinon
+      // prix catalogue. Aligné sur le total affiché au panier (getEffectivePrice).
+      const price = getEffectivePrice(item.product);
+      return {
+        product_id: item.product.id,
+        name: item.product.name,
+        category: item.product.category,
+        price,
+        quantity: item.quantity,
+        total: price * item.quantity,
+        alcohol: Boolean(item.product.alcohol),
+      };
+    }),
   };
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
