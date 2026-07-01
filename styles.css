@@ -3376,10 +3376,10 @@ main {
 
 .promo-add,
 .promo-list {
-  background: var(--panel-strong);
+  background: rgba(3, 7, 6, 0.28);
   border: 1px solid var(--line-soft);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 18px;
 }
 
 .promo-add h2,
@@ -3405,7 +3405,8 @@ main {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 0.85rem;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--muted);
 }
 
@@ -3420,12 +3421,13 @@ main {
 
 .promo-form select,
 .promo-form input {
-  padding: 11px 12px;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: rgba(255, 243, 223, 0.05);
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #07110f;
   color: var(--cream);
-  font-size: 0.95rem;
+  font: inherit;
   color-scheme: dark;
   transition:
     border-color 0.15s ease,
