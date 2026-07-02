@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=promo-4" />
+  <link rel="stylesheet" href="styles.css?v=upsell-1" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -253,10 +253,20 @@
       <div data-product-modal-content></div>
     </section>
     <div class="scrim" data-cart-close data-product-modal-close></div>
+    <div class="upsell-modal hidden" data-upsell-modal aria-modal="true" aria-label="Suggestion gourmande">
+      <div class="upsell-panel">
+        <button class="icon-btn upsell-close" type="button" data-upsell-skip aria-label="Fermer la suggestion" data-i18n-aria="upsell_close_aria">×</button>
+        <p class="eyebrow" data-i18n="upsell_eyebrow">Petit plaisir</p>
+        <h2 data-i18n="upsell_title">Envie d'un dessert ?</h2>
+        <p class="upsell-lead" data-i18n="upsell_lead">Complétez votre commande avec une douceur avant de valider.</p>
+        <div class="upsell-list" data-upsell-list></div>
+        <button class="ghost-btn full" type="button" data-upsell-continue data-i18n="upsell_continue">Continuer sans dessert</button>
+      </div>
+    </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=promo-1"></script>
+  <script src="i18n.js?v=upsell-1"></script>
   <script src="stock.js?v=promo-fix1"></script>
-  <script src="script.js?v=promo-2"></script>
+  <script src="script.js?v=upsell-1"></script>
   </body>
 </html>

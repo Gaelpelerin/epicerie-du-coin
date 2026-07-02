@@ -689,6 +689,8 @@ const productModalContent = document.querySelector("[data-product-modal-content]
 const scrim = document.querySelector(".scrim");
 const cartToast = document.querySelector("[data-cart-toast]");
 const checkoutButton = document.querySelector("[data-checkout]");
+const upsellModal = document.querySelector("[data-upsell-modal]");
+const upsellList = document.querySelector("[data-upsell-list]");
 const cart = new Map();
 const featuredState = {
   quantity: 1,
@@ -697,6 +699,12 @@ const featuredState = {
 };
 let checkoutFormVisible = false;
 let activePromos = [];
+
+// Vente incitative : au 1er clic sur "Finaliser", on propose des douceurs si
+// le panier n'en contient pas déjà. Affiché une seule fois par panier.
+const UPSELL_CATEGORY = "douceurs";
+const UPSELL_MAX = 4;
+let upsellShown = false;
 
 function getPromoForProduct(productId) {
   return activePromos.find((p) => p.product_id === productId) || null;
@@ -1206,6 +1214,7 @@ function addToCart(productId, quantity = 1) {
     requestedQuantity > stock ? t("msg_stock_limited", { n: stock, name: pName(product) }) : "";
   renderCart();
   refreshAddButtons();
+  if (!upsellModal.classList.contains("hidden")) renderUpsellList();
   if (productModal.classList.contains("open")) closeProductModal();
   showCartToast(t("toast_added", { name: pName(product) }));
 }
@@ -1221,8 +1230,62 @@ function updateQuantity(productId, delta) {
     cart.set(productId, { ...item, quantity: Math.min(nextQuantity, getProductStock(productId)) });
   }
 
+  if (!cart.size) upsellShown = false;
   renderCart();
   refreshAddButtons();
+}
+
+function cartHasCategory(category) {
+  return [...cart.values()].some((item) => item.product.category === category);
+}
+
+function getUpsellSuggestions() {
+  return products
+    .filter(
+      (product) =>
+        product.category === UPSELL_CATEGORY && !cart.has(product.id) && isPurchasable(product)
+    )
+    .slice(0, UPSELL_MAX);
+}
+
+function shouldShowUpsell() {
+  return (
+    !upsellShown &&
+    cart.size > 0 &&
+    !cartHasCategory(UPSELL_CATEGORY) &&
+    getUpsellSuggestions().length > 0
+  );
+}
+
+function renderUpsellList() {
+  const suggestions = getUpsellSuggestions();
+  if (!suggestions.length) {
+    upsellList.innerHTML = "";
+    return;
+  }
+  upsellList.innerHTML = suggestions
+    .map(
+      (product) => `
+      <div class="upsell-item">
+        <img class="upsell-item-photo" src="${getProductCardImage(product)}" alt="" loading="lazy" onerror="this.style.display='none'" />
+        <h3>${pName(product)}</h3>
+        <div class="upsell-item-foot">
+          ${renderPromoPrice(product)}
+          <button class="upsell-add-btn" type="button" data-add="${product.id}">${t("upsell_add")}</button>
+        </div>
+      </div>`
+    )
+    .join("");
+}
+
+function openUpsell() {
+  upsellShown = true;
+  renderUpsellList();
+  upsellModal.classList.remove("hidden");
+}
+
+function closeUpsell() {
+  upsellModal.classList.add("hidden");
 }
 
 function setCheckoutFormVisible(isVisible) {
@@ -1241,6 +1304,10 @@ async function checkoutCart() {
   }
 
   if (!checkoutFormVisible) {
+    if (shouldShowUpsell()) {
+      openUpsell();
+      return;
+    }
     setCheckoutFormVisible(true);
     return;
   }
@@ -1575,6 +1642,19 @@ document.querySelectorAll("[data-cart-open]").forEach((button) => button.addEven
 document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEventListener("click", closeCart));
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
 document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
+
+document.querySelectorAll("[data-upsell-continue], [data-upsell-skip]").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    closeUpsell();
+    setCheckoutFormVisible(true);
+  })
+);
+upsellModal.addEventListener("click", (event) => {
+  if (event.target === upsellModal) {
+    closeUpsell();
+    setCheckoutFormVisible(true);
+  }
+});
 
 document.querySelectorAll('[href="#packs"]').forEach((btn) => {
   btn.addEventListener("click", (e) => {
