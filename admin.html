@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=promo-ui2" />
+    <link rel="stylesheet" href="styles.css?v=upsell-cfg1" />
   </head>
   <body class="admin-page">
     <main class="admin-shell">
@@ -41,6 +41,7 @@
           <button type="button" data-admin-view="packs">Packs</button>
           <button type="button" data-admin-view="closures">Fermetures</button>
           <button type="button" data-admin-view="promos">Promos</button>
+          <button type="button" data-admin-view="upsell">Suggestions dessert</button>
           <button type="button" data-admin-view="sales">Suivi CA</button>
           <button type="button" data-admin-view="history">Historique de ventes</button>
           <button class="hidden" type="button" data-sales-filter-open>Filtrer</button>
@@ -98,6 +99,10 @@
           <div class="promos-manager" data-promos-manager></div>
         </div>
 
+        <div class="hidden" data-admin-panel="upsell">
+          <div class="upsell-manager" data-upsell-manager></div>
+        </div>
+
         <div class="hidden" data-admin-panel="sales">
           <div class="qr-stats" data-qr-stats></div>
           <div class="sales-dashboard" data-sales-dashboard></div>
@@ -128,7 +133,7 @@
       </div>
     </div>
 
-    <script src="stock.js?v=promo-fix1"></script>
-    <script src="admin.js?v=promo-ui1"></script>
+    <script src="stock.js?v=upsell-cfg1"></script>
+    <script src="admin.js?v=upsell-cfg1"></script>
   </body>
 </html>

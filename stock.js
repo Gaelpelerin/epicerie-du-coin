@@ -493,6 +493,28 @@ async function adminDeletePromo(pin, promoId) {
   return response.json();
 }
 
+// Upsell : liste publique des produits proposés dans la pop-up dessert (pas de PIN).
+async function listUpsell() {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_upsell`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({}),
+  });
+  if (!response.ok) throw new Error("Impossible de charger les suggestions upsell.");
+  return response.json();
+}
+
+// Upsell : remplace la sélection admin (PIN requis). productIds = tableau d'ids.
+async function adminSetUpsell(pin, productIds) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_set_upsell`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ p_pin: pin, p_product_ids: productIds }),
+  });
+  if (!response.ok) { const m = await response.text(); throw new Error(m || "Impossible d'enregistrer les suggestions."); }
+  return response.json();
+}
+
 // Fermetures : créneaux à venir où la livraison est bloquée (boutique, pas de PIN).
 async function listClosures() {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_closures`, {
@@ -851,6 +873,8 @@ window.listPromos = listPromos;
 window.adminListPromos = adminListPromos;
 window.adminCreatePromo = adminCreatePromo;
 window.adminDeletePromo = adminDeletePromo;
+window.listUpsell = listUpsell;
+window.adminSetUpsell = adminSetUpsell;
 window.listClosures = listClosures;
 window.adminListClosures = adminListClosures;
 window.adminAddClosure = adminAddClosure;

@@ -956,6 +956,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     if (button.dataset.adminView === "packs") openPackPanel();
     if (button.dataset.adminView === "closures") openClosuresPanel();
     if (button.dataset.adminView === "promos") openPromosPanel();
+    if (button.dataset.adminView === "upsell") openUpsellPanel();
   });
 });
 
@@ -1952,6 +1953,122 @@ if (promosManager) {
   });
   promosManager.addEventListener("change", (event) => {
     if (event.target.matches('[data-promo="product_id"]')) updatePromoPreview();
+  });
+}
+
+// ── Suggestions dessert (upsell configurable) ────────────────────────────────
+const upsellManager = document.querySelector("[data-upsell-manager]");
+let upsellSelection = new Set();
+let upsellMsg = "";
+let upsellMsgError = false;
+
+function notifyUpsell(text, isError = false) {
+  upsellMsg = text || "";
+  upsellMsgError = Boolean(isError);
+  const el = upsellManager && upsellManager.querySelector("[data-upsell-msg]");
+  if (el) {
+    el.textContent = upsellMsg;
+    el.classList.toggle("is-error", upsellMsgError);
+  }
+}
+
+function updateUpsellCount() {
+  const el = upsellManager && upsellManager.querySelector("[data-upsell-count]");
+  if (el) {
+    el.textContent = upsellSelection.size
+      ? `${upsellSelection.size} produit(s) sélectionné(s)`
+      : "Aucun produit → mode automatique (douceurs)";
+  }
+}
+
+function renderUpsellPanel() {
+  if (!upsellManager) return;
+  const groups = [];
+  const seen = new Map();
+  productsForAdmin
+    .filter((p) => p[3] !== "pack")
+    .forEach((p) => {
+      let group = seen.get(p[3]);
+      if (!group) { group = { cat: p[3], rows: [] }; seen.set(p[3], group); groups.push(group); }
+      group.rows.push(p);
+    });
+
+  const groupsHtml = groups
+    .map(
+      (group) => `
+      <div class="upsell-cfg-group">
+        <h3>${packEscape(group.cat)}</h3>
+        <div class="upsell-cfg-items">
+          ${group.rows
+            .map((p) => {
+              const on = upsellSelection.has(p[0]);
+              return `
+              <label class="upsell-cfg-item${on ? " is-on" : ""}">
+                <input type="checkbox" data-upsell-check value="${p[0]}" ${on ? "checked" : ""} />
+                <span class="upsell-cfg-name">${packEscape(p[1])}</span>
+                <span class="upsell-cfg-price">${Number(p[2]).toFixed(2)} €</span>
+              </label>`;
+            })
+            .join("")}
+        </div>
+      </div>`
+    )
+    .join("");
+
+  upsellManager.innerHTML = `
+    <p class="promo-msg${upsellMsgError ? " is-error" : ""}" data-upsell-msg>${packEscape(upsellMsg)}</p>
+    <section class="promo-add">
+      <h2>Suggestions de la pop-up dessert</h2>
+      <p class="promo-hint">Coche les produits proposés dans la pop-up « Envie d'un dessert ? » (avant la validation du panier). <strong>Aucune coche = mode automatique</strong> : les douceurs en stock. Le client voit au maximum 4 produits, uniquement ceux en stock et pas déjà dans son panier.</p>
+      <div class="upsell-cfg-list">${groupsHtml}</div>
+      <div class="promo-actions">
+        <span class="upsell-cfg-count" data-upsell-count></span>
+        <button type="button" class="primary-btn" data-upsell-save>Enregistrer les suggestions</button>
+      </div>
+    </section>`;
+  updateUpsellCount();
+}
+
+async function openUpsellPanel() {
+  try {
+    const list = await listUpsell();
+    upsellSelection = new Set(Array.isArray(list) ? list : []);
+    upsellMsg = "";
+    upsellMsgError = false;
+  } catch (error) {
+    console.error(error);
+    upsellSelection = new Set();
+    upsellMsg = "Impossible de charger les suggestions.";
+    upsellMsgError = true;
+  }
+  renderUpsellPanel();
+}
+
+async function saveUpsell() {
+  try {
+    await adminSetUpsell(adminSessionPin, [...upsellSelection]);
+    upsellMsg = upsellSelection.size
+      ? "Suggestions enregistrées. Elles s'affichent dans la pop-up dès maintenant."
+      : "Sélection vidée : la pop-up repasse en mode automatique (douceurs).";
+    upsellMsgError = false;
+    renderUpsellPanel();
+  } catch (error) {
+    console.error(error);
+    notifyUpsell("Impossible d'enregistrer les suggestions.", true);
+  }
+}
+
+if (upsellManager) {
+  upsellManager.addEventListener("change", (event) => {
+    const check = event.target.closest("[data-upsell-check]");
+    if (!check) return;
+    if (check.checked) upsellSelection.add(check.value);
+    else upsellSelection.delete(check.value);
+    check.closest(".upsell-cfg-item")?.classList.toggle("is-on", check.checked);
+    updateUpsellCount();
+  });
+  upsellManager.addEventListener("click", (event) => {
+    if (event.target.closest("[data-upsell-save]")) saveUpsell();
   });
 }
 

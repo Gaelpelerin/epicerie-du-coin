@@ -705,6 +705,8 @@ let activePromos = [];
 const UPSELL_CATEGORY = "douceurs";
 const UPSELL_MAX = 4;
 let upsellShown = false;
+// Produits configurés en back-office. Vide = repli auto sur la catégorie douceurs.
+let upsellConfig = [];
 
 function getPromoForProduct(productId) {
   return activePromos.find((p) => p.product_id === productId) || null;
@@ -1240,21 +1242,20 @@ function cartHasCategory(category) {
 }
 
 function getUpsellSuggestions() {
-  return products
-    .filter(
-      (product) =>
-        product.category === UPSELL_CATEGORY && !cart.has(product.id) && isPurchasable(product)
-    )
+  // Config back-office prioritaire (ordre conservé) ; sinon repli catégorie douceurs.
+  const base = upsellConfig.length
+    ? upsellConfig.map((id) => products.find((product) => product.id === id)).filter(Boolean)
+    : products.filter((product) => product.category === UPSELL_CATEGORY);
+  return base
+    .filter((product) => !cart.has(product.id) && isPurchasable(product))
     .slice(0, UPSELL_MAX);
 }
 
 function shouldShowUpsell() {
-  return (
-    !upsellShown &&
-    cart.size > 0 &&
-    !cartHasCategory(UPSELL_CATEGORY) &&
-    getUpsellSuggestions().length > 0
-  );
+  if (upsellShown || cart.size === 0) return false;
+  // En mode auto (pas de config), on n'insiste pas si le panier a déjà une douceur.
+  if (!upsellConfig.length && cartHasCategory(UPSELL_CATEGORY)) return false;
+  return getUpsellSuggestions().length > 0;
 }
 
 function renderUpsellList() {
@@ -1792,6 +1793,16 @@ async function loadPromos() {
   renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
 }
 
+async function loadUpsell() {
+  if (typeof listUpsell !== "function") return;
+  try {
+    const list = await listUpsell();
+    upsellConfig = Array.isArray(list) ? list : [];
+  } catch {
+    upsellConfig = [];
+  }
+}
+
 renderProducts();
 renderCart();
 setupDeliveryDateInput();
@@ -1800,5 +1811,6 @@ setupDeliveryDateInput();
 refreshStockThenShop().then(loadCustomPacks);
 loadDeliveryClosures();
 loadPromos();
+loadUpsell();
 trackVisit();
 restoreCartIfPaymentCancelled();

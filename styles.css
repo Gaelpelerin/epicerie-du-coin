@@ -3655,6 +3655,70 @@ main {
   margin-top: 16px;
 }
 
+/* Suggestions dessert (upsell configurable) */
+.upsell-cfg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.upsell-cfg-group h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--copper-light);
+}
+
+.upsell-cfg-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.upsell-cfg-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: #07110f;
+  color: var(--cream);
+  cursor: pointer;
+}
+
+.upsell-cfg-item.is-on {
+  border-color: var(--line);
+  background: rgba(215, 122, 34, 0.12);
+}
+
+.upsell-cfg-item input {
+  accent-color: var(--copper);
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.upsell-cfg-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.upsell-cfg-price {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.upsell-cfg-count {
+  margin-right: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .promo-rows {
   display: flex;
   flex-direction: column;
