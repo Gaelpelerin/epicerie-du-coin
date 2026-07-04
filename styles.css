@@ -839,7 +839,7 @@ main {
    (produit en rupture → on peut masquer), la promo est EN STOCK : le client
    doit voir la photo, la description, les allergènes et le prix. On n'obstrue
    donc PAS la carte — on override le top:36%/width hérités de .product-ribbon. */
-.promo-ribbon {
+.product-card .promo-ribbon {
   position: absolute;
   z-index: 5;
   top: 10px;
