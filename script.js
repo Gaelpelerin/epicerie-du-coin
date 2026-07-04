@@ -863,7 +863,13 @@ function renderPromoSection() {
 }
 
 function renderProducts(filter = "all") {
-  const visibleProducts = filter === "all" ? products : products.filter((product) => product.category === filter);
+  // Sur la vue « Tout », les produits en promo (en stock) sont déjà mis en avant
+  // dans « Offres du moment » → on les retire du catalogue principal pour éviter
+  // le doublon. Ils réapparaissent normalement quand on filtre par catégorie.
+  const visibleProducts =
+    filter === "all"
+      ? products.filter((product) => !(getPromoForProduct(product.id) && getProductStock(product.id) > 0))
+      : products.filter((product) => product.category === filter);
 
   grid.innerHTML = `
     ${filter === "all" ? renderPromoSection() : ""}
