@@ -84,6 +84,7 @@ const products = [
   },
   {
     id: "quiche-chevre-tomate",
+    images: ["assets/quiche-chevre-tomate.jpeg?v=1"],
     name: "Quiche chèvre tomate",
     category: "quiches",
     description: "145 g - recette végétarienne chèvre et tomate.",
