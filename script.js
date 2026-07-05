@@ -35,6 +35,7 @@ const products = [
   },
   {
     id: "quiche-poulet",
+    images: ["assets/quiche-poulet.jpeg?v=1"],
     name: "Quiche poulet",
     category: "quiches",
     description: "145 g - quiche individuelle au poulet.",
@@ -176,16 +177,6 @@ const products = [
     price: 8.9,
     icon: "🍕",
     allergens: ["Gluten", "Lait", "Poisson"],
-  },
-  {
-    id: "pizza-poulet",
-    name: "Pizza poulet",
-    images: ["assets/pizza-poulet.jpeg?v=1"],
-    category: "pizzas",
-    description: "450 g - pizza au poulet.",
-    price: 8.9,
-    icon: "🍕",
-    allergens: ["Gluten", "Lait"],
   },
   {
     id: "pizza-vegetarienne",
