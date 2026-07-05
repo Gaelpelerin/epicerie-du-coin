@@ -15,6 +15,7 @@ const products = [
   },
   {
     id: "quiche-saumon",
+    images: ["assets/quiche-saumon.jpeg?v=1"],
     name: "Quiche saumon & brocoli",
     category: "quiches",
     description: "145 g - une recette complète, douce et savoureuse.",
@@ -24,6 +25,7 @@ const products = [
   },
   {
     id: "quiche-epinards",
+    images: ["assets/quiche-epinards.jpeg?v=1"],
     name: "Quiche épinards, pignons de pin",
     category: "quiches",
     description: "145 g - recette végétarienne aux notes de fruits secs.",
@@ -42,6 +44,7 @@ const products = [
   },
   {
     id: "quiche-dinde-halal",
+    images: ["assets/quiche-dinde-halal.jpeg?v=1"],
     name: "Quiche dinde halal",
     category: "quiches",
     description: "145 g - quiche individuelle à la dinde halal.",
@@ -51,6 +54,7 @@ const products = [
   },
   {
     id: "quiche-poireaux",
+    images: ["assets/quiche-poireaux.jpeg?v=1"],
     name: "Quiche poireaux",
     category: "quiches",
     description: "145 g - recette végétarienne aux poireaux.",
@@ -60,6 +64,7 @@ const products = [
   },
   {
     id: "quiche-mediterraneenne",
+    images: ["assets/quiche-mediterraneenne.jpeg?v=1"],
     name: "Quiche méditerranéenne",
     category: "quiches",
     description: "145 g - recette végétarienne aux saveurs du soleil.",
@@ -106,6 +111,7 @@ const products = [
   },
   {
     id: "bretzel-gratine-lard",
+    images: ["assets/bretzel-gratine-lard.jpeg?v=1"],
     name: "Bretzel gratiné lard & emmental",
     category: "snacking",
     description: "130 g - gratiné au lard et emmental.",
@@ -115,6 +121,7 @@ const products = [
   },
   {
     id: "pizza-napolitaine",
+    images: ["assets/pizza-napolitaine.jpeg?v=1"],
     name: "Pizza napolitaine",
     category: "pizzas",
     description: "450 g - pizza généreuse prête à savourer.",
@@ -180,6 +187,7 @@ const products = [
   },
   {
     id: "pizza-4-fromages",
+    images: ["assets/pizza-4-fromages.jpeg?v=1"],
     name: "Pizza 4 fromages",
     category: "pizzas",
     description: "450 g - recette végétarienne aux fromages.",
@@ -189,6 +197,7 @@ const products = [
   },
   {
     id: "pizza-pincee-margherita",
+    images: ["assets/pizza-pincee-margherita.jpeg?v=1"],
     name: "Pizza pincée margherita",
     category: "pizza-pincees",
     description: "250 g - sandwich pizza végétarien.",
@@ -226,6 +235,7 @@ const products = [
   },
   {
     id: "panwich-mozzarella-pesto",
+    images: ["assets/panwich-mozzarella-pesto.jpeg?v=1"],
     name: "Panwich mozzarella tomate pesto",
     category: "panwichs",
     description: "220 g - panwich végétarien mozzarella, tomate et pesto.",
@@ -244,6 +254,7 @@ const products = [
   },
   {
     id: "donut-speculoos",
+    images: ["assets/donut-speculoos.jpeg?v=1"],
     name: "Donut Spéculoos",
     category: "douceurs",
     description: "90 g - douceur individuelle.",
@@ -253,6 +264,7 @@ const products = [
   },
   {
     id: "donut-lion",
+    images: ["assets/donut-lion.jpeg?v=1"],
     name: "Donut Lion",
     category: "douceurs",
     description: "90 g - douceur individuelle.",
@@ -281,6 +293,7 @@ const products = [
   },
   {
     id: "carrot-cake",
+    images: ["assets/carrot-cake.jpeg?v=1"],
     name: "Carrot cake",
     category: "douceurs",
     description: "500 g - pour 6 à 8 personnes.",
@@ -290,6 +303,7 @@ const products = [
   },
   {
     id: "cake-citron",
+    images: ["assets/cake-citron.jpeg?v=1"],
     name: "Cake citron",
     category: "douceurs",
     description: "450 g - pour 4 à 5 personnes.",
@@ -308,6 +322,7 @@ const products = [
   },
   {
     id: "cake-pain-epices",
+    images: ["assets/cake-pain-epices.jpeg?v=1"],
     name: "Cake pain d'épices",
     category: "douceurs",
     description: "450 g - pour 6 à 8 personnes.",
@@ -317,6 +332,7 @@ const products = [
   },
   {
     id: "kouglof-sucre",
+    images: ["assets/kouglof-sucre.jpeg?v=1"],
     name: "Kouglof sucré",
     category: "douceurs",
     description: "400 g - pour 4 à 5 personnes.",
