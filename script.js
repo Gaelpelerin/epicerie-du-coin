@@ -125,6 +125,7 @@ const products = [
   {
     id: "pizza-jambon-fromage",
     name: "Pizza jambon fromage",
+    images: ["assets/pizza-jambon-fromage.jpeg?v=1"],
     category: "pizzas",
     description: "450 g - jambon fromage, simple et efficace.",
     price: 8.9,
@@ -159,17 +160,9 @@ const products = [
     allergens: ["Gluten", "Lait", "Poisson"],
   },
   {
-    id: "pizza-poulet-curry",
-    name: "Pizza poulet curry",
-    category: "pizzas",
-    description: "450 g - poulet curry.",
-    price: 8.9,
-    icon: "🍕",
-    allergens: ["Gluten", "Lait", "Moutarde"],
-  },
-  {
     id: "pizza-poulet",
     name: "Pizza poulet",
+    images: ["assets/pizza-poulet.jpeg?v=1"],
     category: "pizzas",
     description: "450 g - pizza au poulet.",
     price: 8.9,
@@ -206,6 +199,7 @@ const products = [
   {
     id: "pizza-pincee-diavola",
     name: "Pizza pincée diavola",
+    images: ["assets/pizza-pincee-diavola.jpeg?v=1"],
     category: "pizza-pincees",
     description: "250 g - sandwich pizza au salami.",
     price: 7.9,
