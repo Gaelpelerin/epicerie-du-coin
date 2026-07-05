@@ -315,6 +315,7 @@ const products = [
   },
   {
     id: "cake-marbre",
+    images: ["assets/cake-marbre.jpeg?v=1"],
     name: "Cake marbré",
     category: "douceurs",
     description: "450 g - pour 6 à 8 personnes.",
