@@ -93,6 +93,16 @@ const products = [
     allergens: ["Gluten", "Œufs", "Lait"],
   },
   {
+    id: "quiche-tartiflette",
+    images: ["assets/quiche-tartiflette.jpeg?v=1"],
+    name: "Quiche tartiflette",
+    category: "quiches",
+    description: "145 g - pommes de terre, lardons et fromage fondant.",
+    price: 5.9,
+    icon: "🥧",
+    allergens: ["Gluten", "Œufs", "Lait"],
+  },
+  {
     id: "croque",
     name: "Croque-monsieur premium",
     category: "snacking",
