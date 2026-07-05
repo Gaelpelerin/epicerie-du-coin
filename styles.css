@@ -772,7 +772,7 @@ main {
   padding: 0;
   object-fit: cover !important;
   object-position: center;
-  transform: scale(1.03) !important;
+  transform: none !important;
   filter: none;
 }
 
