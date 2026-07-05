@@ -70,7 +70,7 @@ const products = [
   {
     id: "quiche-3-fromages",
     name: "Quiche 3 fromages",
-    images: ["products/quiche-3-fromages.jpeg"],
+    images: ["assets/quiche-3-fromages.jpeg"],
     category: "quiches",
     description: "145 g - recette végétarienne fondante aux fromages.",
     price: 5.9,
@@ -269,7 +269,7 @@ const products = [
   {
     id: "brioche-babka",
     name: "Brioche Babka",
-    images: ["products/brioche-babka.jpeg"],
+    images: ["assets/brioche-babka.jpeg"],
     category: "douceurs",
     description: "450 g - pour 4 à 5 personnes.",
     price: 14.9,
