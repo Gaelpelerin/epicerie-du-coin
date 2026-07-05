@@ -282,12 +282,20 @@
       // Le paiement a réussi : on nettoie le panier conservé pour une annulation.
       localStorage.removeItem("epicerie-pending-cart");
 
+      // Détail produits de la commande (pour la correspondance catalogue Meta)
+      const orderContents = order && Array.isArray(order.contents) ? order.contents : [];
+      const orderContentIds = orderContents.map((c) => c.id);
+      const orderNumItems = orderContents.reduce((sum, c) => sum + (c.quantity || 0), 0);
+
       // Meta Pixel — événement Purchase (déduplication CAPI via event_id = référence commande)
       if (typeof fbq === "function" && order && typeof order.total === "number" && reference) {
         fbq("track", "Purchase", {
           value: order.total,
           currency: "EUR",
           content_type: "product",
+          content_ids: orderContentIds,
+          contents: orderContents,
+          num_items: orderNumItems,
         }, { eventID: reference });
       }
 
@@ -305,9 +313,13 @@
             Authorization: "Bearer sb_publishable_IeCEj5v9LP9GQ-3DZVw_sg__IBZtvxg",
           },
           body: JSON.stringify({
+            event_name: "Purchase",
             event_id: reference,
             value: order.total,
             currency: "EUR",
+            content_ids: orderContentIds,
+            contents: orderContents,
+            num_items: orderNumItems,
             event_source_url: window.location.href,
             client_user_agent: navigator.userAgent,
             fbp: getCookie("_fbp"),

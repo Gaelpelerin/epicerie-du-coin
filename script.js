@@ -70,6 +70,7 @@ const products = [
   {
     id: "quiche-3-fromages",
     name: "Quiche 3 fromages",
+    images: ["products/quiche-3-fromages.jpeg"],
     category: "quiches",
     description: "145 g - recette végétarienne fondante aux fromages.",
     price: 5.9,
@@ -268,6 +269,7 @@ const products = [
   {
     id: "brioche-babka",
     name: "Brioche Babka",
+    images: ["products/brioche-babka.jpeg"],
     category: "douceurs",
     description: "450 g - pour 4 à 5 personnes.",
     price: 14.9,
@@ -1128,6 +1130,40 @@ function renderProductModal(product) {
   `;
 }
 
+// ── Meta Pixel + Conversions API (déduplication via event_id partagé) ──
+const META_CAPI_URL = "https://uqlqgfmlvyejenxbxjnx.supabase.co/functions/v1/meta-capi";
+const META_CAPI_KEY = "sb_publishable_IeCEj5v9LP9GQ-3DZVw_sg__IBZtvxg";
+
+function metaCookie(name) {
+  const m = document.cookie.match("(?:^|;)\\s*" + name + "=([^;]*)");
+  return m ? decodeURIComponent(m[1]) : "";
+}
+
+function metaTrack(eventName, custom = {}) {
+  const eventId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  if (typeof fbq === "function") {
+    fbq("track", eventName, custom, { eventID: eventId });
+  }
+  // Même event_id côté serveur → Meta déduplique navigateur + CAPI.
+  fetch(META_CAPI_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: META_CAPI_KEY,
+      Authorization: `Bearer ${META_CAPI_KEY}`,
+    },
+    body: JSON.stringify({
+      event_name: eventName,
+      event_id: eventId,
+      event_source_url: window.location.href,
+      client_user_agent: navigator.userAgent,
+      fbp: metaCookie("_fbp"),
+      fbc: metaCookie("_fbc"),
+      ...custom,
+    }),
+  }).catch(() => {});
+}
+
 function openProductModal(productId) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
@@ -1138,6 +1174,14 @@ function openProductModal(productId) {
   productModalContent.innerHTML = renderProductModal(product);
   productModal.classList.add("open");
   scrim.classList.add("open");
+
+  metaTrack("ViewContent", {
+    value: getEffectivePrice(product),
+    currency: "EUR",
+    content_type: "product",
+    content_ids: [product.id],
+    content_name: product.name,
+  });
 }
 
 function closeProductModal() {
@@ -1218,6 +1262,13 @@ function addToCart(productId, quantity = 1) {
 
   cart.set(productId, { product, quantity: allowedQuantity });
   recordProductAdd(product, quantity);
+  metaTrack("AddToCart", {
+    value: getEffectivePrice(product) * quantity,
+    currency: "EUR",
+    content_type: "product",
+    content_ids: [productId],
+    contents: [{ id: productId, quantity }],
+  });
   cartMessage.textContent =
     requestedQuantity > stock ? t("msg_stock_limited", { n: stock, name: pName(product) }) : "";
   renderCart();
@@ -1378,7 +1429,13 @@ async function checkoutCart() {
   try {
     localStorage.setItem(
       "epicerie-last-order",
-      JSON.stringify({ reference: orderReference, total: totalPrice, lines, customer })
+      JSON.stringify({
+        reference: orderReference,
+        total: totalPrice,
+        lines,
+        customer,
+        contents: items.map((item) => ({ id: item.product.id, quantity: item.quantity })),
+      })
     );
     localStorage.setItem(
       "epicerie-pending-cart",
@@ -1387,6 +1444,15 @@ async function checkoutCart() {
   } catch (error) {
     console.warn(error);
   }
+
+  metaTrack("InitiateCheckout", {
+    value: totalPrice,
+    currency: "EUR",
+    content_type: "product",
+    content_ids: items.map((item) => item.product.id),
+    contents: items.map((item) => ({ id: item.product.id, quantity: item.quantity })),
+    num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+  });
 
   cartMessage.textContent = t("msg_redirect_payment");
 
