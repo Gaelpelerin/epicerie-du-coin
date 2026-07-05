@@ -23,6 +23,7 @@ const stockDefaults = {
   "quiche-mediterraneenne": 5,
   "quiche-3-fromages": 5,
   "quiche-chevre-tomate": 5,
+  "quiche-tartiflette": 5,
   croque: 7,
   "bretzel-nature": 12,
   "bretzel-gratine-lard": 8,

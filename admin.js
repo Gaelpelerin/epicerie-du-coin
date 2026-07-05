@@ -10,6 +10,7 @@ const productsForAdmin = [
   ["quiche-mediterraneenne", "Quiche méditerranéenne", 5.9, "quiches", false],
   ["quiche-3-fromages", "Quiche 3 fromages", 5.9, "quiches", false],
   ["quiche-chevre-tomate", "Quiche chèvre tomate", 5.9, "quiches", false],
+  ["quiche-tartiflette", "Quiche tartiflette", 5.9, "quiches", false],
   ["croque", "Croque-monsieur premium", 8.9, "snacking", false],
   ["bretzel-nature", "Bretzel nature", 3.9, "snacking", false],
   ["bretzel-gratine-lard", "Bretzel gratiné lard & emmental", 5.9, "snacking", false],
