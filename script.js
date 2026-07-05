@@ -269,7 +269,7 @@ const products = [
   {
     id: "brioche-babka",
     name: "Brioche Babka",
-    images: ["assets/brioche-babka.jpeg?v=2"],
+    images: ["assets/brioche-babka.jpeg?v=3"],
     category: "douceurs",
     description: "450 g - pour 4 à 5 personnes.",
     price: 14.9,
