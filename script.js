@@ -219,6 +219,7 @@ const products = [
   },
   {
     id: "pizza-pincee-jambon",
+    images: ["assets/pizza-pincee-jambon.jpeg?v=1"],
     name: "Pizza pincée jambon fromage",
     category: "pizza-pincees",
     description: "250 g - sandwich pizza jambon fromage.",
@@ -286,6 +287,7 @@ const products = [
   },
   {
     id: "cake-marbre-rocher",
+    images: ["assets/cake-marbre-rocher.jpeg?v=1"],
     name: "Cake marbré rocher",
     category: "douceurs",
     description: "600 g - pour 6 à 8 personnes.",
