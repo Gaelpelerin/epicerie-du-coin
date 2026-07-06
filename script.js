@@ -105,6 +105,7 @@ const products = [
   },
   {
     id: "croque",
+    images: ["assets/croque.jpeg?v=1"],
     name: "Croque-monsieur premium",
     category: "snacking",
     description: "190 g - version végétarienne, pratique et gourmande.",
@@ -114,6 +115,7 @@ const products = [
   },
   {
     id: "bretzel-nature",
+    images: ["assets/bretzel-nature.jpeg?v=1"],
     name: "Bretzel nature",
     category: "snacking",
     description: "110 g - classique salé à grignoter.",
