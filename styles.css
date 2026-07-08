@@ -4084,3 +4084,194 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Entrées d'accueil : 3 portes (menu / pack / à la carte) ── */
+.doors {
+  margin: 40px 0 8px;
+}
+
+.doors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.door {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px 22px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: linear-gradient(150deg, var(--panel), #050c0b);
+}
+
+.door h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--cream);
+}
+
+.door p {
+  margin: 0;
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+
+.door .primary-btn,
+.door .ghost-btn {
+  align-self: flex-start;
+}
+
+.door-menu {
+  border-color: var(--line);
+  background:
+    radial-gradient(circle at 80% 10%, rgba(215, 122, 34, 0.16), transparent 18rem),
+    linear-gradient(150deg, var(--panel-strong), #050c0b);
+}
+
+.door-badge {
+  position: absolute;
+  top: -12px;
+  left: 22px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--copper);
+  color: #1a0f04;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ── Composeur de menu (pop-up centré) ── */
+.menu-composer {
+  position: fixed;
+  z-index: 30;
+  top: 50%;
+  left: 50%;
+  display: none;
+  width: min(720px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 72% 8%, rgba(215, 122, 34, 0.14), transparent 22rem),
+    linear-gradient(135deg, #101c19, #050c0b);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.56);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+}
+
+.menu-composer.open {
+  display: block;
+}
+
+.menu-composer-body {
+  padding: 30px 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.menu-composer-sub {
+  margin: -8px 0 0;
+  color: var(--muted);
+}
+
+.menu-step h3 {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+  color: var(--cream);
+}
+
+.menu-picker,
+.menu-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.menu-pill,
+.menu-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: rgba(255, 243, 223, 0.04);
+  color: var(--cream);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.menu-pill span,
+.menu-opt-price {
+  color: var(--copper-light);
+  font-weight: 700;
+}
+
+.menu-pill:hover,
+.menu-opt:hover {
+  border-color: var(--line);
+}
+
+.menu-pill.active,
+.menu-opt.selected {
+  border-color: var(--copper);
+  background: rgba(215, 122, 34, 0.18);
+}
+
+.menu-summary {
+  padding: 16px 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 243, 223, 0.04);
+}
+
+.menu-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.menu-summary-row strong {
+  font-size: 1.35rem;
+  color: var(--copper-light);
+}
+
+.menu-summary-sep {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.menu-summary-sep span[data-menu-separate] {
+  text-decoration: line-through;
+}
+
+.menu-save {
+  margin: 10px 0 0;
+  color: var(--copper-light);
+  font-weight: 700;
+}
+
+/* Ligne « Menu » dans le panier */
+.cart-line-menu {
+  border-left: 3px solid var(--copper);
+  padding-left: 12px;
+}
+
+.cart-line-menu strong {
+  color: var(--copper-light);
+}
+
+@media (max-width: 860px) {
+  .doors-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -214,9 +214,27 @@ function createRemoteManualOrder(cartItems, customer, reference) {
   return createRemoteOrderRequest(cartItems, customer, reference, "create_manual_order");
 }
 
-async function createCheckoutSession(cartItems, customer, reference) {
+async function createCheckoutSession(cartItems, customer, reference, menuItems = []) {
   logProductEvent("checkout", null, 1);
 
+  // Articles à la carte : prix réellement facturé = prix promo si une promo est
+  // active, sinon prix catalogue (aligné sur le total du panier).
+  const productItems = cartItems.map((item) => {
+    const price = getEffectivePrice(item.product);
+    return {
+      product_id: item.product.id,
+      name: item.product.name,
+      category: item.product.category,
+      price,
+      quantity: item.quantity,
+      total: price * item.quantity,
+      alcohol: Boolean(item.product.alcohol),
+    };
+  });
+
+  // Articles issus des menus : déjà mis en forme (prix menu réparti, étiquette
+  // menu_group/menu_label). On ne repasse PAS par getEffectivePrice (ce sont de
+  // vrais product_id mais leur prix est celui alloué au menu, pas le prix promo).
   const payload = {
     reference,
     customer: {
@@ -229,20 +247,7 @@ async function createCheckoutSession(cartItems, customer, reference) {
       delivery_at: customer.deliveryAt || "",
       notes: customer.notes || "",
     },
-    items: cartItems.map((item) => {
-      // Prix réellement facturé = prix promo si une promo est active, sinon
-      // prix catalogue. Aligné sur le total affiché au panier (getEffectivePrice).
-      const price = getEffectivePrice(item.product);
-      return {
-        product_id: item.product.id,
-        name: item.product.name,
-        category: item.product.category,
-        price,
-        quantity: item.quantity,
-        total: price * item.quantity,
-        alcohol: Boolean(item.product.alcohol),
-      };
-    }),
+    items: [...productItems, ...menuItems],
   };
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {

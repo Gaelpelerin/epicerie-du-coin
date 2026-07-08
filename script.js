@@ -1372,8 +1372,9 @@ function setCheckoutFormVisible(isVisible) {
 
 async function checkoutCart() {
   const items = [...cart.values()];
+  const menuItems = expandMenuCheckoutItems();
 
-  if (!items.length) {
+  if (!items.length && !menuCart.length) {
     cartMessage.textContent = t("cart_empty");
     return;
   }
@@ -1433,12 +1434,18 @@ async function checkoutCart() {
     return;
   }
 
-  const totalPrice = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
-  const lines = items.map((item) => {
+  const productTotal = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
+  const totalPrice = productTotal + menuCartTotalPrice();
+  const menuLines = menuCart.map(
+    (line) =>
+      `- ${line.qty} x ${line.label} (${formatPrice(line.price)}) : ${line.plat.name} + ${line.boisson.name} + ${line.donut.name}`
+  );
+  const productLines = items.map((item) => {
     const effPrice = getEffectivePrice(item.product);
     const promoNote = effPrice < item.product.price ? ` [promo ${formatPrice(effPrice)}]` : "";
     return `- ${item.quantity} x ${item.product.name} (${formatPrice(item.product.price)}${promoNote})`;
   });
+  const lines = [...menuLines, ...productLines];
   const orderReference = `EDC-${Date.now().toString().slice(-6)}`;
 
   // Mémorise la commande : la page "Merci" en aura besoin pour le message
@@ -1458,23 +1465,39 @@ async function checkoutCart() {
       "epicerie-pending-cart",
       JSON.stringify(items.map((item) => ({ id: item.product.id, quantity: item.quantity })))
     );
+    localStorage.setItem(
+      "epicerie-pending-menus",
+      JSON.stringify(
+        menuCart.map((line) => ({
+          formulaId: line.formulaId,
+          qty: line.qty,
+          plat: line.plat.id,
+          boisson: line.boisson.id,
+          donut: line.donut.id,
+        }))
+      )
+    );
   } catch (error) {
     console.warn(error);
   }
 
+  const metaContentIds = [...menuItems.map((item) => item.product_id), ...items.map((item) => item.product.id)];
   metaTrack("InitiateCheckout", {
     value: totalPrice,
     currency: "EUR",
     content_type: "product",
-    content_ids: items.map((item) => item.product.id),
-    contents: items.map((item) => ({ id: item.product.id, quantity: item.quantity })),
-    num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+    content_ids: metaContentIds,
+    contents: [
+      ...menuItems.map((item) => ({ id: item.product_id, quantity: item.quantity })),
+      ...items.map((item) => ({ id: item.product.id, quantity: item.quantity })),
+    ],
+    num_items: items.reduce((sum, item) => sum + item.quantity, 0) + menuCartTotalQuantity(),
   });
 
   cartMessage.textContent = t("msg_redirect_payment");
 
   try {
-    const session = await createCheckoutSession(items, customer, orderReference);
+    const session = await createCheckoutSession(items, customer, orderReference, menuItems);
     if (!session?.url) throw new Error("URL de paiement manquante.");
     window.location.href = session.url;
   } catch (error) {
@@ -1603,21 +1626,40 @@ if ("BroadcastChannel" in window) {
 
 function renderCart() {
   const items = [...cart.values()];
-  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0) + menuCartTotalQuantity();
+  const totalPrice =
+    items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0) + menuCartTotalPrice();
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
   cartCount.textContent = totalQuantity;
   cartTotal.textContent = formatPrice(totalPrice);
   alcoholConfirm.classList.toggle("hidden", !hasAlcohol);
 
-  if (!items.length) {
+  if (!items.length && !menuCart.length) {
     cartItems.innerHTML = `<p class="empty-cart">${t("cart_empty")}</p>`;
     setCheckoutFormVisible(false);
     return;
   }
 
-  cartItems.innerHTML = items
+  const menuLinesHtml = menuCart
+    .map(
+      (line) => `
+        <div class="cart-line cart-line-menu">
+          <div>
+            <strong>${line.label}</strong>
+            <span>${formatPrice(line.price)} · ${pName(line.plat)} + ${pName(line.boisson)} + ${pName(line.donut)}</span>
+          </div>
+          <div class="qty-controls">
+            <button type="button" data-menu-qty="${line.uid}" data-menu-delta="-1" aria-label="${t("remove_aria", { name: line.label })}">−</button>
+            <strong>${line.qty}</strong>
+            <button type="button" data-menu-qty="${line.uid}" data-menu-delta="1" aria-label="${t("addone_aria", { name: line.label })}">+</button>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+
+  const productLinesHtml = items
     .map(
       ({ product, quantity }) => `
         <div class="cart-line">
@@ -1634,11 +1676,13 @@ function renderCart() {
       `
     )
     .join("");
+
+  cartItems.innerHTML = menuLinesHtml + productLinesHtml;
 }
 
 function openCart() {
   closeProductModal();
-  if (!cart.size) setCheckoutFormVisible(false);
+  if (!cart.size && !menuCart.length) setCheckoutFormVisible(false);
   cartPanel.classList.add("open");
   scrim.classList.add("open");
 }
@@ -1654,6 +1698,244 @@ tabs.forEach((tab) => {
     tab.classList.add("active");
     renderProducts(tab.dataset.filter);
   });
+});
+
+// ── Menus composables (plat + boisson sans alcool + donut, prix menu fixe) ──
+// Chaque menu part au paiement éclaté en ses 3 vrais produits (stock + CA
+// justes), avec une étiquette menu_group/menu_label que create-checkout
+// regroupe en 1 seule ligne « Menu » sur la facture Stripe.
+const MENU_FORMULAS = [
+  { id: "menu-pizza", label: "Menu Pizza", price: 14.9, platCategory: "pizzas" },
+  { id: "menu-panwich", label: "Menu Panwich", price: 14.9, platCategory: "panwichs" },
+  { id: "menu-croque", label: "Menu Croque", price: 14.9, platIds: ["croque"] },
+  { id: "menu-pincee", label: "Menu Pincée", price: 13.9, platCategory: "pizza-pincees" },
+  { id: "menu-quiche", label: "Menu Quiche", price: 12.9, platCategory: "quiches" },
+];
+const MENU_DRINK_CATEGORIES = ["eaux", "softs", "jus"];
+const MENU_DONUT_IDS = ["donut-speculoos", "donut-lion"];
+
+const menuCart = []; // { uid, formulaId, label, price, qty, plat, boisson, donut }
+let menuComposerState = { formulaId: MENU_FORMULAS[0].id, plat: null, boisson: null, donut: null };
+const menuComposer = document.querySelector("[data-menu-composer]");
+
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+function currentMenuFormula() {
+  return MENU_FORMULAS.find((f) => f.id === menuComposerState.formulaId) || MENU_FORMULAS[0];
+}
+function menuPlats(formula) {
+  if (formula.platIds) return formula.platIds.map((id) => products.find((p) => p.id === id)).filter(Boolean);
+  return products.filter((p) => p.category === formula.platCategory);
+}
+function menuDrinks() {
+  return products.filter((p) => MENU_DRINK_CATEGORIES.includes(p.category) && !p.alcohol);
+}
+function menuDonuts() {
+  return MENU_DONUT_IDS.map((id) => products.find((p) => p.id === id)).filter(Boolean);
+}
+// Répartit le prix menu sur les 3 composants (proportionnel au prix catalogue)
+// pour un stock et un CA justes ; la somme des 3 = prix menu exact.
+function allocateMenuPrices(formula, plat, boisson, donut) {
+  const sep = plat.price + boisson.price + donut.price;
+  const f = sep > 0 ? formula.price / sep : 0;
+  const dr = round2(boisson.price * f);
+  const dn = round2(donut.price * f);
+  const pl = round2(formula.price - dr - dn);
+  return { plat: pl, boisson: dr, donut: dn };
+}
+function menuUnitFor(slot) {
+  return slot === "plat" ? menuPlats(currentMenuFormula()) : slot === "boisson" ? menuDrinks() : menuDonuts();
+}
+
+function renderMenuComposer() {
+  if (!menuComposer) return;
+  const picker = menuComposer.querySelector("[data-menu-picker]");
+  if (picker) {
+    picker.innerHTML = MENU_FORMULAS.map(
+      (f) =>
+        `<button type="button" class="menu-pill ${f.id === menuComposerState.formulaId ? "active" : ""}" data-menu-formula="${f.id}">${f.label} <span>${formatPrice(f.price)}</span></button>`
+    ).join("");
+  }
+  ["plat", "boisson", "donut"].forEach((slot) => renderMenuSlot(slot));
+  updateMenuComposerSummary();
+}
+function renderMenuSlot(slot) {
+  if (!menuComposer) return;
+  const box = menuComposer.querySelector(`[data-menu-slot="${slot}"] .menu-options`);
+  if (!box) return;
+  box.innerHTML = menuUnitFor(slot)
+    .map((p) => {
+      const selected = menuComposerState[slot]?.id === p.id;
+      return `<button type="button" class="menu-opt ${selected ? "selected" : ""}" data-menu-pick="${slot}" data-menu-pick-id="${p.id}">${pName(p)}<span class="menu-opt-price">${formatPrice(p.price)}</span></button>`;
+    })
+    .join("");
+}
+function updateMenuComposerSummary() {
+  if (!menuComposer) return;
+  const f = currentMenuFormula();
+  const s = menuComposerState;
+  const done = s.plat && s.boisson && s.donut;
+  const totalEl = menuComposer.querySelector("[data-menu-total]");
+  const sepEl = menuComposer.querySelector("[data-menu-separate]");
+  const saveEl = menuComposer.querySelector("[data-menu-save]");
+  const addBtn = menuComposer.querySelector("[data-menu-add]");
+  if (totalEl) totalEl.textContent = formatPrice(f.price);
+  if (done) {
+    const sep = s.plat.price + s.boisson.price + s.donut.price;
+    const save = round2(sep - f.price);
+    if (sepEl) sepEl.textContent = formatPrice(sep);
+    if (saveEl) saveEl.textContent = save > 0 ? t("menu_save", { amount: formatPrice(save) }) : "";
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.textContent = t("menu_add_btn", { price: formatPrice(f.price) });
+    }
+  } else {
+    if (sepEl) sepEl.textContent = "—";
+    if (saveEl) saveEl.textContent = "";
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.textContent = t("menu_add_pending");
+    }
+  }
+}
+function setMenuFormula(formulaId) {
+  menuComposerState = { formulaId, plat: null, boisson: null, donut: null };
+  renderMenuComposer();
+}
+function pickMenuOption(slot, id) {
+  menuComposerState[slot] = menuUnitFor(slot).find((p) => p.id === id) || null;
+  renderMenuSlot(slot);
+  updateMenuComposerSummary();
+}
+function openMenuComposer() {
+  closeProductModal();
+  renderMenuComposer();
+  menuComposer?.classList.add("open");
+  scrim.classList.add("open");
+}
+function closeMenuComposer() {
+  menuComposer?.classList.remove("open");
+  if (!productModal.classList.contains("open") && !cartPanel.classList.contains("open")) {
+    scrim.classList.remove("open");
+  }
+}
+function addComposedMenuToCart() {
+  const f = currentMenuFormula();
+  const s = menuComposerState;
+  if (!s.plat || !s.boisson || !s.donut) return;
+  const same = menuCart.find(
+    (l) => l.formulaId === f.id && l.plat.id === s.plat.id && l.boisson.id === s.boisson.id && l.donut.id === s.donut.id
+  );
+  if (same) {
+    same.qty += 1;
+  } else {
+    menuCart.push({
+      uid: `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      formulaId: f.id,
+      label: f.label,
+      price: f.price,
+      qty: 1,
+      plat: s.plat,
+      boisson: s.boisson,
+      donut: s.donut,
+    });
+  }
+  closeMenuComposer();
+  renderCart();
+  openCart();
+  showCartToast(t("menu_added", { name: f.label }));
+}
+function changeMenuQty(uid, delta) {
+  const line = menuCart.find((l) => l.uid === uid);
+  if (!line) return;
+  line.qty += delta;
+  if (line.qty <= 0) menuCart.splice(menuCart.indexOf(line), 1);
+  renderCart();
+}
+function removeMenuLine(uid) {
+  const i = menuCart.findIndex((l) => l.uid === uid);
+  if (i >= 0) menuCart.splice(i, 1);
+  renderCart();
+}
+// Éclate le panier-menus en lignes produit (prix alloué) pour le paiement,
+// le stock et l'email : 1 ligne par ingrédient, étiquetée menu_group/menu_label.
+function expandMenuCheckoutItems() {
+  const out = [];
+  menuCart.forEach((line) => {
+    const f = MENU_FORMULAS.find((m) => m.id === line.formulaId) || line;
+    const alloc = allocateMenuPrices(f, line.plat, line.boisson, line.donut);
+    [
+      [line.plat, alloc.plat],
+      [line.boisson, alloc.boisson],
+      [line.donut, alloc.donut],
+    ].forEach(([prod, price]) => {
+      out.push({
+        product_id: prod.id,
+        name: prod.name,
+        category: prod.category,
+        price,
+        quantity: line.qty,
+        total: round2(price * line.qty),
+        alcohol: false,
+        menu_group: line.uid,
+        menu_label: line.label,
+      });
+    });
+  });
+  return out;
+}
+function menuCartTotalPrice() {
+  return menuCart.reduce((sum, l) => sum + l.price * l.qty, 0);
+}
+function menuCartTotalQuantity() {
+  return menuCart.reduce((sum, l) => sum + l.qty, 0);
+}
+
+// Câblage des interactions menus (délégation).
+document.addEventListener("click", (event) => {
+  const openBtn = event.target.closest("[data-open-composer]");
+  if (openBtn) {
+    event.preventDefault();
+    openMenuComposer();
+    return;
+  }
+  const closeBtn = event.target.closest("[data-menu-close]");
+  if (closeBtn) {
+    event.preventDefault();
+    closeMenuComposer();
+    return;
+  }
+  const formulaBtn = event.target.closest("[data-menu-formula]");
+  if (formulaBtn) {
+    event.preventDefault();
+    setMenuFormula(formulaBtn.dataset.menuFormula);
+    return;
+  }
+  const pickBtn = event.target.closest("[data-menu-pick]");
+  if (pickBtn) {
+    event.preventDefault();
+    pickMenuOption(pickBtn.dataset.menuPick, pickBtn.dataset.menuPickId);
+    return;
+  }
+  const addBtn = event.target.closest("[data-menu-add]");
+  if (addBtn) {
+    event.preventDefault();
+    addComposedMenuToCart();
+    return;
+  }
+  const qtyBtn = event.target.closest("[data-menu-qty]");
+  if (qtyBtn) {
+    event.preventDefault();
+    changeMenuQty(qtyBtn.dataset.menuQty, Number(qtyBtn.dataset.menuDelta));
+    return;
+  }
+  const removeBtn = event.target.closest("[data-menu-remove]");
+  if (removeBtn) {
+    event.preventDefault();
+    removeMenuLine(removeBtn.dataset.menuRemove);
+    return;
+  }
 });
 
 document.addEventListener("click", (event) => {
@@ -1823,18 +2105,43 @@ function restoreCartIfPaymentCancelled() {
   if (!new URLSearchParams(window.location.search).has("paiement")) return;
 
   let pending = null;
+  let pendingMenus = null;
   try {
     pending = JSON.parse(localStorage.getItem("epicerie-pending-cart") || "null");
+    pendingMenus = JSON.parse(localStorage.getItem("epicerie-pending-menus") || "null");
   } catch (error) {
     console.warn(error);
   }
 
-  if (Array.isArray(pending) && pending.length) {
+  const hasPending = (Array.isArray(pending) && pending.length) || (Array.isArray(pendingMenus) && pendingMenus.length);
+
+  if (hasPending) {
     cart.clear();
-    pending.forEach((entry) => {
+    (Array.isArray(pending) ? pending : []).forEach((entry) => {
       const product = products.find((item) => item.id === entry.id);
       if (product) cart.set(product.id, { product, quantity: entry.quantity });
     });
+
+    menuCart.length = 0;
+    (Array.isArray(pendingMenus) ? pendingMenus : []).forEach((entry) => {
+      const formula = MENU_FORMULAS.find((f) => f.id === entry.formulaId);
+      const plat = products.find((p) => p.id === entry.plat);
+      const boisson = products.find((p) => p.id === entry.boisson);
+      const donut = products.find((p) => p.id === entry.donut);
+      if (formula && plat && boisson && donut) {
+        menuCart.push({
+          uid: `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+          formulaId: formula.id,
+          label: formula.label,
+          price: formula.price,
+          qty: Math.max(1, Number(entry.qty) || 1),
+          plat,
+          boisson,
+          donut,
+        });
+      }
+    });
+
     renderCart();
     refreshAddButtons();
     openCart();
@@ -1842,6 +2149,7 @@ function restoreCartIfPaymentCancelled() {
   }
 
   localStorage.removeItem("epicerie-pending-cart");
+  localStorage.removeItem("epicerie-pending-menus");
   history.replaceState(null, "", window.location.pathname);
 }
 

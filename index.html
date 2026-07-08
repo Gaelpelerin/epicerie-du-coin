@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=photos-fill3" />
+  <link rel="stylesheet" href="styles.css?v=menus1" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -84,6 +84,31 @@
           <a class="primary-btn" href="#catalogue" data-i18n="cta_shop">Voir notre boutique</a>
           <a class="ghost-btn" href="#packs" data-i18n="cta_packs">Voir nos packs</a>
         </div>
+
+        <section class="doors" id="doors" aria-label="Par où commencer">
+          <div class="section-heading">
+            <h2 data-i18n="doors_title">Par où commencer ?</h2>
+            <p data-i18n="doors_sub">Composez un menu, choisissez un pack ou piochez à la carte.</p>
+          </div>
+          <div class="doors-grid">
+            <article class="door door-menu">
+              <span class="door-badge" data-i18n="door_menu_badge">Le + malin</span>
+              <h3 data-i18n="door_menu_title">Un menu</h3>
+              <p data-i18n="door_menu_desc">1 plat + 1 boisson + 1 donut à prix doux.</p>
+              <button class="primary-btn" type="button" data-open-composer data-i18n="door_menu_cta">Composer mon menu</button>
+            </article>
+            <article class="door">
+              <h3 data-i18n="door_pack_title">Un pack</h3>
+              <p data-i18n="door_pack_desc">Des sélections prêtes pour plusieurs personnes.</p>
+              <a class="ghost-btn" href="#packs" data-i18n="door_pack_cta">Voir les packs</a>
+            </article>
+            <article class="door">
+              <h3 data-i18n="door_product_title">À la carte</h3>
+              <p data-i18n="door_product_desc">Choisissez vos produits un à un.</p>
+              <a class="ghost-btn" href="#catalogue" data-i18n="door_product_cta">Voir la boutique</a>
+            </article>
+          </div>
+        </section>
 
         <section class="catalogue" id="catalogue">
           <div class="section-heading">
@@ -252,7 +277,44 @@
       <button class="icon-btn modal-close" type="button" data-product-modal-close aria-label="Fermer le détail produit" data-i18n-aria="product_modal_close_aria">×</button>
       <div data-product-modal-content></div>
     </section>
-    <div class="scrim" data-cart-close data-product-modal-close></div>
+    <section class="menu-composer" data-menu-composer aria-label="Composer un menu" aria-modal="true">
+      <button class="icon-btn modal-close" type="button" data-menu-close aria-label="Fermer le composeur de menu" data-i18n-aria="menu_close_aria">×</button>
+      <div class="menu-composer-body">
+        <p class="eyebrow" data-i18n="menu_modal_title">Composez votre menu</p>
+        <p class="menu-composer-sub" data-i18n="menu_modal_sub">1 plat + 1 boisson (sans alcool) + 1 donut.</p>
+
+        <div class="menu-step">
+          <h3 data-i18n="menu_pick_formula">1. Votre formule</h3>
+          <div class="menu-picker" data-menu-picker></div>
+        </div>
+        <div class="menu-step" data-menu-slot="plat">
+          <h3 data-i18n="menu_pick_plat">2. Votre plat</h3>
+          <div class="menu-options"></div>
+        </div>
+        <div class="menu-step" data-menu-slot="boisson">
+          <h3 data-i18n="menu_pick_boisson">3. Votre boisson</h3>
+          <div class="menu-options"></div>
+        </div>
+        <div class="menu-step" data-menu-slot="donut">
+          <h3 data-i18n="menu_pick_donut">4. Votre donut</h3>
+          <div class="menu-options"></div>
+        </div>
+
+        <div class="menu-summary">
+          <div class="menu-summary-row">
+            <span data-i18n="menu_total_lbl">Prix du menu</span>
+            <strong data-menu-total>—</strong>
+          </div>
+          <div class="menu-summary-row menu-summary-sep">
+            <span data-i18n="menu_separate_lbl">Séparément</span>
+            <span data-menu-separate>—</span>
+          </div>
+          <p class="menu-save" data-menu-save></p>
+        </div>
+        <button class="primary-btn full" type="button" data-menu-add disabled>Choisissez plat, boisson et donut</button>
+      </div>
+    </section>
+    <div class="scrim" data-cart-close data-product-modal-close data-menu-close></div>
     <div class="upsell-modal hidden" data-upsell-modal aria-modal="true" aria-label="Suggestion gourmande">
       <div class="upsell-panel">
         <button class="icon-btn upsell-close" type="button" data-upsell-skip aria-label="Fermer la suggestion" data-i18n-aria="upsell_close_aria">×</button>
@@ -265,8 +327,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=upsell-1"></script>
-  <script src="stock.js?v=tartiflette1"></script>
-  <script src="script.js?v=photos13"></script>
+  <script src="i18n.js?v=menus1"></script>
+  <script src="stock.js?v=menus1"></script>
+  <script src="script.js?v=menus1"></script>
   </body>
 </html>
