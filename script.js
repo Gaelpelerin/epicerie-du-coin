@@ -1813,6 +1813,9 @@ function openMenuComposer() {
   renderMenuComposer();
   menuComposer?.classList.add("open");
   scrim.classList.add("open");
+  if (typeof recordProductClick === "function") {
+    recordProductClick({ id: "menu-module", name: "Module Menu", category: "menu" });
+  }
 }
 function closeMenuComposer() {
   menuComposer?.classList.remove("open");
