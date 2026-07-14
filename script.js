@@ -1389,12 +1389,7 @@ async function checkoutCart() {
   }
 
   const formData = new FormData(checkoutForm);
-  const street = String(formData.get("address") || "").trim();
-  const postalCode = String(formData.get("postalCode") || "").trim();
-  const city = String(formData.get("city") || "").trim();
-  const fullAddress = [street, [postalCode, city].filter(Boolean).join(" ")]
-    .filter(Boolean)
-    .join(", ");
+  const fullAddress = String(formData.get("address") || "").trim();
   const customer = {
     name: String(formData.get("name") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
@@ -1406,7 +1401,7 @@ async function checkoutCart() {
   };
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
-  if (!customer.name || !customer.phone || !street || !postalCode || !city || !customer.date || !customer.time) {
+  if (!customer.name || !customer.phone || !fullAddress || !customer.date || !customer.time) {
     cartMessage.textContent = t("msg_fill_fields");
     return;
   }

@@ -72,8 +72,8 @@
       f_name: "Nom",
       f_name_ph: "Votre nom",
       f_phone: "Téléphone",
-      f_address: "Adresse ou logement",
-      f_address_ph: "N° et rue, résidence, chambre...",
+      f_address: "Adresse de livraison",
+      f_address_ph: "N° et rue, ville, résidence, chambre...",
       f_postal: "Code postal",
       f_city: "Ville",
       f_email: "Email (facultatif, pour recevoir votre reçu)",
@@ -157,7 +157,7 @@
       msg_unavailable: "{name} est indisponible.",
       msg_stock_limited: "Stock limité : {n} disponible pour {name}.",
       msg_fill_fields:
-        "Merci de compléter nom, téléphone, adresse, code postal, ville, jour et heure de livraison.",
+        "Merci de compléter nom, téléphone, adresse, jour et heure de livraison.",
       msg_slot_too_soon:
         "Choisissez un créneau au moins 1 heure après votre commande, le temps de préparer et livrer.",
       msg_no_delivery: "Pas de livraison possible {window}. Merci de choisir un autre créneau.",
@@ -221,8 +221,8 @@
       f_name: "Name",
       f_name_ph: "Your name",
       f_phone: "Phone",
-      f_address: "Address or accommodation",
-      f_address_ph: "Number and street, residence, room...",
+      f_address: "Delivery address",
+      f_address_ph: "Number and street, city, residence, room...",
       f_postal: "Postal code",
       f_city: "City",
       f_email: "Email (optional, to receive your receipt)",
@@ -306,7 +306,7 @@
       msg_unavailable: "{name} is unavailable.",
       msg_stock_limited: "Limited stock: {n} available for {name}.",
       msg_fill_fields:
-        "Please fill in name, phone, address, postal code, city, delivery day and time.",
+        "Please fill in name, phone, address, delivery day and time.",
       msg_slot_too_soon:
         "Choose a slot at least 1 hour after your order, to allow time to prepare and deliver.",
       msg_no_delivery: "No delivery available {window}. Please choose another slot.",
@@ -370,8 +370,8 @@
       f_name: "Name",
       f_name_ph: "Ihr Name",
       f_phone: "Telefon",
-      f_address: "Adresse oder Unterkunft",
-      f_address_ph: "Nr. und Straße, Residenz, Zimmer...",
+      f_address: "Lieferadresse",
+      f_address_ph: "Nr. und Straße, Stadt, Residenz, Zimmer...",
       f_postal: "Postleitzahl",
       f_city: "Stadt",
       f_email: "E-Mail (optional, für Ihre Quittung)",
@@ -455,7 +455,7 @@
       msg_unavailable: "{name} ist nicht verfügbar.",
       msg_stock_limited: "Begrenzter Bestand: {n} verfügbar für {name}.",
       msg_fill_fields:
-        "Bitte Name, Telefon, Adresse, Postleitzahl, Stadt, Liefertag und -uhrzeit angeben.",
+        "Bitte Name, Telefon, Adresse, Liefertag und -uhrzeit angeben.",
       msg_slot_too_soon:
         "Wählen Sie einen Zeitpunkt mindestens 1 Stunde nach Ihrer Bestellung, für Zubereitung und Lieferung.",
       msg_no_delivery: "Keine Lieferung möglich {window}. Bitte wählen Sie einen anderen Zeitpunkt.",
