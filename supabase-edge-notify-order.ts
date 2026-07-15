@@ -20,6 +20,8 @@ const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "465");
 const SMTP_USERNAME = Deno.env.get("SMTP_USERNAME")!;
 const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD")!;
 const OWNER_EMAIL = Deno.env.get("OWNER_EMAIL") ?? SMTP_USERNAME;
+const NTFY_TOPIC = Deno.env.get("NTFY_TOPIC");
+const NTFY_URL = Deno.env.get("NTFY_URL") ?? "https://ntfy.sh";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -96,6 +98,34 @@ function clientEmailHtml(order: Record<string, unknown>, items: Array<Record<str
   </div>`;
 }
 
+async function sendNtfy(
+  order: Record<string, unknown>,
+  items: Array<Record<string, unknown>>,
+) {
+  if (!NTFY_TOPIC) return;
+  const body = [
+    `Client : ${order.customer_name} (${order.customer_phone})`,
+    `Adresse : ${order.customer_address}`,
+    `Livraison : ${order.delivery_date} a ${order.delivery_time}`,
+    `Total : ${euro(Number(order.total))}`,
+    "",
+    ...items.map((it) => `- ${it.quantity} x ${it.name}`),
+  ].join("\n");
+  try {
+    await fetch(`${NTFY_URL}/${NTFY_TOPIC}`, {
+      method: "POST",
+      headers: {
+        "Title": `Nouvelle commande ${order.reference}`,
+        "Priority": "high",
+        "Tags": "shopping,bell",
+      },
+      body,
+    });
+  } catch (err) {
+    console.error("ntfy error:", err);
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const payload = await req.json();
@@ -112,6 +142,9 @@ Deno.serve(async (req) => {
       .order("name");
 
     if (error) throw error;
+
+    // Push instantané EN PREMIER : ne dépend pas du SMTP, donc fiable meme si l'email plante.
+    await sendNtfy(order, items ?? []);
 
     const client = new SMTPClient({
       connection: {
