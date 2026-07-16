@@ -1560,6 +1560,71 @@ main {
   font-size: 0.78rem;
 }
 
+.pay-choice {
+  border: 1px solid rgba(240, 162, 66, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 0;
+  background: rgba(240, 162, 66, 0.06);
+}
+
+.pay-choice legend {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0 6px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pay-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pay-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  text-align: center;
+  padding: 12px 8px;
+  border: 1.5px solid rgba(238, 219, 191, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--cream);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pay-option:hover {
+  border-color: rgba(240, 162, 66, 0.6);
+}
+
+.pay-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pay-icon {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.pay-option:has(input:checked) {
+  border-color: rgba(240, 162, 66, 0.95);
+  background: rgba(240, 162, 66, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(240, 162, 66, 0.5);
+}
+
 .checkbox-field {
   display: flex !important;
   grid-template-columns: auto 1fr;

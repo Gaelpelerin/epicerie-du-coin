@@ -198,6 +198,7 @@
 
       const params = new URLSearchParams(window.location.search);
       const refFromUrl = params.get("ref") || "";
+      const isCash = params.get("mode") === "cash";
 
       let order = null;
       try {
@@ -249,9 +250,34 @@
         summary.hidden = false;
       }
 
+      // Paiement à la livraison (espèces) : on adapte les textes de la page.
+      if (isCash) {
+        document.title = "Commande enregistrée — L'Épicerie du Coin";
+        const h1El = document.querySelector("h1");
+        const leadEl = document.querySelector(".lead");
+        const totalLabelEl = document.querySelector(".total span");
+        const waIntroEl = document.querySelector(".wa-intro");
+        const hintEl = document.querySelector(".hint");
+        if (h1El) h1El.textContent = "Merci, votre commande est enregistrée !";
+        if (leadEl) {
+          const time = order && order.customer ? [order.customer.date, order.customer.time].filter(Boolean).join(" à ") : "";
+          leadEl.innerHTML =
+            "Nous vous rappelons rapidement pour confirmer" +
+            (time ? " la livraison du <strong>" + time + "</strong>" : "") +
+            ".<br />💵 Paiement en <strong>espèces à la livraison</strong>.";
+        }
+        if (totalLabelEl) totalLabelEl.textContent = "Total à régler à la livraison";
+        if (waIntroEl) waIntroEl.textContent = "Une question ? Contactez-nous directement sur WhatsApp.";
+        if (hintEl) hintEl.textContent = "Pensez à préparer l'appoint en espèces pour la livraison.";
+      }
+
       // Message WhatsApp pré-rempli pour coordonner la livraison de la commande payée.
       const waLines = [];
-      waLines.push("Bonjour, je viens de régler ma commande L'Épicerie du Coin.");
+      waLines.push(
+        isCash
+          ? "Bonjour, je viens de passer une commande L'Épicerie du Coin (paiement en espèces à la livraison)."
+          : "Bonjour, je viens de régler ma commande L'Épicerie du Coin.",
+      );
       if (reference) waLines.push("Référence : " + reference);
       if (order && order.customer) {
         const c = order.customer;
@@ -267,7 +293,10 @@
         order.lines.forEach((line) => waLines.push(line));
       }
       if (order && typeof order.total === "number") {
-        waLines.push("Total payé : " + formatPrice(order.total));
+        waLines.push(
+          (isCash ? "Total à régler à la livraison : " : "Total payé : ") +
+            formatPrice(order.total),
+        );
       }
       waLines.push("");
       waLines.push("Je confirme mon créneau de livraison. Merci !");

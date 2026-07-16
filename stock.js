@@ -264,6 +264,54 @@ async function createCheckoutSession(cartItems, customer, reference, menuItems =
   return response.json();
 }
 
+// Paiement à la livraison (espèces) : enregistre la commande directement via le
+// RPC create_order_request (valide + décrémente le stock, déclenche la notif
+// Telegram) SANS passer par Stripe. Même mise en forme des articles que
+// createCheckoutSession (prix promo + menus éclatés déjà formatés).
+async function createCashOrder(cartItems, customer, reference, menuItems = []) {
+  const productItems = cartItems.map((item) => {
+    const price = getEffectivePrice(item.product);
+    return {
+      product_id: item.product.id,
+      name: item.product.name,
+      category: item.product.category,
+      price,
+      quantity: item.quantity,
+      total: price * item.quantity,
+      alcohol: Boolean(item.product.alcohol),
+    };
+  });
+
+  const payload = {
+    p_reference: reference,
+    p_customer: {
+      name: customer.name,
+      phone: customer.phone,
+      address: customer.address,
+      email: customer.email || "",
+      delivery_date: customer.date,
+      delivery_time: customer.time,
+      notes: customer.notes || "",
+    },
+    p_items: [...productItems, ...menuItems],
+  };
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_order_request`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    const error = new Error(message || "Impossible d'enregistrer la commande.");
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
 async function loadRemoteSales(pin) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_order_requests`, {
     method: "POST",
@@ -858,6 +906,7 @@ window.updateRemoteProductStock = updateRemoteProductStock;
 window.createRemoteOrderRequest = createRemoteOrderRequest;
 window.createRemoteManualOrder = createRemoteManualOrder;
 window.createCheckoutSession = createCheckoutSession;
+window.createCashOrder = createCashOrder;
 window.loadRemoteSales = loadRemoteSales;
 window.cancelRemoteOrderRequest = cancelRemoteOrderRequest;
 window.setRemoteOrderStatus = setRemoteOrderStatus;

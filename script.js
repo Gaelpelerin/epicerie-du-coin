@@ -1489,6 +1489,34 @@ async function checkoutCart() {
     num_items: items.reduce((sum, item) => sum + item.quantity, 0) + menuCartTotalQuantity(),
   });
 
+  const paymentMethod = String(formData.get("payment") || "card");
+
+  // Paiement à la livraison (espèces) : on enregistre la commande directement
+  // (RPC create_order_request → stock + notif Telegram), sans passer par Stripe.
+  if (paymentMethod === "cash") {
+    cartMessage.textContent = t("msg_saving_order");
+    try {
+      await createCashOrder(items, customer, orderReference, menuItems);
+      // Note : l'événement Meta "Purchase" est déclenché par merci.html
+      // (pixel + CAPI dédupliqués via event_id = référence), comme le flux carte.
+      // Commande enregistrée : on vide le panier (pas de restauration comme Stripe).
+      cart.clear();
+      menuCart.length = 0;
+      try {
+        localStorage.removeItem("epicerie-pending-cart");
+        localStorage.removeItem("epicerie-pending-menus");
+      } catch (error) {
+        console.warn(error);
+      }
+      window.location.href = "merci.html?mode=cash";
+    } catch (error) {
+      console.warn(error);
+      cartMessage.textContent = t("msg_order_failed");
+    }
+    return;
+  }
+
+  // Paiement par carte : flux Stripe existant.
   cartMessage.textContent = t("msg_redirect_payment");
 
   try {

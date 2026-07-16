@@ -1,16 +1,22 @@
 // Supabase Edge Function : notify-order
 // Déclenchée par un Database Webhook sur INSERT dans public.order_requests.
-// Envoie 2 emails via le SMTP Hostinger :
-//   1) Notification à la gérante (toujours)
-//   2) Reçu au client (seulement s'il a laissé un email)
+// Envoie :
+//   1) Notification push instantanée à la gérante via Telegram (TOUJOURS, fiable)
+//   2) Email notification à la gérante via SMTP Hostinger (best-effort, avec timeout)
+//   3) Email reçu au client (seulement s'il a laissé un email)
 //
 // Secrets à définir dans Supabase (Edge Functions > notify-order > Secrets) :
+//   TELEGRAM_BOT_TOKEN = token du bot créé via @BotFather
+//   TELEGRAM_CHAT_ID    = id du chat privé de la gérante
 //   SMTP_HOSTNAME   = smtp.hostinger.com
 //   SMTP_PORT       = 465
 //   SMTP_USERNAME   = contact@epicerieducoin.fr
 //   SMTP_PASSWORD   = (mot de passe de la boîte mail Hostinger)
 //   OWNER_EMAIL     = contact@epicerieducoin.fr
 // (SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement.)
+//
+// NB : ntfy.sh a été abandonné car non fiable depuis Supabase (IP de sortie
+//      partagée -> 429 daily message quota reached). Telegram = fiable + gratuit.
 
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -20,8 +26,8 @@ const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "465");
 const SMTP_USERNAME = Deno.env.get("SMTP_USERNAME")!;
 const SMTP_PASSWORD = Deno.env.get("SMTP_PASSWORD")!;
 const OWNER_EMAIL = Deno.env.get("OWNER_EMAIL") ?? SMTP_USERNAME;
-const NTFY_TOPIC = Deno.env.get("NTFY_TOPIC");
-const NTFY_URL = Deno.env.get("NTFY_URL") ?? "https://ntfy.sh";
+const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN");
+const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID");
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -98,31 +104,33 @@ function clientEmailHtml(order: Record<string, unknown>, items: Array<Record<str
   </div>`;
 }
 
-async function sendNtfy(
+async function sendTelegram(
   order: Record<string, unknown>,
   items: Array<Record<string, unknown>>,
 ) {
-  if (!NTFY_TOPIC) return;
-  const body = [
-    `Client : ${order.customer_name} (${order.customer_phone})`,
-    `Adresse : ${order.customer_address}`,
-    `Livraison : ${order.delivery_date} a ${order.delivery_time}`,
-    `Total : ${euro(Number(order.total))}`,
-    "",
-    ...items.map((it) => `- ${it.quantity} x ${it.name}`),
-  ].join("\n");
+  console.log("telegram: token =", TELEGRAM_BOT_TOKEN ? "présent" : "VIDE", "| chat =", TELEGRAM_CHAT_ID ? "présent" : "VIDE");
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+  const lines = [
+    `🛎️ NOUVELLE COMMANDE ${order.reference}`,
+    ``,
+    `👤 ${order.customer_name} (${order.customer_phone})`,
+    `📍 ${order.customer_address}`,
+    `🚚 ${order.delivery_date} à ${order.delivery_time}`,
+    `💶 Total : ${euro(Number(order.total))}`,
+  ];
+  if (order.customer_email) lines.push(`✉️ ${order.customer_email}`);
+  if (order.notes) lines.push(`📝 ${order.notes}`);
+  lines.push(``);
+  for (const it of items) lines.push(`• ${it.quantity} x ${it.name}`);
   try {
-    await fetch(`${NTFY_URL}/${NTFY_TOPIC}`, {
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
-      headers: {
-        "Title": `Nouvelle commande ${order.reference}`,
-        "Priority": "high",
-        "Tags": "shopping,bell",
-      },
-      body,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: lines.join("\n") }),
     });
+    console.log("telegram: status", res.status, await res.text());
   } catch (err) {
-    console.error("ntfy error:", err);
+    console.error("telegram error:", err);
   }
 }
 
@@ -135,45 +143,48 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "no_order" }), { status: 400 });
     }
 
-    const { data: items, error } = await supabase
+    const { data: items } = await supabase
       .from("order_items")
       .select("name, quantity, price, total")
       .eq("order_id", order.id)
       .order("name");
 
-    if (error) throw error;
+    // Notif Telegram EN PREMIER : fiable, indépendante du SMTP.
+    await sendTelegram(order, items ?? []);
 
-    // Push instantané EN PREMIER : ne dépend pas du SMTP, donc fiable meme si l'email plante.
-    await sendNtfy(order, items ?? []);
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: SMTP_HOSTNAME,
-        port: SMTP_PORT,
-        tls: true,
-        auth: { username: SMTP_USERNAME, password: SMTP_PASSWORD },
-      },
-    });
-
-    // 1) Notification gérante (toujours)
-    await client.send({
-      from: SMTP_USERNAME,
-      to: OWNER_EMAIL,
-      subject: `Nouvelle commande ${order.reference} — ${euro(Number(order.total))}`,
-      html: ownerEmailHtml(order, items ?? []),
-    });
-
-    // 2) Reçu client (si email fourni)
-    if (order.customer_email) {
-      await client.send({
-        from: SMTP_USERNAME,
-        to: order.customer_email,
-        subject: `Votre commande ${order.reference} — L'Épicerie du Coin`,
-        html: clientEmailHtml(order, items ?? []),
-      });
+    // Email SMTP avec timeout : ne peut jamais bloquer/planter la fonction.
+    try {
+      await Promise.race([
+        (async () => {
+          const client = new SMTPClient({
+            connection: {
+              hostname: SMTP_HOSTNAME,
+              port: SMTP_PORT,
+              tls: true,
+              auth: { username: SMTP_USERNAME, password: SMTP_PASSWORD },
+            },
+          });
+          await client.send({
+            from: SMTP_USERNAME,
+            to: OWNER_EMAIL,
+            subject: `Nouvelle commande ${order.reference} — ${euro(Number(order.total))}`,
+            html: ownerEmailHtml(order, items ?? []),
+          });
+          if (order.customer_email) {
+            await client.send({
+              from: SMTP_USERNAME,
+              to: order.customer_email,
+              subject: `Votre commande ${order.reference} — L'Épicerie du Coin`,
+              html: clientEmailHtml(order, items ?? []),
+            });
+          }
+          await client.close();
+        })(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP timeout")), 15000)),
+      ]);
+    } catch (mailErr) {
+      console.error("SMTP error (non bloquant):", mailErr);
     }
-
-    await client.close();
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { "Content-Type": "application/json" },

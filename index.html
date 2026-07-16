@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=menus1" />
+  <link rel="stylesheet" href="styles.css?v=cash2" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -243,6 +243,21 @@
             </label>
           </div>
           <p class="checkout-note compact" data-delivery-hint></p>
+          <fieldset class="pay-choice full-field">
+            <legend data-i18n="pay_method">Mode de paiement</legend>
+            <div class="pay-options">
+              <label class="pay-option">
+                <input type="radio" name="payment" value="card" checked />
+                <span class="pay-icon" aria-hidden="true">💳</span>
+                <span class="pay-label" data-i18n="pay_card">Payer maintenant par carte</span>
+              </label>
+              <label class="pay-option">
+                <input type="radio" name="payment" value="cash" />
+                <span class="pay-icon" aria-hidden="true">💶</span>
+                <span class="pay-label" data-i18n="pay_cash">En espèces à la livraison</span>
+              </label>
+            </div>
+          </fieldset>
           <label class="full-field">
             <span data-i18n="f_notes">Notes</span>
             <textarea name="notes" rows="3" placeholder="Digicode, précision de livraison, allergie à signaler..." data-i18n-ph="f_notes_ph"></textarea>
@@ -317,8 +332,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=menus1"></script>
-  <script src="stock.js?v=menus1"></script>
-  <script src="script.js?v=menus1"></script>
+  <script src="i18n.js?v=cash2"></script>
+  <script src="stock.js?v=cash2"></script>
+  <script src="script.js?v=cash2"></script>
   </body>
 </html>
