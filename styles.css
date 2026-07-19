@@ -1619,6 +1619,14 @@ main {
   line-height: 1;
 }
 
+.pay-sub {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.85;
+  line-height: 1.2;
+}
+
 .pay-option:has(input:checked) {
   border-color: rgba(240, 162, 66, 0.95);
   background: rgba(240, 162, 66, 0.16);

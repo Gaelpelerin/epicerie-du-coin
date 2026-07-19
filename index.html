@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=cash2" />
+  <link rel="stylesheet" href="styles.css?v=cash5" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -244,6 +244,26 @@
           </div>
           <p class="checkout-note compact" data-delivery-hint></p>
           <fieldset class="pay-choice full-field">
+            <legend data-i18n="delivery_method">Mode de livraison</legend>
+            <div class="pay-options">
+              <label class="pay-option">
+                <input type="radio" name="deliveryTemp" value="hot" checked />
+                <span class="pay-icon" aria-hidden="true">🔥</span>
+                <span class="pay-label" data-i18n="delivery_hot">Chaude, prête à déguster</span>
+                <span class="pay-sub" data-i18n="delivery_hot_sub">recommandé le soir</span>
+              </label>
+              <label class="pay-option">
+                <input type="radio" name="deliveryTemp" value="cold" />
+                <span class="pay-icon" aria-hidden="true">🍽️</span>
+                <span class="pay-label" data-i18n="delivery_cold">À réchauffer chez vous</span>
+                <span class="pay-sub" data-i18n="delivery_cold_sub">four 10 min, à votre rythme</span>
+              </label>
+            </div>
+          </fieldset>
+          <p class="checkout-note hidden" data-reheat-note data-i18n="checkout_reheat_note">
+            Vos plats sont livrés prêts à réchauffer. Préchauffez votre four 10 à 15 minutes avant dégustation.
+          </p>
+          <fieldset class="pay-choice full-field">
             <legend data-i18n="pay_method">Mode de paiement</legend>
             <div class="pay-options">
               <label class="pay-option">
@@ -266,9 +286,6 @@
             <input type="checkbox" name="alcoholAge" />
             <span data-i18n="f_alcohol_confirm">Je confirme avoir 18 ans ou plus pour les boissons alcoolisées.</span>
           </label>
-          <p class="checkout-note" data-i18n="checkout_reheat_note">
-            Produits livrés froids, prêts à réchauffer. Pensez à préchauffer votre four 10 à 15 minutes avant dégustation.
-          </p>
         </form>
         <div class="cart-total">
           <span data-i18n="cart_total">Total estimé</span>
@@ -332,8 +349,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=cash2"></script>
-  <script src="stock.js?v=cash2"></script>
-  <script src="script.js?v=cash2"></script>
+  <script src="i18n.js?v=cash5"></script>
+  <script src="stock.js?v=cash5"></script>
+  <script src="script.js?v=cash5"></script>
   </body>
 </html>

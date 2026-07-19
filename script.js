@@ -703,6 +703,7 @@ const deliveryDateInput = checkoutForm.querySelector('input[name="date"]');
 const deliveryTimeInput = checkoutForm.querySelector('input[name="time"]');
 const deliveryHint = document.querySelector("[data-delivery-hint]");
 const alcoholConfirm = document.querySelector("[data-alcohol-confirm]");
+const reheatNote = document.querySelector("[data-reheat-note]");
 const productModal = document.querySelector("[data-product-modal]");
 const productModalContent = document.querySelector("[data-product-modal-content]");
 const scrim = document.querySelector(".scrim");
@@ -791,6 +792,16 @@ function setupDeliveryDateInput() {
   deliveryDateInput.addEventListener("change", updateDeliveryTimeConstraints);
   deliveryTimeInput.addEventListener("change", updateDeliveryTimeConstraints);
   updateDeliveryTimeConstraints();
+
+  // Le message "produits livrés froids, à réchauffer" ne concerne que la
+  // livraison froide : on l'affiche uniquement quand ce mode est sélectionné.
+  const updateReheatNote = () => {
+    const selected = checkoutForm.querySelector('input[name="deliveryTemp"]:checked');
+    reheatNote.classList.toggle("hidden", !selected || selected.value !== "cold");
+  };
+  checkoutForm
+    .querySelectorAll('input[name="deliveryTemp"]')
+    .forEach((radio) => radio.addEventListener("change", updateReheatNote));
 }
 
 // Fermetures de livraison : créneaux où le client ne peut pas se faire livrer
@@ -1405,6 +1416,19 @@ async function checkoutCart() {
     cartMessage.textContent = t("msg_fill_fields");
     return;
   }
+
+  // Mode de livraison (froid/chaud) : choix obligatoire, transmis au gérant
+  // via les notes (visibles dans la notif Telegram + email + admin).
+  const deliveryTemp = String(formData.get("deliveryTemp") || "");
+  if (deliveryTemp !== "cold" && deliveryTemp !== "hot") {
+    cartMessage.textContent = t("msg_choose_delivery_temp");
+    return;
+  }
+  const deliveryTempLabel =
+    deliveryTemp === "hot"
+      ? "🔥 Livraison chaude (prête à déguster)"
+      : "🍽️ À réchauffer (livrée non chauffée)";
+  customer.notes = customer.notes ? `${deliveryTempLabel}\n${customer.notes}` : deliveryTempLabel;
 
   const deliveryAt = new Date(`${customer.date}T${customer.time}`);
   const earliestDelivery = new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
