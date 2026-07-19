@@ -1573,6 +1573,15 @@ main {
   margin-top: 12px;
 }
 
+/* Contenu centré pour s'aligner visuellement avec les tuiles (elles-mêmes centrées). */
+[data-schedule-fields] label {
+  text-align: center;
+}
+
+[data-schedule-fields] input {
+  text-align: center;
+}
+
 .pay-choice legend {
   font-size: 0.78rem;
   font-weight: 700;
@@ -1588,7 +1597,9 @@ main {
   gap: 10px;
 }
 
-.pay-option {
+/* Spécificité renforcée : sinon la règle générique `label` du formulaire (display:grid)
+   force les tuiles en grille et cale le contenu à gauche. */
+.pay-options .pay-option {
   position: relative;
   display: flex;
   flex-direction: column;
