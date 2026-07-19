@@ -260,7 +260,10 @@
         const hintEl = document.querySelector(".hint");
         if (h1El) h1El.textContent = "Merci, votre commande est enregistrée !";
         if (leadEl) {
-          const time = order && order.customer ? [order.customer.date, order.customer.time].filter(Boolean).join(" à ") : "";
+          const time =
+            order && order.customer && order.customer.deliveryWhen !== "asap"
+              ? [order.customer.date, order.customer.time].filter(Boolean).join(" à ")
+              : "";
           leadEl.innerHTML =
             "Nous vous rappelons rapidement pour confirmer" +
             (time ? " la livraison du <strong>" + time + "</strong>" : "") +
@@ -283,7 +286,9 @@
         const c = order.customer;
         if (c.name) waLines.push("Nom : " + c.name);
         if (c.address) waLines.push("Adresse : " + c.address);
-        if (c.date || c.time) {
+        if (c.deliveryWhen === "asap") {
+          waLines.push("Livraison : au plus vite (dès que possible)");
+        } else if (c.date || c.time) {
           waLines.push("Créneau souhaité : " + [c.date, c.time].filter(Boolean).join(" à "));
         }
       }

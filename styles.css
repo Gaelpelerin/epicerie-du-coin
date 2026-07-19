@@ -1568,6 +1568,11 @@ main {
   background: rgba(240, 162, 66, 0.06);
 }
 
+/* Bloc "Planifier" (jour + créneau) révélé sous les tuiles : aligné avec elles. */
+.schedule-inset {
+  margin-top: 12px;
+}
+
 .pay-choice legend {
   font-size: 0.78rem;
   font-weight: 700;

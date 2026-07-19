@@ -689,7 +689,7 @@ const products = [
 
 const ALCOHOL_SALES_ENABLED = true;
 const FIRST_DELIVERY_DATE = "2026-05-31";
-const MIN_DELIVERY_LEAD_MINUTES = 60;
+const MIN_DELIVERY_LEAD_MINUTES = 30;
 const WHATSAPP_ORDER_NUMBER = "33675748449";
 const grid = document.querySelector("[data-product-grid]");
 const tabs = document.querySelectorAll("[data-filter]");
@@ -700,7 +700,10 @@ const cartTotal = document.querySelector("[data-cart-total]");
 const cartMessage = document.querySelector("[data-cart-message]");
 const checkoutForm = document.querySelector("[data-checkout-form]");
 const deliveryDateInput = checkoutForm.querySelector('input[name="date"]');
-const deliveryTimeInput = checkoutForm.querySelector('input[name="time"]');
+const deliverySlotInput = checkoutForm.querySelector('input[name="slot"]');
+const deliveryWhenRadios = checkoutForm.querySelectorAll('input[name="deliveryWhen"]');
+const scheduleFields = checkoutForm.querySelector("[data-schedule-fields]");
+const asapNote = document.querySelector("[data-asap-note]");
 const deliveryHint = document.querySelector("[data-delivery-hint]");
 const alcoholConfirm = document.querySelector("[data-alcohol-confirm]");
 const reheatNote = document.querySelector("[data-reheat-note]");
@@ -760,38 +763,68 @@ function formatDateInput(date) {
 
 const pad2 = (value) => String(value).padStart(2, "0");
 
-// Met à jour l'heure minimale sélectionnable selon le délai de préparation.
-// Livraison 24h/24, mais au moins MIN_DELIVERY_LEAD_MINUTES après la commande.
-function updateDeliveryTimeConstraints() {
-  const today = formatDateInput(new Date());
-  const earliest = new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
+// Livraison 24h/24 : le 1er créneau possible = maintenant + MIN_DELIVERY_LEAD_MINUTES.
+function earliestDeliveryDate() {
+  return new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
+}
 
-  if (deliveryDateInput.value === today) {
-    if (formatDateInput(earliest) === today) {
-      const minTime = `${pad2(earliest.getHours())}:${pad2(earliest.getMinutes())}`;
-      deliveryTimeInput.min = minTime;
-      if (deliveryTimeInput.value && deliveryTimeInput.value < minTime) {
-        deliveryTimeInput.value = minTime;
-      }
-    } else {
-      // Le 1er créneau possible tombe demain : on bascule la date.
-      deliveryDateInput.value = formatDateInput(earliest);
-      deliveryTimeInput.removeAttribute("min");
-    }
-  } else {
-    deliveryTimeInput.removeAttribute("min");
+// Livraison planifiée : le client saisit librement son heure (aucun blocage de
+// frappe). Le jour ne peut simplement pas être dans le passé.
+function initScheduleDefaults() {
+  const earliest = earliestDeliveryDate();
+  const earliestDay = formatDateInput(earliest);
+  const floorDate = earliestDay > FIRST_DELIVERY_DATE ? earliestDay : FIRST_DELIVERY_DATE;
+
+  deliveryDateInput.min = floorDate;
+  if (!deliveryDateInput.value || deliveryDateInput.value < floorDate) {
+    deliveryDateInput.value = floorDate;
+  }
+  // Valeur par défaut = 1er créneau possible, mais l'heure reste librement modifiable.
+  if (!deliverySlotInput.value) {
+    deliverySlotInput.value = `${pad2(earliest.getHours())}:${pad2(earliest.getMinutes())}`;
+  }
+  deliverySlotInput.removeAttribute("min");
+}
+
+// Si l'heure saisie est déjà passée pour le jour choisi (ex : 1h du matin alors
+// qu'il est 23h), on avance automatiquement le jour au lendemain.
+function rollDateForPastTime() {
+  const day = deliveryDateInput.value;
+  const time = deliverySlotInput.value;
+  if (!day || !time) return;
+  const dt = new Date(`${day}T${time}`);
+  if (Number.isNaN(dt.getTime())) return;
+  if (dt.getTime() <= Date.now()) {
+    const next = new Date(dt.getTime() + 24 * 60 * 60 * 1000);
+    deliveryDateInput.value = formatDateInput(next);
   }
 }
 
+// Le jour ne peut jamais repasser sous le 1er jour livrable.
+function clampScheduleDate() {
+  if (deliveryDateInput.value && deliveryDateInput.value < deliveryDateInput.min) {
+    deliveryDateInput.value = deliveryDateInput.min;
+  }
+}
+
+// Bascule l'affichage du bloc "Planifier" (jour + créneau) selon la tuile.
+function updateDeliveryWhen() {
+  const scheduled =
+    checkoutForm.querySelector('input[name="deliveryWhen"]:checked')?.value === "scheduled";
+  scheduleFields.classList.toggle("hidden", !scheduled);
+  if (asapNote) asapNote.classList.toggle("hidden", scheduled);
+  if (scheduled) initScheduleDefaults();
+}
+
 function setupDeliveryDateInput() {
-  const today = formatDateInput(new Date());
-  const minDate = today > FIRST_DELIVERY_DATE ? today : FIRST_DELIVERY_DATE;
-  deliveryDateInput.min = minDate;
-  if (deliveryDateInput.value && deliveryDateInput.value < minDate) deliveryDateInput.value = minDate;
   deliveryHint.textContent = t("delivery_hint_base");
-  deliveryDateInput.addEventListener("change", updateDeliveryTimeConstraints);
-  deliveryTimeInput.addEventListener("change", updateDeliveryTimeConstraints);
-  updateDeliveryTimeConstraints();
+  deliverySlotInput.addEventListener("change", rollDateForPastTime);
+  deliveryDateInput.addEventListener("change", () => {
+    clampScheduleDate();
+    rollDateForPastTime();
+  });
+  deliveryWhenRadios.forEach((radio) => radio.addEventListener("change", updateDeliveryWhen));
+  updateDeliveryWhen();
 
   // Le message "produits livrés froids, à réchauffer" ne concerne que la
   // livraison froide : on l'affiche uniquement quand ce mode est sélectionné.
@@ -1406,13 +1439,13 @@ async function checkoutCart() {
     phone: String(formData.get("phone") || "").trim(),
     address: fullAddress,
     email: String(formData.get("email") || "").trim(),
-    date: String(formData.get("date") || "").trim(),
-    time: String(formData.get("time") || "").trim(),
+    date: "",
+    time: "",
     notes: String(formData.get("notes") || "").trim(),
   };
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
-  if (!customer.name || !customer.phone || !fullAddress || !customer.date || !customer.time) {
+  if (!customer.name || !customer.phone || !fullAddress) {
     cartMessage.textContent = t("msg_fill_fields");
     return;
   }
@@ -1428,14 +1461,41 @@ async function checkoutCart() {
     deliveryTemp === "hot"
       ? "🔥 Livraison chaude (prête à déguster)"
       : "🍽️ À réchauffer (livrée non chauffée)";
-  customer.notes = customer.notes ? `${deliveryTempLabel}\n${customer.notes}` : deliveryTempLabel;
 
-  const deliveryAt = new Date(`${customer.date}T${customer.time}`);
-  const earliestDelivery = new Date(Date.now() + MIN_DELIVERY_LEAD_MINUTES * 60000);
-  if (Number.isNaN(deliveryAt.getTime()) || deliveryAt < earliestDelivery) {
-    cartMessage.textContent = t("msg_slot_too_soon");
-    return;
+  // Quand : "au plus vite" (aucune heure promise, convenue par WhatsApp après la
+  // commande) ou "planifier" (le client choisit son créneau lui-même). On envoie
+  // toujours une date + heure valides en base (colonnes NOT NULL), même en ASAP.
+  const deliveryWhen = String(formData.get("deliveryWhen") || "asap");
+  let deliveryAt;
+  let deliveryWhenLabel;
+  if (deliveryWhen === "scheduled") {
+    const scheduledDate = String(formData.get("date") || "").trim();
+    const scheduledSlot = String(formData.get("slot") || "").trim();
+    if (!scheduledDate || !scheduledSlot) {
+      cartMessage.textContent = t("msg_fill_fields");
+      return;
+    }
+    deliveryAt = new Date(`${scheduledDate}T${scheduledSlot}`);
+    if (Number.isNaN(deliveryAt.getTime()) || deliveryAt < earliestDeliveryDate()) {
+      cartMessage.textContent = t("msg_slot_too_soon");
+      return;
+    }
+    customer.date = scheduledDate;
+    customer.time = scheduledSlot;
+    deliveryWhenLabel = `📅 Créneau souhaité : ${scheduledDate} à ${scheduledSlot.replace(":", "h")}`;
+  } else {
+    const now = new Date();
+    deliveryAt = now;
+    customer.date = formatDateInput(now);
+    customer.time = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    deliveryWhenLabel = "🚀 Au plus vite (heure à convenir)";
   }
+  customer.deliveryWhen = deliveryWhen;
+
+  // Récap livraison en tête des notes (visible Telegram + email + admin).
+  customer.notes = [deliveryWhenLabel, deliveryTempLabel, customer.notes]
+    .filter(Boolean)
+    .join("\n");
 
   // Re-vérifie les fermetures (au cas où une nouvelle serait ajoutée pendant
   // que la page est ouverte), puis bloque si le créneau choisi tombe dedans.

@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=cash5" />
+  <link rel="stylesheet" href="styles.css?v=slot4" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -232,16 +232,36 @@
             <span data-i18n="f_email">Email (facultatif, pour recevoir votre reçu)</span>
             <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" data-i18n-ph="news_email_ph" />
           </label>
-          <div class="checkout-grid">
-            <label>
-              <span data-i18n="f_date">Jour souhaité</span>
-              <input type="date" name="date" />
-            </label>
-            <label>
-              <span data-i18n="f_time">Heure souhaitée</span>
-              <input type="time" name="time" />
-            </label>
-          </div>
+          <fieldset class="pay-choice full-field">
+            <legend data-i18n="delivery_when">Quand souhaitez-vous être livré ?</legend>
+            <div class="pay-options">
+              <label class="pay-option">
+                <input type="radio" name="deliveryWhen" value="asap" checked />
+                <span class="pay-icon" aria-hidden="true">🚀</span>
+                <span class="pay-label" data-i18n="delivery_asap">Au plus vite</span>
+                <span class="pay-sub" data-i18n="delivery_asap_sub">dès que possible</span>
+              </label>
+              <label class="pay-option">
+                <input type="radio" name="deliveryWhen" value="scheduled" />
+                <span class="pay-icon" aria-hidden="true">📅</span>
+                <span class="pay-label" data-i18n="delivery_scheduled">Planifier</span>
+                <span class="pay-sub" data-i18n="delivery_scheduled_sub">choisir un créneau</span>
+              </label>
+            </div>
+            <p class="checkout-note compact schedule-inset" data-asap-note data-i18n="delivery_asap_note">
+              On vous confirme l'heure exacte par WhatsApp juste après votre commande.
+            </p>
+            <div class="checkout-grid schedule-inset hidden" data-schedule-fields>
+              <label>
+                <span data-i18n="f_date">Jour souhaité</span>
+                <input type="date" name="date" />
+              </label>
+              <label>
+                <span data-i18n="f_slot">Créneau souhaité</span>
+                <input type="time" name="slot" />
+              </label>
+            </div>
+          </fieldset>
           <p class="checkout-note compact" data-delivery-hint></p>
           <fieldset class="pay-choice full-field">
             <legend data-i18n="delivery_method">Mode de livraison</legend>
@@ -349,8 +369,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=cash5"></script>
-  <script src="stock.js?v=cash5"></script>
-  <script src="script.js?v=cash5"></script>
+  <script src="i18n.js?v=slot4"></script>
+  <script src="stock.js?v=slot4"></script>
+  <script src="script.js?v=slot4"></script>
   </body>
 </html>
