@@ -1609,7 +1609,16 @@ async function checkoutCart() {
     window.location.href = session.url;
   } catch (error) {
     console.warn(error);
-    cartMessage.textContent = t("msg_payment_failed");
+    if (error?.code === "stock_insufficient") {
+      const names = (error.items || []).join(", ");
+      cartMessage.textContent = names
+        ? t("msg_stock_insufficient").replace("{items}", names)
+        : t("msg_payment_failed");
+      // Réaligne l'affichage sur le stock réel (badges « Rupture »).
+      refreshStockThenShop();
+    } else {
+      cartMessage.textContent = t("msg_payment_failed");
+    }
   }
 }
 

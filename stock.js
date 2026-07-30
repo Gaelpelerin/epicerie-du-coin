@@ -257,8 +257,24 @@ async function createCheckoutSession(cartItems, customer, reference, menuItems =
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Impossible de démarrer le paiement.");
+    let data = null;
+    try {
+      data = await response.json();
+    } catch {
+      /* corps non-JSON : on tombe sur l'erreur générique plus bas */
+    }
+    // Rupture de stock détectée AVANT paiement : on remonte les noms des
+    // articles concernés pour un message clair côté panier (aucun encaissement).
+    if (data?.error === "stock_insufficient") {
+      const err = new Error("stock_insufficient");
+      err.code = "stock_insufficient";
+      err.items = Array.isArray(data.items) ? data.items : [];
+      throw err;
+    }
+    throw new Error(
+      (data && (data.error || JSON.stringify(data))) ||
+        "Impossible de démarrer le paiement.",
+    );
   }
 
   return response.json();
