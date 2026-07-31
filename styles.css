@@ -1681,6 +1681,71 @@ main {
   line-height: 1.4;
 }
 
+.promo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.promo-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.promo-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.promo-row input {
+  flex: 1;
+  text-transform: uppercase;
+}
+
+.promo-row .secondary-btn {
+  white-space: nowrap;
+  padding: 0 20px;
+  border-radius: 6px;
+  border: 1px solid var(--copper);
+  background: rgba(3, 7, 6, 0.36);
+  color: var(--copper-light);
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.promo-row .secondary-btn:hover {
+  background: linear-gradient(135deg, var(--copper-light), var(--copper));
+  color: #150a05;
+}
+
+.promo-message {
+  min-height: 18px;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.promo-message.is-valid {
+  color: var(--copper-light);
+}
+
+.promo-message.is-error {
+  color: #e0736b;
+}
+
+.cart-discount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+  color: var(--copper-light);
+  font-size: 0.95rem;
+}
+
 .full {
   width: 100%;
 }

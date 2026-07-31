@@ -714,6 +714,12 @@ const cartToast = document.querySelector("[data-cart-toast]");
 const checkoutButton = document.querySelector("[data-checkout]");
 const upsellModal = document.querySelector("[data-upsell-modal]");
 const upsellList = document.querySelector("[data-upsell-list]");
+const promoInput = document.querySelector("[data-promo-input]");
+const promoApplyButton = document.querySelector("[data-promo-apply]");
+const promoMessage = document.querySelector("[data-promo-message]");
+const cartDiscountRow = document.querySelector("[data-cart-discount-row]");
+const cartDiscountAmount = document.querySelector("[data-cart-discount]");
+const promoTag = document.querySelector("[data-promo-tag]");
 const cart = new Map();
 const featuredState = {
   quantity: 1,
@@ -1580,7 +1586,7 @@ async function checkoutCart() {
   if (paymentMethod === "cash") {
     cartMessage.textContent = t("msg_saving_order");
     try {
-      await createCashOrder(items, customer, orderReference, menuItems);
+      await createCashOrder(items, customer, orderReference, menuItems, appliedPromo?.code || "");
       // Note : l'événement Meta "Purchase" est déclenché par merci.html
       // (pixel + CAPI dédupliqués via event_id = référence), comme le flux carte.
       // Commande enregistrée : on vide le panier (pas de restauration comme Stripe).
@@ -1604,7 +1610,7 @@ async function checkoutCart() {
   cartMessage.textContent = t("msg_redirect_payment");
 
   try {
-    const session = await createCheckoutSession(items, customer, orderReference, menuItems);
+    const session = await createCheckoutSession(items, customer, orderReference, menuItems, appliedPromo?.code || "");
     if (!session?.url) throw new Error("URL de paiement manquante.");
     window.location.href = session.url;
   } catch (error) {
@@ -1740,16 +1746,104 @@ if ("BroadcastChannel" in window) {
   stockChannel.addEventListener("message", refreshShopFromStock);
 }
 
+// Code promo prévalidé côté client : { code, percent }. La remise réelle est
+// recalculée par le serveur au paiement (check_promo_code fait foi).
+let appliedPromo = null;
+
+function cartSubtotal() {
+  const items = [...cart.values()];
+  return (
+    items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0) +
+    menuCartTotalPrice()
+  );
+}
+
+function promoDiscountAmount(subtotal) {
+  if (!appliedPromo) return 0;
+  return Math.round(subtotal * appliedPromo.percent) / 100;
+}
+
+function resetPromo() {
+  appliedPromo = null;
+  if (promoMessage) {
+    promoMessage.textContent = "";
+    promoMessage.classList.remove("is-valid", "is-error");
+  }
+}
+
+async function applyPromoCode() {
+  if (!promoInput) return;
+  const code = promoInput.value.trim();
+  const setMsg = (text, kind) => {
+    if (!promoMessage) return;
+    promoMessage.textContent = text;
+    promoMessage.classList.toggle("is-valid", kind === "valid");
+    promoMessage.classList.toggle("is-error", kind === "error");
+  };
+
+  if (!code) {
+    resetPromo();
+    renderCart();
+    return;
+  }
+
+  const subtotal = cartSubtotal();
+  if (subtotal <= 0) {
+    resetPromo();
+    setMsg(t("cart_empty"), "error");
+    renderCart();
+    return;
+  }
+
+  const phone = (checkoutForm.querySelector('input[name="phone"]')?.value || "").trim();
+
+  try {
+    const result = await validatePromoCode(code, phone, subtotal);
+    if (result?.valid) {
+      appliedPromo = { code: result.code, percent: Number(result.percent) || 0 };
+      setMsg(t("promo_ok", { amount: formatPrice(Number(result.discount) || 0) }), "valid");
+    } else {
+      resetPromo();
+      const reasonKey = {
+        not_found: "promo_invalid",
+        inactive: "promo_invalid",
+        expired: "promo_expired",
+        min_amount: "promo_min",
+        no_phone: "promo_no_phone",
+        not_first_order: "promo_not_first",
+      }[result?.reason] || "promo_invalid";
+      setMsg(t(reasonKey), "error");
+    }
+  } catch (error) {
+    console.warn(error);
+    resetPromo();
+    setMsg(t("promo_invalid"), "error");
+  }
+  renderCart();
+}
+
 function renderCart() {
   const items = [...cart.values()];
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0) + menuCartTotalQuantity();
-  const totalPrice =
+  const subtotal =
     items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0) + menuCartTotalPrice();
+  const discount = promoDiscountAmount(subtotal);
+  const totalPrice = Math.max(subtotal - discount, 0);
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
   cartCount.textContent = totalQuantity;
   cartTotal.textContent = formatPrice(totalPrice);
   alcoholConfirm.classList.toggle("hidden", !hasAlcohol);
+
+  if (cartDiscountRow) {
+    if (appliedPromo && discount > 0) {
+      cartDiscountRow.classList.remove("hidden");
+      if (promoTag) promoTag.textContent = `${appliedPromo.code} (−${appliedPromo.percent}%)`;
+      if (cartDiscountAmount) cartDiscountAmount.textContent = `−${formatPrice(discount)}`;
+    } else {
+      cartDiscountRow.classList.add("hidden");
+    }
+  }
 
   if (!items.length && !menuCart.length) {
     cartItems.innerHTML = `<p class="empty-cart">${t("cart_empty")}</p>`;
@@ -2133,6 +2227,26 @@ document.querySelectorAll("[data-cart-open]").forEach((button) => button.addEven
 document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEventListener("click", closeCart));
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
 document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
+
+if (promoApplyButton) {
+  promoApplyButton.addEventListener("click", applyPromoCode);
+}
+if (promoInput) {
+  // Toute modification du code invalide la remise déjà appliquée : il faut
+  // recliquer sur « Appliquer » pour la revalider (évite un total incohérent).
+  promoInput.addEventListener("input", () => {
+    if (appliedPromo) {
+      resetPromo();
+      renderCart();
+    }
+  });
+  promoInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyPromoCode();
+    }
+  });
+}
 
 document.querySelectorAll("[data-upsell-continue], [data-upsell-skip]").forEach((btn) =>
   btn.addEventListener("click", () => {

@@ -214,7 +214,7 @@ function createRemoteManualOrder(cartItems, customer, reference) {
   return createRemoteOrderRequest(cartItems, customer, reference, "create_manual_order");
 }
 
-async function createCheckoutSession(cartItems, customer, reference, menuItems = []) {
+async function createCheckoutSession(cartItems, customer, reference, menuItems = [], promoCode = "") {
   logProductEvent("checkout", null, 1);
 
   // Articles à la carte : prix réellement facturé = prix promo si une promo est
@@ -248,6 +248,7 @@ async function createCheckoutSession(cartItems, customer, reference, menuItems =
       notes: customer.notes || "",
     },
     items: [...productItems, ...menuItems],
+    promo_code: promoCode || "",
   };
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
@@ -284,7 +285,7 @@ async function createCheckoutSession(cartItems, customer, reference, menuItems =
 // RPC create_order_request (valide + décrémente le stock, déclenche la notif
 // Telegram) SANS passer par Stripe. Même mise en forme des articles que
 // createCheckoutSession (prix promo + menus éclatés déjà formatés).
-async function createCashOrder(cartItems, customer, reference, menuItems = []) {
+async function createCashOrder(cartItems, customer, reference, menuItems = [], promoCode = "") {
   const productItems = cartItems.map((item) => {
     const price = getEffectivePrice(item.product);
     return {
@@ -310,6 +311,7 @@ async function createCashOrder(cartItems, customer, reference, menuItems = []) {
       notes: customer.notes || "",
     },
     p_items: [...productItems, ...menuItems],
+    p_promo_code: promoCode || null,
   };
 
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_order_request`, {
@@ -321,6 +323,30 @@ async function createCashOrder(cartItems, customer, reference, menuItems = []) {
   if (!response.ok) {
     const message = await response.text();
     const error = new Error(message || "Impossible d'enregistrer la commande.");
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
+// Prévisualise un code promo côté client (validation NON autoritaire, juste
+// pour afficher la remise au panier). La validation qui fait foi reste côté
+// serveur (create-checkout + RPC create_order_request via check_promo_code).
+async function validatePromoCode(code, phone, subtotal) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/check_promo_code`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({
+      p_code: code,
+      p_phone: phone || "",
+      p_subtotal: subtotal,
+    }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    const error = new Error(message || "Code promo indisponible.");
     error.status = response.status;
     throw error;
   }

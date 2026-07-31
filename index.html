@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot8" />
+  <link rel="stylesheet" href="styles.css?v=slot9" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -298,6 +298,14 @@
               </label>
             </div>
           </fieldset>
+          <div class="promo-field full-field">
+            <span class="promo-label" data-i18n="promo_label">Code promo</span>
+            <div class="promo-row">
+              <input type="text" name="promo" autocomplete="off" placeholder="BIENVENUE10" data-promo-input data-i18n-ph="promo_ph" />
+              <button type="button" class="secondary-btn" data-promo-apply data-i18n="promo_apply">Appliquer</button>
+            </div>
+            <p class="promo-message" data-promo-message aria-live="polite"></p>
+          </div>
           <label class="full-field">
             <span data-i18n="f_notes">Notes</span>
             <textarea name="notes" rows="3" placeholder="Digicode, précision de livraison, allergie à signaler..." data-i18n-ph="f_notes_ph"></textarea>
@@ -307,6 +315,10 @@
             <span data-i18n="f_alcohol_confirm">Je confirme avoir 18 ans ou plus pour les boissons alcoolisées.</span>
           </label>
         </form>
+        <div class="cart-discount hidden" data-cart-discount-row>
+          <span data-promo-tag></span>
+          <strong data-cart-discount>0,00 €</strong>
+        </div>
         <div class="cart-total">
           <span data-i18n="cart_total">Total estimé</span>
           <strong data-cart-total>0,00 €</strong>
@@ -369,8 +381,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot8"></script>
-  <script src="stock.js?v=slot8"></script>
-  <script src="script.js?v=slot8"></script>
+  <script src="i18n.js?v=slot9"></script>
+  <script src="stock.js?v=slot9"></script>
+  <script src="script.js?v=slot9"></script>
   </body>
 </html>
