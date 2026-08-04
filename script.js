@@ -720,6 +720,11 @@ const promoMessage = document.querySelector("[data-promo-message]");
 const cartDiscountRow = document.querySelector("[data-cart-discount-row]");
 const cartDiscountAmount = document.querySelector("[data-cart-discount]");
 const promoTag = document.querySelector("[data-promo-tag]");
+const promoBanner = document.querySelector("[data-promo-banner]");
+const geoLocateButton = document.querySelector("[data-geo-locate]");
+const geoMessage = document.querySelector("[data-geo-message]");
+const addressInput = checkoutForm.querySelector('input[name="address"]');
+const phoneInput = checkoutForm.querySelector('input[name="phone"]');
 const cart = new Map();
 const featuredState = {
   quantity: 1,
@@ -1429,15 +1434,6 @@ async function checkoutCart() {
     return;
   }
 
-  if (!checkoutFormVisible) {
-    if (shouldShowUpsell()) {
-      openUpsell();
-      return;
-    }
-    setCheckoutFormVisible(true);
-    return;
-  }
-
   const formData = new FormData(checkoutForm);
   const fullAddress = String(formData.get("address") || "").trim();
   const customer = {
@@ -1498,8 +1494,13 @@ async function checkoutCart() {
   }
   customer.deliveryWhen = deliveryWhen;
 
+  // Point GPS exact si le client a géolocalisé : lien Maps pour le livreur.
+  const geoPinLabel = geoCoords
+    ? `📍 Position GPS : https://www.google.com/maps?q=${geoCoords.lat},${geoCoords.lng}`
+    : "";
+
   // Récap livraison en tête des notes (visible Telegram + email + admin).
-  customer.notes = [deliveryWhenLabel, deliveryTempLabel, customer.notes]
+  customer.notes = [deliveryWhenLabel, deliveryTempLabel, geoPinLabel, customer.notes]
     .filter(Boolean)
     .join("\n");
 
@@ -1750,6 +1751,51 @@ if ("BroadcastChannel" in window) {
 // recalculée par le serveur au paiement (check_promo_code fait foi).
 let appliedPromo = null;
 
+// Point GPS exact du client s'il a utilisé « Utiliser ma position ». Transmis
+// au livreur (lien Google Maps dans les notes). Effacé si l'adresse est
+// ressaisie à la main pour ne jamais envoyer un pin qui ne correspond plus.
+let geoCoords = null;
+
+function useMyLocation() {
+  if (!geoMessage) return;
+  const setGeoMsg = (text, kind) => {
+    geoMessage.textContent = text;
+    geoMessage.classList.toggle("is-valid", kind === "valid");
+    geoMessage.classList.toggle("is-error", kind === "error");
+  };
+  if (!("geolocation" in navigator)) {
+    setGeoMsg(t("geo_unsupported"), "error");
+    return;
+  }
+  setGeoMsg(t("geo_locating"), "");
+  if (geoLocateButton) geoLocateButton.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+      geoCoords = { lat: latitude, lng: longitude };
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+        const response = await fetch(url, { headers: { Accept: "application/json" } });
+        const data = await response.json();
+        // La valeur est posée en JS : cela ne déclenche pas l'event "input",
+        // donc geoCoords n'est pas effacé par le listener de saisie manuelle.
+        if (data && data.display_name && addressInput) addressInput.value = data.display_name;
+      } catch (error) {
+        console.warn(error);
+      }
+      setGeoMsg(t("geo_ok"), "valid");
+      if (geoLocateButton) geoLocateButton.disabled = false;
+    },
+    (error) => {
+      console.warn(error);
+      geoCoords = null;
+      setGeoMsg(error.code === error.PERMISSION_DENIED ? t("geo_denied") : t("geo_error"), "error");
+      if (geoLocateButton) geoLocateButton.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
 function cartSubtotal() {
   const items = [...cart.values()];
   return (
@@ -1769,6 +1815,29 @@ function resetPromo() {
     promoMessage.textContent = "";
     promoMessage.classList.remove("is-valid", "is-error");
   }
+}
+
+async function applyWelcomeFromBanner() {
+  if (promoInput) promoInput.value = "BIENVENUE10";
+  const phone = (phoneInput?.value || "").trim();
+  if (!phone) {
+    // Pas d'erreur rouge : on guide simplement vers le champ téléphone déjà obligatoire.
+    if (phoneInput) {
+      phoneInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      phoneInput.focus();
+    }
+    if (promoMessage) {
+      promoMessage.textContent = t("promo_no_phone");
+      promoMessage.classList.remove("is-valid", "is-error");
+    }
+    return;
+  }
+  await applyPromoCode();
+  // On fait défiler jusqu'à la remise pour que le client voie le −10 % appliqué.
+  const target = (cartDiscountRow && !cartDiscountRow.classList.contains("hidden"))
+    ? cartDiscountRow
+    : checkoutButton;
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 async function applyPromoCode() {
@@ -1795,7 +1864,7 @@ async function applyPromoCode() {
     return;
   }
 
-  const phone = (checkoutForm.querySelector('input[name="phone"]')?.value || "").trim();
+  const phone = (phoneInput?.value || "").trim();
 
   try {
     const result = await validatePromoCode(code, phone, subtotal);
@@ -1812,7 +1881,9 @@ async function applyPromoCode() {
         no_phone: "promo_no_phone",
         not_first_order: "promo_not_first",
       }[result?.reason] || "promo_invalid";
-      setMsg(t(reasonKey), "error");
+      // "Téléphone manquant" n'est pas une erreur (le champ est déjà obligatoire
+      // plus haut) : on l'affiche en info neutre, pas en rouge.
+      setMsg(t(reasonKey), result?.reason === "no_phone" ? "info" : "error");
     }
   } catch (error) {
     console.warn(error);
@@ -1845,11 +1916,20 @@ function renderCart() {
     }
   }
 
+  if (promoBanner) {
+    const showBanner = !appliedPromo && (items.length > 0 || menuCart.length > 0);
+    promoBanner.classList.toggle("hidden", !showBanner);
+  }
+
   if (!items.length && !menuCart.length) {
     cartItems.innerHTML = `<p class="empty-cart">${t("cart_empty")}</p>`;
     setCheckoutFormVisible(false);
     return;
   }
+
+  // Formulaire toujours affiché dès qu'il y a des articles : un seul clic sur
+  // « Finaliser » suffit (plus de double-clic ni d'écran d'upsell bloquant).
+  setCheckoutFormVisible(true);
 
   const menuLinesHtml = menuCart
     .map(
@@ -1892,7 +1972,7 @@ function renderCart() {
 
 function openCart() {
   closeProductModal();
-  if (!cart.size && !menuCart.length) setCheckoutFormVisible(false);
+  setCheckoutFormVisible(cart.size > 0 || menuCart.length > 0);
   cartPanel.classList.add("open");
   scrim.classList.add("open");
 }
@@ -2230,6 +2310,25 @@ document.querySelector("[data-checkout]").addEventListener("click", checkoutCart
 
 if (promoApplyButton) {
   promoApplyButton.addEventListener("click", applyPromoCode);
+}
+if (promoBanner) {
+  promoBanner.addEventListener("click", applyWelcomeFromBanner);
+}
+if (phoneInput) {
+  // Dès que le téléphone est renseigné, on applique automatiquement le code
+  // déjà saisi (ex : cliqué depuis le bandeau) — plus besoin de reclíquer.
+  phoneInput.addEventListener("change", () => {
+    if (!appliedPromo && promoInput && promoInput.value.trim()) applyPromoCode();
+  });
+}
+if (geoLocateButton) {
+  geoLocateButton.addEventListener("click", useMyLocation);
+}
+if (addressInput) {
+  // Saisie manuelle de l'adresse : le pin GPS auto n'est plus fiable.
+  addressInput.addEventListener("input", () => {
+    geoCoords = null;
+  });
 }
 if (promoInput) {
   // Toute modification du code invalide la remise déjà appliquée : il faut
