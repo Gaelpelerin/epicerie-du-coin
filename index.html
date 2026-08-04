@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot10" />
+  <link rel="stylesheet" href="styles.css?v=slot11" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -223,24 +223,6 @@
       </div>
       <div class="cart-footer">
         <form class="checkout-form hidden" data-checkout-form>
-          <label>
-            <span data-i18n="f_name">Prénom</span>
-            <input type="text" name="name" autocomplete="given-name" placeholder="Votre prénom" data-i18n-ph="f_name_ph" />
-          </label>
-          <label>
-            <span data-i18n="f_phone">Téléphone</span>
-            <input type="tel" name="phone" autocomplete="tel" placeholder="+33 ..." />
-          </label>
-          <label class="full-field">
-            <span data-i18n="f_address">Adresse de livraison</span>
-            <input type="text" name="address" autocomplete="street-address" placeholder="N° et rue, ville, résidence, chambre..." data-i18n-ph="f_address_ph" />
-            <button type="button" class="geo-btn" data-geo-locate data-i18n="geo_use">📍 Utiliser ma position</button>
-            <p class="geo-message" data-geo-message aria-live="polite"></p>
-          </label>
-          <label class="full-field">
-            <span data-i18n="f_email">Email (facultatif, pour recevoir votre reçu)</span>
-            <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" data-i18n-ph="news_email_ph" />
-          </label>
           <fieldset class="pay-choice full-field">
             <legend data-i18n="delivery_when">Quand souhaitez-vous être livré ?</legend>
             <div class="pay-options">
@@ -315,6 +297,25 @@
             </div>
             <p class="promo-message" data-promo-message aria-live="polite"></p>
           </div>
+          <p class="checkout-section" data-i18n="checkout_contact_heading">Vos coordonnées de livraison</p>
+          <label>
+            <span data-i18n="f_name">Prénom</span>
+            <input type="text" name="name" autocomplete="given-name" placeholder="Votre prénom" data-i18n-ph="f_name_ph" />
+          </label>
+          <label>
+            <span data-i18n="f_phone">Téléphone</span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="+33 ..." />
+          </label>
+          <label class="full-field">
+            <span data-i18n="f_address">Adresse de livraison</span>
+            <input type="text" name="address" autocomplete="street-address" placeholder="N° et rue, ville, résidence, chambre..." data-i18n-ph="f_address_ph" />
+            <button type="button" class="geo-btn" data-geo-locate data-i18n="geo_use">📍 Utiliser ma position</button>
+            <p class="geo-message" data-geo-message aria-live="polite"></p>
+          </label>
+          <label class="full-field">
+            <span data-i18n="f_email">Email (facultatif, pour recevoir votre reçu)</span>
+            <input type="email" name="email" autocomplete="email" placeholder="vous@exemple.fr" data-i18n-ph="news_email_ph" />
+          </label>
           <label class="full-field">
             <span data-i18n="f_notes">Notes</span>
             <textarea name="notes" rows="3" placeholder="Digicode, précision de livraison, allergie à signaler..." data-i18n-ph="f_notes_ph"></textarea>
@@ -390,8 +391,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot10"></script>
-  <script src="stock.js?v=slot10"></script>
-  <script src="script.js?v=slot10"></script>
+  <script src="i18n.js?v=slot11"></script>
+  <script src="stock.js?v=slot11"></script>
+  <script src="script.js?v=slot11"></script>
   </body>
 </html>
