@@ -1434,6 +1434,10 @@ async function checkoutCart() {
     return;
   }
 
+  // Tracking sur mesure : compte chaque clic « Payer » (panier non vide),
+  // puis la raison exacte du blocage si la validation échoue. Silent-fail.
+  logProductEvent("pay_click");
+
   const formData = new FormData(checkoutForm);
   const fullAddress = String(formData.get("address") || "").trim();
   const customer = {
@@ -1448,6 +1452,7 @@ async function checkoutCart() {
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
   if (!customer.name || !customer.phone || !fullAddress) {
+    logProductEvent("pay_blocked_fields");
     cartMessage.textContent = t("msg_fill_fields");
     return;
   }
@@ -1456,6 +1461,7 @@ async function checkoutCart() {
   // via les notes (visibles dans la notif Telegram + email + admin).
   const deliveryTemp = String(formData.get("deliveryTemp") || "");
   if (deliveryTemp !== "cold" && deliveryTemp !== "hot") {
+    logProductEvent("pay_blocked_temp");
     cartMessage.textContent = t("msg_choose_delivery_temp");
     return;
   }
@@ -1474,11 +1480,13 @@ async function checkoutCart() {
     const scheduledDate = String(formData.get("date") || "").trim();
     const scheduledSlot = String(formData.get("slot") || "").trim();
     if (!scheduledDate || !scheduledSlot) {
+      logProductEvent("pay_blocked_slot_missing");
       cartMessage.textContent = t("msg_fill_fields");
       return;
     }
     deliveryAt = new Date(`${scheduledDate}T${scheduledSlot}`);
     if (Number.isNaN(deliveryAt.getTime()) || deliveryAt < earliestDeliveryDate()) {
+      logProductEvent("pay_blocked_slot_soon");
       cartMessage.textContent = t("msg_slot_too_soon");
       return;
     }
@@ -1510,12 +1518,14 @@ async function checkoutCart() {
   const closure = closureForDate(deliveryAt);
   if (closure) {
     const windowLabel = `${formatClosureLabel(closure)}${closure.reason ? ` (${closure.reason})` : ""}`;
+    logProductEvent("pay_blocked_closure");
     cartMessage.textContent = t("msg_no_delivery", { window: windowLabel });
     return;
   }
   customer.deliveryAt = deliveryAt.toISOString();
 
   if (hasAlcohol && formData.get("alcoholAge") !== "on") {
+    logProductEvent("pay_blocked_age");
     cartMessage.textContent = t("msg_confirm_age");
     return;
   }
