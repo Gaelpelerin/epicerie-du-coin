@@ -1778,31 +1778,46 @@ function useMyLocation() {
     return;
   }
   setGeoMsg(t("geo_locating"), "");
+  logProductEvent("geo_click");
   if (geoLocateButton) geoLocateButton.disabled = true;
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const { latitude, longitude } = position.coords;
       geoCoords = { lat: latitude, lng: longitude };
+      let filled = false;
       try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
         const response = await fetch(url, { headers: { Accept: "application/json" } });
         const data = await response.json();
         // La valeur est posée en JS : cela ne déclenche pas l'event "input",
         // donc geoCoords n'est pas effacé par le listener de saisie manuelle.
-        if (data && data.display_name && addressInput) addressInput.value = data.display_name;
+        if (data && data.display_name && addressInput) {
+          addressInput.value = data.display_name;
+          filled = true;
+        }
       } catch (error) {
         console.warn(error);
       }
-      setGeoMsg(t("geo_ok"), "valid");
+      // Nominatim est un service gratuit, limité et faillible. S'il ne répond
+      // pas, on garde les coordonnées (utiles au livreur) mais on ne prétend
+      // pas avoir rempli l'adresse : sinon le client voit une coche verte
+      // au-dessus d'un champ vide, ne comprend pas, et abandonne.
+      setGeoMsg(filled ? t("geo_ok") : t("geo_partial"), filled ? "valid" : "");
+      logProductEvent(filled ? "geo_ok" : "geo_reverse_failed");
+      if (!filled && addressInput) addressInput.focus();
       if (geoLocateButton) geoLocateButton.disabled = false;
     },
     (error) => {
       console.warn(error);
       geoCoords = null;
-      setGeoMsg(error.code === error.PERMISSION_DENIED ? t("geo_denied") : t("geo_error"), "error");
+      const denied = error.code === error.PERMISSION_DENIED;
+      setGeoMsg(denied ? t("geo_denied") : t("geo_error"), "error");
+      logProductEvent(denied ? "geo_denied" : error.code === error.TIMEOUT ? "geo_timeout" : "geo_error");
       if (geoLocateButton) geoLocateButton.disabled = false;
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    // Position réseau plutôt que GPS : en intérieur et de nuit — c'est-à-dire
+    // l'usage réel du site — le GPS ne fixe pas et on tombait en timeout.
+    { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
   );
 }
 
@@ -2382,6 +2397,15 @@ document.querySelectorAll('[href="#packs"]').forEach((btn) => {
       packTab.classList.add("active");
       renderProducts("pack");
     }
+    document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth" });
+  });
+});
+
+// Les 3 cartes de services ressemblent à des boutons : Clarity remonte des
+// clics morts dessus. On les envoie vers le catalogue plutôt que de ne rien
+// faire.
+document.querySelectorAll(".service-strip article").forEach((card) => {
+  card.addEventListener("click", () => {
     document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth" });
   });
 });
