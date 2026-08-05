@@ -1940,6 +1940,9 @@ function renderCart() {
   // Formulaire toujours affiché dès qu'il y a des articles : un seul clic sur
   // « Finaliser » suffit (plus de double-clic ni d'écran d'upsell bloquant).
   setCheckoutFormVisible(true);
+  // Montant rappelé sur le bouton : grâce à la barre collante il reste visible
+  // en permanence, donc le client sait toujours ce qu'il va payer.
+  checkoutButton.textContent = `${t("checkout_send")} · ${formatPrice(totalPrice)}`;
 
   const menuLinesHtml = menuCart
     .map(

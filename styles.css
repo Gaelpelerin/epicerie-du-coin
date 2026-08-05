@@ -1674,8 +1674,23 @@ main {
   accent-color: var(--copper);
 }
 
+/* Barre de validation collée en bas du panier : le total et le bouton
+   « Finaliser » restent visibles pendant qu'on remplit le formulaire.
+   Sans ça, sur mobile, le bouton se trouve sous la zone Notes et le
+   clavier le masque complètement. */
+.cart-sticky-bar {
+  position: sticky;
+  z-index: 6;
+  bottom: -24px;
+  margin: 14px -24px -24px;
+  padding: 14px 24px 24px;
+  border-top: 1px solid var(--line);
+  background: #07110f;
+  box-shadow: 0 -16px 28px rgba(3, 7, 6, 0.9);
+}
+
 .cart-total {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .cart-total strong {
@@ -1684,8 +1699,8 @@ main {
 }
 
 .cart-message {
-  min-height: 22px;
-  margin: 12px 0 0;
+  min-height: 18px;
+  margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.4;
@@ -3141,6 +3156,14 @@ main {
     width: 100vw;
     padding: 16px;
     overflow-y: auto;
+  }
+
+  /* Le padding du panier passe à 16px : la barre collante doit suivre,
+     sinon elle déborde de 8px de chaque côté et crée un scroll horizontal. */
+  .cart-sticky-bar {
+    bottom: -16px;
+    margin: 12px -16px -16px;
+    padding: 12px 16px 16px;
   }
 
   .cart-items {
