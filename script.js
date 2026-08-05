@@ -1,5 +1,28 @@
 const PRODUCT_IMAGE_VERSION = "photos-1";
 
+// Les photos d'origine pèsent 22 Mo à elles seules : sur un téléphone en 4G la
+// page mettait une vingtaine de secondes à s'afficher. On sert donc des copies
+// WebP redimensionnées (webp/sm pour les vignettes, webp/lg pour la fiche
+// agrandie), en gardant les fichiers d'origine comme repli.
+const SUPPORTS_WEBP = (() => {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    return canvas.toDataURL("image/webp").startsWith("data:image/webp");
+  } catch (error) {
+    return false;
+  }
+})();
+
+function webpVariant(path, size) {
+  if (!SUPPORTS_WEBP || !path) return path;
+  const [file, query] = path.split("?");
+  const match = file.match(/^(assets|products)\/(.+)\.(?:jpe?g|png)$/i);
+  if (!match) return path;
+  return `webp/${size}/${match[1]}/${match[2]}.webp${query ? `?${query}` : ""}`;
+}
+
 const products = [
   {
     id: "quiche-lorraine",
@@ -1104,6 +1127,29 @@ function getProductCardImage(product) {
   return image;
 }
 
+// Si la copie WebP est absente, on revient au fichier d'origine.
+function useOriginalImage(img, original) {
+  if (!original || img.dataset.fallbackTried === "1") return;
+  img.dataset.fallbackTried = "1";
+  img.src = original;
+}
+
+// Repli en deux temps : si la copie WebP manque, on retente le fichier
+// d'origine ; si celui-ci manque aussi, on bascule sur l'icône du produit.
+function handleProductImageError(img, original) {
+  if (original && img.dataset.fallbackTried !== "1") {
+    img.dataset.fallbackTried = "1";
+    img.src = original;
+    return;
+  }
+  const wrapper = img.closest(".product-image");
+  if (wrapper) {
+    wrapper.classList.remove("has-photo");
+    wrapper.classList.add("has-icon");
+  }
+  img.remove();
+}
+
 function renderProductCardImage(product) {
   const image = getProductCardImage(product);
   const isUploadedPhoto = image.startsWith("products/");
@@ -1112,7 +1158,7 @@ function renderProductCardImage(product) {
 
   return `
     <div class="product-image has-photo${uploadedImageClass}" aria-hidden="true">
-      <img class="product-card-photo${uploadedPhotoClass}" src="${image}" alt="" loading="lazy" onerror="this.closest('.product-image').classList.remove('has-photo'); this.closest('.product-image').classList.add('has-icon'); this.remove();" />
+      <img class="product-card-photo${uploadedPhotoClass}" src="${webpVariant(image, "sm")}" alt="" loading="lazy" decoding="async" onerror="handleProductImageError(this, '${image}')" />
       <span class="product-icon-fallback">${product.icon}</span>
     </div>
   `;
@@ -1128,7 +1174,7 @@ function renderFeaturedProduct(product) {
     <article class="featured-product ${stock <= 0 ? "is-sold-out" : ""}" data-featured-card="${product.id}">
       ${stock <= 0 ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
       <div class="featured-gallery">
-        <img class="featured-main-image" src="${activeImage}" alt="${pName(product)}" />
+        <img class="featured-main-image" src="${webpVariant(activeImage, "sm")}" alt="${pName(product)}" decoding="async" onerror="useOriginalImage(this, '${activeImage}')" />
       </div>
       <div class="featured-details product-body">
         <h3>${pName(product)}</h3>
@@ -1157,7 +1203,7 @@ function renderProductModal(product) {
       <div class="modal-gallery">
         ${
           activeImage
-            ? `<img class="modal-main-image" src="${activeImage}" alt="${pName(product)}" />`
+            ? `<img class="modal-main-image" src="${webpVariant(activeImage, "lg")}" alt="${pName(product)}" decoding="async" onerror="useOriginalImage(this, '${activeImage}')" />`
             : `<div class="modal-main-image modal-icon-image" aria-hidden="true">${product.icon}</div>`
         }
         ${stock <= 0 ? `<div class="sold-out-ribbon modal-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
@@ -1168,7 +1214,7 @@ function renderProductModal(product) {
                   .map(
                     (image, index) => `
                       <button class="${image === activeImage ? "active" : ""}" type="button" data-featured-image="${image}" aria-label="${t("modal_photo_view_aria", { n: index + 1, name: pName(product) })}">
-                        <img src="${image}" alt="" />
+                        <img src="${webpVariant(image, "sm")}" alt="" loading="lazy" decoding="async" onerror="useOriginalImage(this, '${image}')" />
                       </button>
                     `
                   )
@@ -1397,7 +1443,7 @@ function renderUpsellList() {
     .map(
       (product) => `
       <div class="upsell-item">
-        <img class="upsell-item-photo" src="${getProductCardImage(product)}" alt="" loading="lazy" onerror="this.style.display='none'" />
+        <img class="upsell-item-photo" src="${webpVariant(getProductCardImage(product), "sm")}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />
         <h3>${pName(product)}</h3>
         <div class="upsell-item-foot">
           ${renderPromoPrice(product)}
