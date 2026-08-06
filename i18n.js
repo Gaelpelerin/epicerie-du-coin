@@ -809,8 +809,8 @@
       de: { name: "Pfirsich-Eistee", description: "Pfirsich-Eistee, kühl serviert." },
     },
     "oasis-tropical": {
-      en: { description: "Fruity drink served chilled." },
-      de: { description: "Fruchtiges Getränk, kühl serviert." },
+      en: { description: "Fruity orange-pineapple drink served chilled." },
+      de: { description: "Fruchtiges Orange-Ananas-Getränk, kühl serviert." },
     },
     orangina: {
       en: { description: "Sparkling orange drink." },

@@ -1,4 +1,4 @@
-const PRODUCT_IMAGE_VERSION = "photos-1";
+const PRODUCT_IMAGE_VERSION = "photos-2";
 
 // Les photos d'origine pèsent 22 Mo à elles seules : sur un téléphone en 4G la
 // page mettait une vingtaine de secondes à s'afficher. On sert donc des copies
@@ -422,14 +422,16 @@ const products = [
     description: "Thé glacé pêche servi frais.",
     price: 3.5,
     icon: "🥤",
+    images: ["products/ice-tea-peche.jpeg"],
   },
   {
     id: "oasis-tropical",
-    name: "Oasis Tropical",
+    name: "Tropico",
     category: "softs",
-    description: "Boisson fruitée servie fraîche.",
+    description: "Boisson fruitée orange-ananas servie fraîche.",
     price: 3.5,
     icon: "🥤",
+    images: ["products/oasis-tropical.jpeg"],
   },
   {
     id: "orangina",
@@ -465,6 +467,7 @@ const products = [
     description: "Limonade bio passion, servie fraîche.",
     price: 5.9,
     icon: "🥤",
+    images: ["products/lemonaid-passion.jpeg"],
   },
   {
     id: "lemonaid-ginger",
@@ -473,6 +476,7 @@ const products = [
     description: "Limonade bio ginger, servie fraîche.",
     price: 5.9,
     icon: "🥤",
+    images: ["products/lemonaid-ginger.jpeg"],
   },
   {
     id: "charitea-the-vert",
@@ -551,6 +555,7 @@ const products = [
     description: "Bière locale - vendue avec nourriture uniquement.",
     price: 5.9,
     icon: "🍺",
+    images: ["products/lorraine-peu-blond.jpeg"],
     alcohol: true,
   },
   {
@@ -1117,14 +1122,19 @@ function renderAllergens(product) {
   `;
 }
 
-function getProductCardImage(product) {
-  const image = product.images?.[0] || `products/${product.id}.jpeg`;
-
-  if (image.startsWith("products/") && !image.includes("?")) {
+// Quand on remplace une photo produit sans changer son nom de fichier, le
+// navigateur garde l'ancienne en cache. Le numéro de version dans l'URL le
+// force à la retélécharger.
+function withVersion(image) {
+  if (image && image.startsWith("products/") && !image.includes("?")) {
     return `${image}?v=${PRODUCT_IMAGE_VERSION}`;
   }
 
   return image;
+}
+
+function getProductCardImage(product) {
+  return withVersion(product.images?.[0] || `products/${product.id}.jpeg`);
 }
 
 // Si la copie WebP est absente, on revient au fichier d'origine.
@@ -1174,7 +1184,7 @@ function renderFeaturedProduct(product) {
     <article class="featured-product ${stock <= 0 ? "is-sold-out" : ""}" data-featured-card="${product.id}">
       ${stock <= 0 ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
       <div class="featured-gallery">
-        <img class="featured-main-image" src="${webpVariant(activeImage, "sm")}" alt="${pName(product)}" decoding="async" onerror="useOriginalImage(this, '${activeImage}')" />
+        <img class="featured-main-image" src="${webpVariant(withVersion(activeImage), "sm")}" alt="${pName(product)}" decoding="async" onerror="useOriginalImage(this, '${activeImage}')" />
       </div>
       <div class="featured-details product-body">
         <h3>${pName(product)}</h3>
@@ -1203,7 +1213,7 @@ function renderProductModal(product) {
       <div class="modal-gallery">
         ${
           activeImage
-            ? `<img class="modal-main-image" src="${webpVariant(activeImage, "lg")}" alt="${pName(product)}" decoding="async" onerror="useOriginalImage(this, '${activeImage}')" />`
+            ? `<img class="modal-main-image" src="${webpVariant(withVersion(activeImage), "lg")}" alt="${pName(product)}" decoding="async" onerror="useOriginalImage(this, '${activeImage}')" />`
             : `<div class="modal-main-image modal-icon-image" aria-hidden="true">${product.icon}</div>`
         }
         ${stock <= 0 ? `<div class="sold-out-ribbon modal-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
@@ -1214,7 +1224,7 @@ function renderProductModal(product) {
                   .map(
                     (image, index) => `
                       <button class="${image === activeImage ? "active" : ""}" type="button" data-featured-image="${image}" aria-label="${t("modal_photo_view_aria", { n: index + 1, name: pName(product) })}">
-                        <img src="${webpVariant(image, "sm")}" alt="" loading="lazy" decoding="async" onerror="useOriginalImage(this, '${image}')" />
+                        <img src="${webpVariant(withVersion(image), "sm")}" alt="" loading="lazy" decoding="async" onerror="useOriginalImage(this, '${image}')" />
                       </button>
                     `
                   )
