@@ -609,7 +609,6 @@
     bieres: { fr: "Bières", en: "Beers", de: "Biere" },
     vins: { fr: "Vins", en: "Wines", de: "Weine" },
     bulles: { fr: "Bulles", en: "Sparkling", de: "Schaumweine" },
-    apero: { fr: "Apéro", en: "Aperitifs", de: "Aperitif" },
     pack: { fr: "Packs", en: "Packs", de: "Pakete" },
   };
 
@@ -832,25 +831,17 @@
       en: { name: "Lemonaid ginger organic", description: "Organic ginger lemonade, served chilled." },
       de: { name: "Lemonaid Ingwer bio", description: "Bio-Ingwerlimonade, kühl serviert." },
     },
-    "charitea-the-vert": {
-      en: { name: "Charitea green tea organic", description: "Organic green tea served chilled." },
-      de: { name: "Charitea grüner Tee bio", description: "Bio-Grüntee, kühl serviert." },
+    "jus-goyave-litchi": {
+      en: { name: "Guava & lychee juice 25 cl", description: "Drink made from guava and lychee purées." },
+      de: { name: "Guaven-Litschi-Saft 25 cl", description: "Getränk aus Guaven- und Litschipüree." },
     },
-    "jus-pomme-artisanal": {
-      en: { name: "Artisanal apple juice 25 cl", description: "Premium artisanal juice." },
-      de: { name: "Handwerklicher Apfelsaft 25 cl", description: "Handwerklicher Premium-Saft." },
+    "jus-pomme-kiwi": {
+      en: { name: "Apple & kiwi juice 25 cl", description: "Apple and kiwi drink, 50% fruit." },
+      de: { name: "Apfel-Kiwi-Saft 25 cl", description: "Apfel-Kiwi-Getränk, 50 % Fruchtanteil." },
     },
-    "jus-orange-presse": {
-      en: { name: "Premium fresh orange juice 25 cl", description: "Premium fresh-pressed juice." },
-      de: { name: "Premium-Orangensaft frisch gepresst 25 cl", description: "Frisch gepresster Premium-Saft." },
-    },
-    "nectar-mirabelle": {
-      en: { name: "Artisanal mirabelle nectar 25 cl", description: "Artisanal mirabelle nectar." },
-      de: { name: "Handwerklicher Mirabellen-Nektar 25 cl", description: "Handwerklicher Mirabellen-Nektar." },
-    },
-    "jus-pomme-fruits-rouges": {
-      en: { name: "Apple & red berry juice 25 cl", description: "Premium apple and red berry juice." },
-      de: { name: "Apfel-Rotbeeren-Saft 25 cl", description: "Premium-Apfel-Rotbeeren-Saft." },
+    "jus-ananas-gingembre": {
+      en: { name: "Pineapple & ginger juice 25 cl", description: "Pineapple, apple, ginger and lime - 96% fruit." },
+      de: { name: "Ananas-Ingwer-Saft 25 cl", description: "Ananas, Apfel, Ingwer und Limette - 96 % Fruchtanteil." },
     },
     desperados: {
       en: { description: "Lager - sold with food only." },
@@ -892,10 +883,6 @@
       en: { description: "White wine - sold with food only." },
       de: { description: "Weißwein - nur mit Speisen erhältlich." },
     },
-    "pinot-noir": {
-      en: { description: "Red wine - sold with food only." },
-      de: { description: "Rotwein - nur mit Speisen erhältlich." },
-    },
     "cotes-du-rhone": {
       en: { description: "Red wine - sold with food only." },
       de: { description: "Rotwein - nur mit Speisen erhältlich." },
@@ -908,10 +895,6 @@
       en: { description: "UBY white wine - sold with food only." },
       de: { description: "UBY Weißwein - nur mit Speisen erhältlich." },
     },
-    "uby-4": {
-      en: { description: "UBY wine - sold with food only." },
-      de: { description: "UBY Wein - nur mit Speisen erhältlich." },
-    },
     prosecco: {
       en: { description: "Sparkling wine - sold with food only." },
       de: { description: "Schaumwein - nur mit Speisen erhältlich." },
@@ -919,18 +902,6 @@
     "champagne-brut": {
       en: { description: "Brut champagne - sold with food only." },
       de: { description: "Brut-Champagner - nur mit Speisen erhältlich." },
-    },
-    "gin-tonic": {
-      en: { name: "Ready-to-drink gin tonic 25 cl", description: "Ready-to-drink cocktail - sold with food only." },
-      de: { name: "Trinkfertiger Gin Tonic 25 cl", description: "Trinkfertiger Cocktail - nur mit Speisen erhältlich." },
-    },
-    spritz: {
-      en: { name: "Ready-to-drink spritz 25 cl", description: "Ready-to-drink cocktail - sold with food only." },
-      de: { name: "Trinkfertiger Spritz 25 cl", description: "Trinkfertiger Cocktail - nur mit Speisen erhältlich." },
-    },
-    mojito: {
-      en: { name: "Ready-to-drink mojito 25 cl", description: "Ready-to-drink cocktail - sold with food only." },
-      de: { name: "Trinkfertiger Mojito 25 cl", description: "Trinkfertiger Cocktail - nur mit Speisen erhältlich." },
     },
   };
 
