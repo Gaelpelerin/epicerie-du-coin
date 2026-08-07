@@ -1107,18 +1107,43 @@ main {
   border-bottom: 1px solid rgba(240, 162, 66, 0.34);
 }
 
+/* Le message est placé juste sous le bouton : sur mobile, le visiteur voit la
+   réponse à l'endroit exact où il vient de cliquer. Vide, il ne prend pas de place. */
 .newsletter-message {
-  min-height: 1.2em;
-  font-size: 0.86rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
   color: var(--muted);
+  text-align: left;
+  border-radius: 8px;
 }
 
 .newsletter-message.is-success {
   color: var(--copper-light);
+  padding: 10px 12px;
+  background: rgba(240, 162, 66, 0.12);
+  border: 1px solid rgba(240, 162, 66, 0.4);
 }
 
 .newsletter-message.is-error {
-  color: #f0a242;
+  color: #ffc27a;
+  padding: 10px 12px;
+  background: rgba(214, 92, 60, 0.16);
+  border: 1px solid rgba(214, 92, 60, 0.55);
+}
+
+/* Consentement manquant : on montre quoi corriger, pas seulement qu'il y a un souci. */
+.newsletter-consent.is-flagged {
+  color: var(--cream);
+  padding: 8px 10px;
+  margin: -8px -10px;
+  border-radius: 8px;
+  background: rgba(214, 92, 60, 0.16);
+  box-shadow: 0 0 0 1px rgba(214, 92, 60, 0.55);
+}
+
+.newsletter-consent.is-flagged input {
+  outline: 2px solid #d65c3c;
+  outline-offset: 2px;
 }
 
 @media (max-width: 560px) {

@@ -2470,6 +2470,19 @@ document.querySelectorAll(".service-strip article").forEach((card) => {
 const newsletterForm = document.querySelector("[data-newsletter-form]");
 if (newsletterForm) {
   const newsletterMessage = newsletterForm.querySelector("[data-newsletter-message]");
+  const newsletterConsent = newsletterForm.querySelector("[data-newsletter-consent]");
+
+  // Le message ne sert à rien s'il est hors écran : sur mobile le clavier ou le
+  // bas de page peuvent le masquer, on le ramène dans la vue.
+  function showNewsletterMessage(text, kind) {
+    newsletterMessage.textContent = text;
+    newsletterMessage.classList.add(kind);
+    const box = newsletterMessage.getBoundingClientRect();
+    if (box.top < 0 || box.bottom > window.innerHeight) {
+      newsletterMessage.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }
+
   newsletterForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const email = newsletterForm.email.value.trim();
@@ -2477,15 +2490,16 @@ if (newsletterForm) {
     const submitButton = newsletterForm.querySelector("button[type='submit']");
 
     newsletterMessage.classList.remove("is-error", "is-success");
+    newsletterConsent.classList.remove("is-flagged");
 
     if (!email) {
-      newsletterMessage.textContent = t("news_need_email");
-      newsletterMessage.classList.add("is-error");
+      showNewsletterMessage(t("news_need_email"), "is-error");
+      newsletterForm.email.focus();
       return;
     }
     if (!consent) {
-      newsletterMessage.textContent = t("news_need_consent");
-      newsletterMessage.classList.add("is-error");
+      showNewsletterMessage(t("news_need_consent"), "is-error");
+      newsletterConsent.classList.add("is-flagged");
       return;
     }
 
@@ -2493,24 +2507,20 @@ if (newsletterForm) {
     try {
       const result = await window.subscribeNewsletter(email, consent, "shop_footer");
       if (result && result.ok) {
-        if (result.status === "already_confirmed") {
-          newsletterMessage.textContent = t("news_already");
-        } else {
-          newsletterMessage.textContent = t("news_almost");
-        }
-        newsletterMessage.classList.add("is-success");
+        const done = result.status === "already_confirmed"
+          ? t("news_already")
+          : t("news_almost");
         newsletterForm.reset();
+        showNewsletterMessage(done, "is-success");
       } else {
         const reason = result && result.error === "invalid_email"
           ? t("news_invalid")
           : t("news_fail");
-        newsletterMessage.textContent = reason;
-        newsletterMessage.classList.add("is-error");
+        showNewsletterMessage(reason, "is-error");
       }
     } catch (error) {
       console.warn(error);
-      newsletterMessage.textContent = t("news_error");
-      newsletterMessage.classList.add("is-error");
+      showNewsletterMessage(t("news_error"), "is-error");
     } finally {
       submitButton.disabled = false;
     }
