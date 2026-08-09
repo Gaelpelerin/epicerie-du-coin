@@ -1548,8 +1548,16 @@ async function checkoutCart() {
     ? `📍 Position GPS : https://www.google.com/maps?q=${geoCoords.lat},${geoCoords.lng}`
     : "";
 
+  // Mode de paiement : sans cette ligne, rien ne distingue une commande déjà
+  // payée d'une commande à encaisser — ni dans Telegram, ni dans l'admin.
+  const paymentMethod = String(formData.get("payment") || "card");
+  const paymentLabel =
+    paymentMethod === "cash"
+      ? "💶 ESPÈCES — à encaisser à la livraison"
+      : "💳 Payé en ligne par carte (Stripe)";
+
   // Récap livraison en tête des notes (visible Telegram + email + admin).
-  customer.notes = [deliveryWhenLabel, deliveryTempLabel, geoPinLabel, customer.notes]
+  customer.notes = [paymentLabel, deliveryWhenLabel, deliveryTempLabel, geoPinLabel, customer.notes]
     .filter(Boolean)
     .join("\n");
 
@@ -1630,8 +1638,6 @@ async function checkoutCart() {
     ],
     num_items: items.reduce((sum, item) => sum + item.quantity, 0) + menuCartTotalQuantity(),
   });
-
-  const paymentMethod = String(formData.get("payment") || "card");
 
   // Paiement à la livraison (espèces) : on enregistre la commande directement
   // (RPC create_order_request → stock + notif Telegram), sans passer par Stripe.

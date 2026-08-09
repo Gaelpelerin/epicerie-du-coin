@@ -2656,6 +2656,9 @@ main {
   font-size: 0.82rem;
   color: var(--muted);
   font-style: italic;
+  /* Les notes portent un récap multi-lignes (paiement, créneau, chaud/froid, GPS,
+     message du client) : sans ceci, le HTML colle tout sur une seule ligne. */
+  white-space: pre-line;
 }
 
 .cancel-order-btn {

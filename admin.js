@@ -465,8 +465,8 @@ function renderSalesDashboard() {
                         <span>
                           ${orderStatusBadge(sale.status)}
                           ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                          ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
-                          ${sale.customer?.phone ? `<small>${sale.customer.phone}</small>` : ""}
+                          ${sale.customer?.name ? `<small>${packEscape(sale.customer.name)} · ${packEscape(sale.customer.address) || "adresse à confirmer"}</small>` : ""}
+                          ${sale.customer?.phone ? `<small>${packEscape(sale.customer.phone)}</small>` : ""}
                         </span>
                         <strong>${formatPrice(sale.total)} · ${sale.items.length} ligne(s)</strong>
                       </summary>
@@ -478,7 +478,7 @@ function renderSalesDashboard() {
                             )
                             .join("")}
                         </ul>
-                        ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${sale.customer.notes}</p>` : ""}
+                        ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${packEscape(sale.customer.notes)}</p>` : ""}
                         ${invoiceLink(sale)}
                         ${sale.orderId ? `<button class="cancel-order-btn" type="button" data-cancel-order="${sale.orderId}">Annuler / Restaurer le stock</button>` : ""}
                       </div>
@@ -552,8 +552,8 @@ function renderSalesHistory() {
                 ${sale.id ? `<strong class="sales-order-ref">${sale.id}</strong>` : ""}
                 ${orderStatusBadge(sale.status)}
                 ${new Date(sale.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                ${sale.customer?.name ? `<small>${sale.customer.name} · ${sale.customer.address || "adresse à confirmer"}</small>` : ""}
-                ${sale.customer?.phone ? `<small>${sale.customer.phone}</small>` : ""}
+                ${sale.customer?.name ? `<small>${packEscape(sale.customer.name)} · ${packEscape(sale.customer.address) || "adresse à confirmer"}</small>` : ""}
+                ${sale.customer?.phone ? `<small>${packEscape(sale.customer.phone)}</small>` : ""}
               </span>
               <strong>${formatPrice(sale.total)} · ${sale.items.length} ligne(s)</strong>
             </summary>
@@ -565,7 +565,7 @@ function renderSalesHistory() {
                   )
                   .join("")}
               </ul>
-              ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${sale.customer.notes}</p>` : ""}
+              ${sale.customer?.notes ? `<p class="sales-order-notes">Note : ${packEscape(sale.customer.notes)}</p>` : ""}
               <div class="sales-order-actions">
                 ${orderStatusButton(sale)}
                 <button class="ghost-btn" type="button" data-recap-index="${index}">Télécharger le récapitulatif (PDF)</button>
@@ -623,12 +623,12 @@ function downloadOrderRecap(sale) {
       <p class="meta">
         <strong>Récapitulatif</strong> ${sale.id || ""}<br />
         <strong>Date</strong> ${created}<br />
-        ${customer.name ? `<strong>Client</strong> ${customer.name}<br />` : ""}
-        ${customer.phone ? `<strong>Téléphone</strong> ${customer.phone}<br />` : ""}
-        ${customer.email ? `<strong>Email</strong> ${customer.email}<br />` : ""}
-        ${customer.address ? `<strong>Adresse</strong> ${customer.address}<br />` : ""}
+        ${customer.name ? `<strong>Client</strong> ${packEscape(customer.name)}<br />` : ""}
+        ${customer.phone ? `<strong>Téléphone</strong> ${packEscape(customer.phone)}<br />` : ""}
+        ${customer.email ? `<strong>Email</strong> ${packEscape(customer.email)}<br />` : ""}
+        ${customer.address ? `<strong>Adresse</strong> ${packEscape(customer.address)}<br />` : ""}
         ${delivery ? `<strong>Livraison</strong> ${delivery}<br />` : ""}
-        ${customer.notes ? `<strong>Note</strong> ${customer.notes}<br />` : ""}
+        ${customer.notes ? `<strong>Note</strong> ${packEscape(customer.notes).replace(/\n/g, "<br />")}<br />` : ""}
       </p>
       <table>
         <thead>
