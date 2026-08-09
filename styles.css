@@ -1596,6 +1596,45 @@ main {
   font-size: 0.78rem;
 }
 
+/* Les trois choix (quand / chaud-froid / paiement) sont déjà pré-répondus : repliés,
+   ils libèrent ~430 px sur mobile et les champs à remplir arrivent tout de suite. */
+.checkout-options-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 13px;
+  border: 1px solid rgba(240, 162, 66, 0.3);
+  border-radius: 10px;
+  background: rgba(240, 162, 66, 0.08);
+  color: var(--cream);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checkout-options-recap {
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.checkout-options-edit {
+  flex: none;
+  color: var(--copper-light);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.checkout-options {
+  display: grid;
+  gap: 12px;
+}
+
 .pay-choice {
   border: 1px solid rgba(240, 162, 66, 0.3);
   border-radius: 12px;

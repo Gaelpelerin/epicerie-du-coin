@@ -677,6 +677,9 @@ const asapNote = document.querySelector("[data-asap-note]");
 const deliveryHint = document.querySelector("[data-delivery-hint]");
 const alcoholConfirm = document.querySelector("[data-alcohol-confirm]");
 const reheatNote = document.querySelector("[data-reheat-note]");
+const checkoutOptions = document.querySelector("[data-checkout-options]");
+const checkoutOptionsToggle = document.querySelector("[data-checkout-options-toggle]");
+const checkoutOptionsRecap = document.querySelector("[data-checkout-options-recap]");
 const productModal = document.querySelector("[data-product-modal]");
 const productModalContent = document.querySelector("[data-product-modal-content]");
 const scrim = document.querySelector(".scrim");
@@ -797,6 +800,35 @@ function updateDeliveryWhen() {
   if (scheduled) initScheduleDefaults();
 }
 
+// Libellés courts des trois choix, pour la ligne récap quand ils sont repliés.
+const OPTION_RECAP_KEYS = {
+  asap: "opt_asap",
+  scheduled: "opt_scheduled",
+  hot: "opt_hot",
+  cold: "opt_cold",
+  card: "opt_card",
+  cash: "opt_cash",
+};
+
+// « 🚀 Au plus vite · 🔥 Chaude · 💳 Carte » : le client voit ses choix sans
+// avoir à faire défiler trois blocs déjà pré-répondus.
+function updateCheckoutOptionsRecap() {
+  const parts = ["deliveryWhen", "deliveryTemp", "payment"].map((name) => {
+    const checked = checkoutForm.querySelector(`input[name="${name}"]:checked`);
+    if (!checked) return "";
+    const icon = checked.closest(".pay-option")?.querySelector(".pay-icon")?.textContent || "";
+    return `${icon} ${t(OPTION_RECAP_KEYS[checked.value])}`.trim();
+  });
+  checkoutOptionsRecap.textContent = parts.filter(Boolean).join(" · ");
+}
+
+// Déplié aussi par le code quand une erreur vise un champ replié (créneau
+// manquant) : sinon le client lit un message sans voir le champ concerné.
+function setCheckoutOptionsOpen(open) {
+  checkoutOptions.classList.toggle("hidden", !open);
+  checkoutOptionsToggle.setAttribute("aria-expanded", String(open));
+}
+
 function setupDeliveryDateInput() {
   deliveryHint.textContent = t("delivery_hint_base");
   deliverySlotInput.addEventListener("change", rollDateForPastTime);
@@ -816,6 +848,14 @@ function setupDeliveryDateInput() {
   checkoutForm
     .querySelectorAll('input[name="deliveryTemp"]')
     .forEach((radio) => radio.addEventListener("change", updateReheatNote));
+
+  checkoutOptionsToggle.addEventListener("click", () => {
+    setCheckoutOptionsOpen(checkoutOptions.classList.contains("hidden"));
+  });
+  checkoutForm
+    .querySelectorAll('input[name="deliveryWhen"], input[name="deliveryTemp"], input[name="payment"]')
+    .forEach((radio) => radio.addEventListener("change", updateCheckoutOptionsRecap));
+  updateCheckoutOptionsRecap();
 }
 
 // Fermetures de livraison : créneaux où le client ne peut pas se faire livrer
@@ -1460,6 +1500,7 @@ async function checkoutCart() {
   const deliveryTemp = String(formData.get("deliveryTemp") || "");
   if (deliveryTemp !== "cold" && deliveryTemp !== "hot") {
     logProductEvent("pay_blocked_temp");
+    setCheckoutOptionsOpen(true);
     cartMessage.textContent = t("msg_choose_delivery_temp");
     return;
   }
@@ -1479,12 +1520,14 @@ async function checkoutCart() {
     const scheduledSlot = String(formData.get("slot") || "").trim();
     if (!scheduledDate || !scheduledSlot) {
       logProductEvent("pay_blocked_slot_missing");
+      setCheckoutOptionsOpen(true);
       cartMessage.textContent = t("msg_fill_fields");
       return;
     }
     deliveryAt = new Date(`${scheduledDate}T${scheduledSlot}`);
     if (Number.isNaN(deliveryAt.getTime()) || deliveryAt < earliestDeliveryDate()) {
       logProductEvent("pay_blocked_slot_soon");
+      setCheckoutOptionsOpen(true);
       cartMessage.textContent = t("msg_slot_too_soon");
       return;
     }
@@ -2555,6 +2598,7 @@ window.onI18nChange = function () {
   renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
   renderCart();
   renderDeliveryClosuresHint();
+  updateCheckoutOptionsRecap();
 };
 
 async function loadPromos() {

@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot18" />
+  <link rel="stylesheet" href="styles.css?v=slot19" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -234,6 +234,17 @@
       </div>
       <div class="cart-footer">
         <form class="checkout-form hidden" data-checkout-form>
+          <button
+            type="button"
+            class="checkout-options-toggle"
+            data-checkout-options-toggle
+            aria-expanded="false"
+            aria-controls="checkout-options"
+          >
+            <span class="checkout-options-recap" data-checkout-options-recap></span>
+            <span class="checkout-options-edit" data-i18n="options_edit">Modifier</span>
+          </button>
+          <div class="checkout-options hidden" id="checkout-options" data-checkout-options>
           <fieldset class="pay-choice full-field">
             <legend data-i18n="delivery_when">Quand souhaitez-vous être livré ?</legend>
             <div class="pay-options">
@@ -300,6 +311,7 @@
               </label>
             </div>
           </fieldset>
+          </div>
           <div class="promo-field full-field">
             <span class="promo-label" data-i18n="promo_label">Code promo</span>
             <div class="promo-row">
@@ -404,8 +416,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot18"></script>
-  <script src="stock.js?v=slot18"></script>
-  <script src="script.js?v=slot18"></script>
+  <script src="i18n.js?v=slot19"></script>
+  <script src="stock.js?v=slot19"></script>
+  <script src="script.js?v=slot19"></script>
   </body>
 </html>
