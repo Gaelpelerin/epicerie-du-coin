@@ -1691,8 +1691,27 @@ function refreshShopFromStock() {
   renderCart();
 }
 
+// La dispo d'un pack n'est pas stockée : list_packs() la recalcule à partir du
+// stock de ses ingrédients. Mais product_stock contient aussi une ligne par pack
+// (écrite à sa création), que refreshRemoteStock() réinjecte en remplaçant tout
+// le cache — un pack vendable finissait « Épuisé », un pack non assemblable
+// restait commandable. On réapplique donc le calcul après chaque rafraîchissement.
+async function refreshPackStock() {
+  if (typeof listRemotePacks !== "function") return;
+  try {
+    const remotePacks = await listRemotePacks();
+    if (!Array.isArray(remotePacks)) return;
+    remotePacks.forEach((pack) => {
+      if (pack && pack.id) setProductStock(pack.id, Math.max(0, Number(pack.stock) || 0));
+    });
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
 async function refreshStockThenShop() {
   await refreshRemoteStock();
+  await refreshPackStock();
   refreshShopFromStock();
 }
 

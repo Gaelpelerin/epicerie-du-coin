@@ -115,6 +115,81 @@ function renderStockTable() {
     .join("");
 }
 
+// En base les catégories sont des slugs ; le fournisseur lit le libellé boutique.
+const CATEGORY_LABELS = {
+  quiches: "Quiches",
+  snacking: "Snacking",
+  pizzas: "Pizzas",
+  "pizza-pincees": "Pizzas pincées",
+  panwichs: "Panwichs",
+  douceurs: "Douceurs",
+  softs: "Softs",
+  eaux: "Eaux",
+  jus: "Jus premium",
+  bieres: "Bières",
+  vins: "Vins",
+  bulles: "Bulles",
+};
+
+function toCsvCell(value) {
+  const text = String(value ?? "");
+  return /[";\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+// État des stocks à envoyer au fournisseur, en un clic et sans pop-up.
+// Séparateur « ; » et BOM UTF-8 : sans les deux, Excel en français empile tout
+// dans une seule colonne et casse les accents (« Quiche épinards »).
+// Les packs sont exclus : leur stock est calculé depuis leurs ingrédients,
+// un fournisseur ne les livre pas.
+function downloadStockReport() {
+  const stock = loadStock();
+  const rows = productsForAdmin
+    .filter(([, , , category]) => category !== "pack")
+    .map(([id, name, price, category]) => ({
+      category: CATEGORY_LABELS[category] || category,
+      name,
+      quantity: stock[id] ?? 0,
+      price,
+    }))
+    .sort(
+      (a, b) =>
+        a.category.localeCompare(b.category, "fr") || a.name.localeCompare(b.name, "fr")
+    );
+
+  const table = [
+    ["Catégorie", "Produit", "Stock", "État", "Prix de vente TTC"],
+    ...rows.map((row) => [
+      row.category,
+      row.name,
+      row.quantity,
+      row.quantity <= 0 ? "Épuisé" : row.quantity <= 3 ? "Stock faible" : "Disponible",
+      String(row.price).replace(".", ","),
+    ]),
+  ];
+
+  const csv = "﻿" + table.map((cells) => cells.map(toCsvCell).join(";")).join("\r\n");
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `etat-stocks-epicerie-du-coin-${stamp}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Révocation différée : révoquer dans la foulée annule le téléchargement sur Safari.
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+  const outOfStock = rows.filter((row) => row.quantity <= 0).length;
+  errorMessage.textContent = "";
+  successMessage.textContent = `État des stocks téléchargé — ${rows.length} produits, dont ${outOfStock} épuisés.`;
+}
+
 function startOfDay(date = new Date()) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -788,6 +863,8 @@ document.querySelector("[data-stock-save]").addEventListener("click", () => {
   saveStockInputs();
   renderStockTable();
 });
+
+document.querySelector("[data-stock-export]").addEventListener("click", downloadStockReport);
 
 stockTable.addEventListener("input", (event) => {
   const input = event.target.closest("[data-stock-input]");
