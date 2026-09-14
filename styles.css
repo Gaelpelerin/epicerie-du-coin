@@ -4612,3 +4612,30 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Mobile : les produits avant le decor -------------------------------
+   Mesure Clarity sur 30 jours : 81 % des visiteurs mobiles ne depassaient
+   pas 25 % de la page, alors que le catalogue commence a 1312 px du haut
+   sur une page de 9717 px. Ils repartaient sans avoir vu un seul produit.
+   Sous 680 px, le catalogue remonte donc juste apres les boutons d'action
+   et la banniere est raccourcie. L'ordre desktop reste inchange. */
+@media (max-width: 680px) {
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+  .main-actions   { order: 1; }
+  .catalogue      { order: 2; }
+  .doors          { order: 3; }
+  .service-strip  { order: 4; }
+  .allergen-panel { order: 5; }
+  .notice         { order: 6; }
+  .newsletter     { order: 7; }
+  .legal-footer   { order: 8; }
+
+  .hero-cover { margin-top: 16px; }
+  .hero-cover img {
+    max-height: 32vh;
+    aspect-ratio: auto;
+  }
+}
