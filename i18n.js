@@ -157,7 +157,7 @@
       msg_unavailable: "{name} est indisponible.",
       msg_stock_limited: "Stock limité : {n} disponible pour {name}.",
       msg_fill_fields:
-        "Merci de compléter nom, téléphone, adresse, jour et heure de livraison.",
+        "Il manque votre prénom, votre téléphone ou votre adresse de livraison.",
       msg_slot_too_soon:
         "Choisissez un créneau au moins 30 minutes après votre commande, le temps de préparer et livrer.",
       msg_no_delivery: "Pas de livraison possible {window}. Merci de choisir un autre créneau.",
@@ -352,7 +352,7 @@
       msg_unavailable: "{name} is unavailable.",
       msg_stock_limited: "Limited stock: {n} available for {name}.",
       msg_fill_fields:
-        "Please fill in name, phone, address, delivery day and time.",
+        "Your first name, phone number or delivery address is missing.",
       msg_slot_too_soon:
         "Choose a slot at least 1 hour after your order, to allow time to prepare and deliver.",
       msg_no_delivery: "No delivery available {window}. Please choose another slot.",
@@ -547,7 +547,7 @@
       msg_unavailable: "{name} ist nicht verfügbar.",
       msg_stock_limited: "Begrenzter Bestand: {n} verfügbar für {name}.",
       msg_fill_fields:
-        "Bitte Name, Telefon, Adresse, Liefertag und -uhrzeit angeben.",
+        "Es fehlen Ihr Vorname, Ihre Telefonnummer oder Ihre Lieferadresse.",
       msg_slot_too_soon:
         "Wählen Sie einen Zeitpunkt mindestens 1 Stunde nach Ihrer Bestellung, für Zubereitung und Lieferung.",
       msg_no_delivery: "Keine Lieferung möglich {window}. Bitte wählen Sie einen anderen Zeitpunkt.",

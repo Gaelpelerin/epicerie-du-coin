@@ -669,6 +669,10 @@ const cartCount = document.querySelector("[data-cart-count]");
 const cartTotal = document.querySelector("[data-cart-total]");
 const cartMessage = document.querySelector("[data-cart-message]");
 const checkoutForm = document.querySelector("[data-checkout-form]");
+// Le surlignage rouge disparait des que le client corrige le champ.
+checkoutForm?.addEventListener("input", (event) => {
+  event.target.classList?.remove("field-error");
+});
 const deliveryDateInput = checkoutForm.querySelector('input[name="date"]');
 const deliverySlotInput = checkoutForm.querySelector('input[name="slot"]');
 const deliveryWhenRadios = checkoutForm.querySelectorAll('input[name="deliveryWhen"]');
@@ -1492,6 +1496,20 @@ async function checkoutCart() {
   if (!customer.name || !customer.phone || !fullAddress) {
     logProductEvent("pay_blocked_fields");
     cartMessage.textContent = t("msg_fill_fields");
+    // Sans ce qui suit, le clic ne produisait aucun effet visible : le bouton
+    // flotte en bas de l'ecran, les champs sont plus haut, et le message seul
+    // passait inapercu. 32 tentatives de paiement sur 72 s'arretaient ici.
+    // On surligne les champs vides, on amene le premier a l'ecran, on y place
+    // le curseur, puis on laisse le navigateur afficher son propre message.
+    const missing = ["name", "phone", "address"]
+      .map((field) => checkoutForm.elements[field])
+      .filter((input) => input && !input.value.trim());
+    missing.forEach((input) => input.classList.add("field-error"));
+    if (missing[0]) {
+      missing[0].scrollIntoView({ block: "center", behavior: "smooth" });
+      missing[0].focus({ preventScroll: true });
+    }
+    checkoutForm.reportValidity();
     return;
   }
 

@@ -323,15 +323,15 @@
           <p class="checkout-section" data-i18n="checkout_contact_heading">Vos coordonnées de livraison</p>
           <label>
             <span data-i18n="f_name">Prénom</span>
-            <input type="text" name="name" autocomplete="given-name" placeholder="Votre prénom" data-i18n-ph="f_name_ph" />
+            <input type="text" name="name" autocomplete="given-name" placeholder="Votre prénom" data-i18n-ph="f_name_ph" required />
           </label>
           <label>
             <span data-i18n="f_phone">Téléphone</span>
-            <input type="tel" name="phone" autocomplete="tel" placeholder="+33 ..." />
+            <input type="tel" name="phone" autocomplete="tel" placeholder="+33 ..." required />
           </label>
           <label class="full-field">
             <span data-i18n="f_address">Adresse de livraison</span>
-            <input type="text" name="address" autocomplete="street-address" placeholder="N° et rue, ville, résidence, chambre..." data-i18n-ph="f_address_ph" />
+            <input type="text" name="address" autocomplete="street-address" placeholder="N° et rue, ville, résidence, chambre..." data-i18n-ph="f_address_ph" required />
             <button type="button" class="geo-btn" data-geo-locate data-i18n="geo_use">📍 Utiliser ma position</button>
             <p class="geo-message" data-geo-message aria-live="polite"></p>
           </label>

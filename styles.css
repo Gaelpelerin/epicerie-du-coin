@@ -4639,3 +4639,13 @@ main {
     aspect-ratio: auto;
   }
 }
+
+/* Champ de commande laisse vide : le refus doit se voir la ou il se produit,
+   pas seulement dans une ligne de texte sous le bouton. */
+.checkout-form input.field-error {
+  border-color: #e0674f;
+  box-shadow: 0 0 0 3px rgba(224, 103, 79, 0.22);
+}
+.checkout-form input.field-error::placeholder {
+  color: rgba(224, 103, 79, 0.75);
+}
