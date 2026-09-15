@@ -8,8 +8,12 @@
  * Seule la colonne "availability" est touchee. Les prix, titres, images et
  * liens restent la propriete du CSV, qui n'est pas regenere.
  *
- * Regle : quantite > 0 -> in stock ; quantite = 0 -> out of stock ;
- * produit absent de la table -> etat du CSV inchange (on ne devine pas).
+ * Regle : "in stock" exige DEUX conditions, une quantite > 0 ET une fiche
+ * produit sur le site. Certains articles ont du stock physique sans figurer
+ * au catalogue web (pas encore de photo) : ils sont invendables en ligne et
+ * doivent rester en rupture cote Meta, sans quoi la pub envoie le client
+ * vers une page ou le produit n'existe pas.
+ * Produit absent de la table de stock -> etat du CSV inchange (on ne devine pas).
  */
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -35,6 +39,12 @@ const stock = new Map(
   (await res.json()).map((r) => [String(r.product_id), Number(r.quantity) || 0])
 );
 if (stock.size === 0) throw new Error("Table product_stock vide : synchro interrompue par securite.");
+
+// Les produits reellement proposes a la vente, tels que le site les declare.
+const sellable = new Set(
+  [...readFileSync("script.js", "utf8").matchAll(/\bid:\s*"([a-z0-9-]+)"/g)].map((m) => m[1])
+);
+if (sellable.size === 0) throw new Error("Aucun produit lu dans script.js : synchro interrompue par securite.");
 
 /** Decoupe une ligne CSV en respectant les guillemets. */
 function splitCsvLine(line) {
@@ -63,11 +73,14 @@ const updated = lines.map((line, i) => {
   const id = cells[0].replace(/^"|"$/g, "");
   if (!stock.has(id)) return line;
 
-  const wanted = stock.get(id) > 0 ? "in stock" : "out of stock";
+  const wanted = stock.get(id) > 0 && sellable.has(id) ? "in stock" : "out of stock";
   const current = cells[AVAILABILITY].replace(/^"|"$/g, "");
   if (current === wanted) return line;
 
-  changes.push(`${id} : ${current} -> ${wanted} (stock ${stock.get(id)})`);
+  const why = stock.get(id) === 0
+    ? "rupture"
+    : sellable.has(id) ? `stock ${stock.get(id)}` : "absent du catalogue du site";
+  changes.push(`${id} : ${current} -> ${wanted} (${why})`);
   cells[AVAILABILITY] = `"${wanted}"`;
   return cells.join(",");
 });
