@@ -477,6 +477,25 @@ async function listRemotePacks() {
   return response.json();
 }
 
+// Bandeau « Les plus commandés » : classement calculé côté serveur à partir des
+// vraies commandes. Renvoie [] plutôt que d'échouer — le bandeau est un bonus,
+// il ne doit jamais empêcher la boutique de s'afficher.
+async function listTopProducts(days = 90, limit = 10) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_top_products`, {
+      method: "POST",
+      headers: supabaseHeaders,
+      body: JSON.stringify({ p_days: days, p_limit: limit }),
+    });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    return Array.isArray(rows) ? rows : [];
+  } catch (error) {
+    console.warn(error);
+    return [];
+  }
+}
+
 // Packs persos : liste admin (tous les packs + stock, PIN requis).
 async function adminListPacks(pin) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_packs`, {

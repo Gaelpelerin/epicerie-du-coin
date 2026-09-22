@@ -404,6 +404,86 @@ main {
   gap: 24px;
 }
 
+/* Bandeau « Les plus commandés » : une seule rangée qui défile, placée avant les
+   onglets pour donner un point d'entrée à qui ne sait pas quoi choisir. Compact
+   (≈ 150 px) pour ne pas repousser le catalogue sous la ligne de flottaison. */
+.top-sellers {
+  margin: 4px 0 18px;
+}
+
+.top-sellers-title {
+  margin: 0 0 8px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--copper-light);
+  text-transform: none;
+}
+
+.top-sellers-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* L'animation du défilement est confiée au CSS : le navigateur la désactive
+     tout seul si le visiteur a demandé des animations réduites. */
+  scroll-behavior: smooth;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.top-sellers-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.top-seller-card {
+  flex: 0 0 auto;
+  width: 132px;
+  scroll-snap-align: start;
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  border: 1px solid rgba(240, 162, 66, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.top-seller-card img {
+  width: 100%;
+  height: 74px;
+  object-fit: cover;
+  display: block;
+}
+
+.top-seller-body {
+  display: grid;
+  gap: 1px;
+  padding: 0 8px 8px;
+}
+
+.top-seller-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
+  /* Deux lignes maxi : au-delà, toutes les cartes se désalignent. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.top-seller-price {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--copper-light);
+}
+
 .category-tabs {
   display: flex;
   flex-wrap: wrap;

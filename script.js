@@ -23,6 +23,10 @@ function webpVariant(path, size) {
   return `webp/${size}/${match[1]}/${match[2]}.webp${query ? `?${query}` : ""}`;
 }
 
+// ⚠️ Les prix sont vérifiés côté serveur contre la table Supabase
+// catalog_products avant tout paiement. Un prix modifié ou un produit ajouté ici
+// sans être reporté là-bas bloque la commande (message « prix mis à jour ») et
+// déclenche une alerte Telegram.
 const products = [
   {
     id: "quiche-lorraine",
@@ -1597,8 +1601,19 @@ async function checkoutCart() {
     return;
   }
 
+  // Code promo saisi mais jamais validé : « Appliquer » non cliqué, ou téléphone
+  // rempli par la saisie automatique du navigateur, qui ne déclenche pas l'événement
+  // « change » censé appliquer le code. Sans ceci la remise est perdue EN SILENCE :
+  // le code part vide, le client paie plein tarif et aucun message ne l'avertit.
+  if (!appliedPromo && promoInput && promoInput.value.trim()) {
+    await applyPromoCode();
+  }
+
   const productTotal = items.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
-  const totalPrice = productTotal + menuCartTotalPrice();
+  // Remise déduite ici aussi : c'est ce total qui est mémorisé pour la page
+  // « Merci » et le message WhatsApp, qui annonçaient jusqu'ici le plein tarif.
+  const subtotalBeforePromo = productTotal + menuCartTotalPrice();
+  const totalPrice = Math.max(subtotalBeforePromo - promoDiscountAmount(subtotalBeforePromo), 0);
   const menuLines = menuCart.map(
     (line) =>
       `- ${line.qty} x ${line.label} (${formatPrice(line.price)}) : ${line.plat.name} + ${line.boisson.name} + ${line.donut.name}`
@@ -1677,7 +1692,9 @@ async function checkoutCart() {
       window.location.href = "merci.html?mode=cash";
     } catch (error) {
       console.warn(error);
-      cartMessage.textContent = t("msg_order_failed");
+      // Refus du serveur sur les prix : le plus souvent un panier ouvert avant un
+      // changement de prix ou la fin d'une promo — recharger suffit.
+      cartMessage.textContent = isPriceMismatch(error) ? t("msg_price_changed") : t("msg_order_failed");
     }
     return;
   }
@@ -1698,10 +1715,18 @@ async function checkoutCart() {
         : t("msg_payment_failed");
       // Réaligne l'affichage sur le stock réel (badges « Rupture »).
       refreshStockThenShop();
+    } else if (isPriceMismatch(error)) {
+      cartMessage.textContent = t("msg_price_changed");
     } else {
       cartMessage.textContent = t("msg_payment_failed");
     }
   }
+}
+
+// Carte : create-checkout renvoie { error: "price_mismatch" }.
+// Espèces : le RPC lève « price_mismatch:[…] », repris dans le texte de l'erreur.
+function isPriceMismatch(error) {
+  return String(error?.message || "").includes("price_mismatch");
 }
 
 function refreshShopFromStock() {
@@ -1791,6 +1816,77 @@ async function translateAndRegisterPacks(packs) {
 // et on les fusionne dans le catalogue (filtre « Packs »). Tout le reste
 // (rendu, panier, paiement) fonctionne ensuite via products[] sans changement.
 const customPackIds = new Set();
+
+// ── Bandeau « Les plus commandés » ───────────────────────────────────────────
+// Classement réel (RPC list_top_products) : aucun entretien, il suit les ventes.
+// On n'affiche que des produits du catalogue, avec photo et en stock — mettre en
+// avant une rupture ferait fuir le client au lieu de l'aider.
+const topSellers = document.querySelector("[data-top-sellers]");
+const topSellersRail = document.querySelector("[data-top-sellers-rail]");
+let topSellersTimer = null;
+
+async function loadTopSellers() {
+  if (!topSellers || !topSellersRail || typeof listTopProducts !== "function") return;
+
+  const ranking = await listTopProducts(90, 10);
+  const shown = ranking
+    .map((row) => products.find((p) => p.id === (row.product_id || row.id)))
+    .filter((p) => p && p.images?.length && getProductStock(p.id) > 0);
+
+  // Moins de 4 produits : le bandeau ferait vide et daterait la boutique.
+  if (shown.length < 4) {
+    topSellers.classList.add("hidden");
+    return;
+  }
+
+  topSellersRail.innerHTML = shown
+    .map(
+      (product) => `
+        <button type="button" class="top-seller-card" data-top-seller="${product.id}">
+          <img src="${webpVariant(product.images[0], "sm")}" alt="${pName(product)}" loading="lazy" />
+          <span class="top-seller-body">
+            <span class="top-seller-name">${pName(product)}</span>
+            <span class="top-seller-price">${formatPrice(getEffectivePrice(product))}</span>
+          </span>
+        </button>`
+    )
+    .join("");
+
+  topSellers.classList.remove("hidden");
+  startTopSellersAutoScroll();
+}
+
+// Défilement doux qui s'arrête définitivement dès que le client touche le
+// bandeau : une animation qui reprend la main pendant qu'on lit est pénible.
+function startTopSellersAutoScroll() {
+  if (topSellersTimer) clearInterval(topSellersTimer);
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const stop = () => {
+    clearInterval(topSellersTimer);
+    topSellersTimer = null;
+  };
+  ["pointerdown", "touchstart", "wheel", "focusin"].forEach((evt) =>
+    topSellersRail.addEventListener(evt, stop, { once: true, passive: true })
+  );
+
+  topSellersTimer = setInterval(() => {
+    if (document.hidden) return;
+    const card = topSellersRail.querySelector(".top-seller-card");
+    if (!card) return stop();
+    const step = card.offsetWidth + 12;
+    const end = topSellersRail.scrollWidth - topSellersRail.clientWidth - 4;
+    const next = topSellersRail.scrollLeft >= end ? 0 : topSellersRail.scrollLeft + step;
+    topSellersRail.scrollLeft = next;
+  }, 4000);
+}
+
+if (topSellersRail) {
+  topSellersRail.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-top-seller]");
+    if (card) openProductModal(card.dataset.topSeller);
+  });
+}
 
 async function loadCustomPacks() {
   if (typeof listRemotePacks !== "function") return;
@@ -2669,7 +2765,7 @@ renderCart();
 setupDeliveryDateInput();
 // On charge d'abord le stock central (réécrit tout le cache), PUIS les packs
 // (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
-refreshStockThenShop().then(loadCustomPacks);
+refreshStockThenShop().then(loadCustomPacks).then(loadTopSellers);
 loadDeliveryClosures();
 loadPromos();
 loadUpsell();

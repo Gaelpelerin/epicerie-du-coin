@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot22" />
+  <link rel="stylesheet" href="styles.css?v=slot23" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -127,6 +127,15 @@
             <p class="eyebrow" data-i18n="cat_eyebrow">Catalogue</p>
             <h2 data-i18n="cat_title">Vos essentiels gourmands</h2>
           </div>
+
+          <!-- Bandeau « Top ventes » : rempli depuis les vraies commandes (RPC
+               list_top_products). Masqué tant qu'il n'y a pas assez de données. -->
+          <section class="top-sellers hidden" data-top-sellers aria-labelledby="top-sellers-title">
+            <h3 class="top-sellers-title" id="top-sellers-title" data-i18n="top_sellers_title">
+              Les plus commandés
+            </h3>
+            <div class="top-sellers-rail" data-top-sellers-rail tabindex="0"></div>
+          </section>
 
           <div class="category-tabs" role="tablist" aria-label="Catégories produits">
             <button class="active" type="button" data-filter="all" data-i18n-cat="all">Tout</button>
@@ -416,8 +425,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot22"></script>
-  <script src="stock.js?v=slot22"></script>
-  <script src="script.js?v=slot22"></script>
+  <script src="i18n.js?v=slot23"></script>
+  <script src="stock.js?v=slot23"></script>
+  <script src="script.js?v=slot23"></script>
   </body>
 </html>
