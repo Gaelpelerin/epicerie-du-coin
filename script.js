@@ -1729,7 +1729,49 @@ function isPriceMismatch(error) {
   return String(error?.message || "").includes("price_mismatch");
 }
 
+// ── Vente d'alcool ───────────────────────────────────────────────────────────
+// Tant que la licence à emporter n'est pas délivrée, la vente d'alcool est une
+// infraction à toute heure : les produits alcoolisés sont retirés du catalogue.
+// Le serveur refuse de toute façon ces commandes ; ici, c'est pour que le client
+// ne voie jamais un produit qu'il ne peut pas acheter.
+let alcoholSalesEnabled = true;
+
+async function loadShopSettings() {
+  if (typeof getShopSettings !== "function") return;
+  const settings = await getShopSettings();
+  if (settings && typeof settings.alcohol_sales === "boolean") {
+    alcoholSalesEnabled = settings.alcohol_sales;
+  }
+}
+
+function applyAlcoholPolicy() {
+  if (alcoholSalesEnabled) return;
+  for (let i = products.length - 1; i >= 0; i -= 1) {
+    if (products[i].alcohol) products.splice(i, 1);
+  }
+}
+
+// Un onglet sans aucun produit est un cul-de-sac : il envoie le client sur une
+// page vide. Vrai pour les alcools retirés, mais aussi pour les packs, dont le
+// seul actif contient de la bière.
+function hideEmptyCategoryTabs() {
+  document.querySelectorAll("[data-filter]").forEach((tab) => {
+    const cat = tab.dataset.filter;
+    if (cat === "all") return;
+    const vide = !products.some((p) => p.category === cat);
+    tab.classList.toggle("hidden", vide);
+    if (vide && tab.classList.contains("active")) {
+      tab.classList.remove("active");
+      document.querySelector('[data-filter="all"]')?.classList.add("active");
+    }
+  });
+}
+
 function refreshShopFromStock() {
+  // Appliqué à chaque rendu : les packs et les produits créés depuis l'admin
+  // arrivent après le démarrage, et peuvent eux aussi contenir de l'alcool.
+  applyAlcoholPolicy();
+  hideEmptyCategoryTabs();
   renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
   renderCart();
 }
@@ -2833,7 +2875,12 @@ renderCart();
 setupDeliveryDateInput();
 // On charge d'abord le stock central (réécrit tout le cache), PUIS les packs
 // (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
-refreshStockThenShop().then(loadCustomPacks).then(loadExtraProducts).then(loadTopSellers);
+// Le réglage d'abord : il décide si les produits alcoolisés sont affichés.
+loadShopSettings()
+  .then(refreshStockThenShop)
+  .then(loadCustomPacks)
+  .then(loadExtraProducts)
+  .then(loadTopSellers);
 loadDeliveryClosures();
 loadPromos();
 loadUpsell();

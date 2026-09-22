@@ -1300,6 +1300,21 @@ main {
 }
 
 /* Onglet Produits de l'admin : liste + formulaire de création. */
+.alcohol-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(224, 103, 79, 0.5);
+  background: rgba(224, 103, 79, 0.1);
+}
+.alcohol-switch.is-on { border-color: rgba(240, 162, 66, 0.4); background: rgba(240, 162, 66, 0.08); }
+.alcohol-switch span { display: grid; gap: 3px; max-width: 640px; }
+.alcohol-switch small { color: var(--muted); font-size: 0.78rem; line-height: 1.4; }
+
 .products-manager { display: grid; gap: 18px; }
 .product-list { display: grid; gap: 10px; }
 

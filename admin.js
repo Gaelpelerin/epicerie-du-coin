@@ -1573,6 +1573,7 @@ const PRODUCT_ALLERGENS = [
 
 const productsManager = document.querySelector("[data-products-manager]");
 let extraProductsData = [];
+let alcoholSalesOn = true; // réglage serveur, relu à l'ouverture de l'onglet
 let productFormState = null; // { id?, image } — l'édition en cours
 
 function productFormHtml(p) {
@@ -1651,12 +1652,30 @@ function renderProductsManager() {
     ? extraProductsData.find((p) => p.id === productFormState.id) || {}
     : {};
 
+  const alcoolHtml = `
+    <div class="alcohol-switch ${alcoholSalesOn ? "is-on" : "is-off"}">
+      <span>
+        <strong>Vente d'alcool : ${alcoholSalesOn ? "AUTORISÉE" : "COUPÉE"}</strong>
+        <small>${alcoholSalesOn
+          ? "Bières, vins et bulles sont en vente. Le serveur les refuse tout de même entre 22 h et 8 h (permis de vente la nuit)."
+          : "Bières, vins et bulles sont retirés de la boutique. À réactiver seulement une fois la licence à emporter délivrée par la mairie."}</small>
+      </span>
+      <button class="ghost-btn" type="button" data-alcohol-toggle>${alcoholSalesOn ? "Couper la vente" : "Réactiver"}</button>
+    </div>`;
+
   productsManager.innerHTML = `
+    ${alcoolHtml}
     <div class="product-list">${liste}</div>
     ${productFormHtml(enEdition)}`;
 }
 
 async function openProductsPanel() {
+  try {
+    const reglages = await getShopSettings();
+    if (reglages && typeof reglages.alcohol_sales === "boolean") alcoholSalesOn = reglages.alcohol_sales;
+  } catch (error) {
+    console.warn(error);
+  }
   try {
     const list = await adminListExtraProducts(adminSessionPin);
     extraProductsData = Array.isArray(list) ? list : [];
@@ -1671,6 +1690,23 @@ async function openProductsPanel() {
 
 if (productsManager) {
   productsManager.addEventListener("click", async (event) => {
+    const alcool = event.target.closest("[data-alcohol-toggle]");
+    if (alcool) {
+      const activer = !alcoholSalesOn;
+      if (activer && !window.confirm(
+        "Réactiver la vente d'alcool ?\n\nÀ ne faire QUE si la mairie t'a délivré la licence à emporter. Sans elle, la vente est une infraction à toute heure.")) return;
+      try {
+        await adminSetAlcoholSales(adminSessionPin, activer);
+        successMessage.textContent = activer
+          ? "Vente d'alcool réactivée."
+          : "Vente d'alcool coupée : les produits alcoolisés sont retirés de la boutique.";
+        await openProductsPanel();
+      } catch (error) {
+        errorMessage.textContent = String(error.message || error);
+      }
+      return;
+    }
+
     const modifier = event.target.closest("[data-product-edit]");
     const basculer = event.target.closest("[data-product-toggle]");
     const supprimer = event.target.closest("[data-product-delete]");

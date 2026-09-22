@@ -496,6 +496,27 @@ async function listTopProducts(days = 90, limit = 10) {
   }
 }
 
+// Réglages publics de la boutique (aujourd'hui : vente d'alcool autorisée ou non).
+// En cas d'échec on ne renvoie rien : l'appelant garde son réglage par défaut.
+async function getShopSettings() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_shop_settings`, {
+      method: "POST",
+      headers: supabaseHeaders,
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.warn(error);
+    return null;
+  }
+}
+
+async function adminSetAlcoholSales(pin, enabled) {
+  return callAdminRpc("admin_set_alcohol_sales", { p_pin: pin, p_enabled: enabled });
+}
+
 // Produits créés depuis l'admin (table extra_products). Comme pour le bandeau
 // des ventes, un échec ne doit pas empêcher la boutique de s'afficher.
 async function listExtraProducts() {
