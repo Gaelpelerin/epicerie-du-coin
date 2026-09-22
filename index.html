@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot24" />
+  <link rel="stylesheet" href="styles.css?v=slot25" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -159,7 +159,7 @@
 
         <section class="allergen-panel" aria-label="Légende allergènes">
           <p class="eyebrow" data-i18n="allergen_eyebrow">Allergènes</p>
-          <h2 data-i18n="allergen_title">Légende à valider avant publication</h2>
+          <h2 data-i18n="allergen_title">Repères allergènes</h2>
           <div class="allergen-legend">
             <span data-i18n-allergen="Gluten">Gluten</span>
             <span data-i18n-allergen="Œufs">Œufs</span>
@@ -175,8 +175,8 @@
             <span data-i18n-allergen="Arachides">Arachides</span>
             <span data-i18n-allergen="Mollusques">Mollusques</span>
           </div>
-          <p data-i18n="allergen_note">
-            Les allergènes affichés sont une base de travail issue du flyer. Avant toute mise en ligne publique, ils doivent être confirmés avec les fiches produits ou fournisseurs.
+          <p data-i18n-html="allergen_note">
+            Les pictogrammes de chaque fiche produit signalent les allergènes présents. Ils sont donnés à titre indicatif : en cas d'allergie, appelez-nous au <a href="tel:+33675748449">06 75 74 84 49</a> avant de commander, nous vérifions la composition avec la fiche du fabricant.
           </p>
         </section>
 
@@ -215,6 +215,19 @@
             </form>
           </div>
         </section>
+        <!-- Contact bien visible : sans lui, un client bloqué par un bug ou une
+             question sur un produit n'a aucun moyen de joindre la boutique. -->
+        <section class="contact-strip" aria-labelledby="contact-strip-title">
+          <p class="contact-strip-title" id="contact-strip-title" data-i18n="contact_title">
+            Une question, un souci sur le site ?
+          </p>
+          <div class="contact-strip-links">
+            <a class="contact-phone" href="tel:+33675748449">📞 06 75 74 84 49</a>
+            <a href="https://wa.me/33675748449" target="_blank" rel="noopener">💬 WhatsApp</a>
+            <a href="mailto:contact@epicerieducoin.fr">✉️ contact@epicerieducoin.fr</a>
+          </div>
+        </section>
+
         <footer class="legal-footer">
           <a href="mentions-legales.html" data-i18n="footer_legal">Mentions légales</a>
           <a href="cgv.html" data-i18n="footer_cgv">CGV</a>
@@ -425,8 +438,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot24"></script>
-  <script src="stock.js?v=slot24"></script>
-  <script src="script.js?v=slot24"></script>
+  <script src="i18n.js?v=slot25"></script>
+  <script src="stock.js?v=slot25"></script>
+  <script src="script.js?v=slot25"></script>
   </body>
 </html>

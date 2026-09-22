@@ -1234,6 +1234,54 @@ main {
   }
 }
 
+/* Bandeau de contact : joignable sans quitter la page, y compris quand le site
+   coince — c'est le seul recours du client si quelque chose ne marche pas. */
+.contact-strip {
+  margin: 30px 0 10px;
+  padding: 16px 18px;
+  border: 1px solid rgba(240, 162, 66, 0.25);
+  border-radius: 14px;
+  background: rgba(240, 162, 66, 0.06);
+  text-align: center;
+}
+
+.contact-strip-title {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--cream);
+}
+
+.contact-strip-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+}
+
+.contact-strip-links a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--copper-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.contact-strip-links a:hover,
+.contact-strip-links a:focus-visible {
+  text-decoration: underline;
+}
+
+.contact-phone {
+  font-size: 1.05rem;
+}
+
+.allergen-panel a {
+  color: var(--copper-light);
+  font-weight: 700;
+}
+
 .legal-footer {
   display: flex;
   flex-wrap: wrap;

@@ -47,9 +47,10 @@
       cat_eyebrow: "Catalogue",
       cat_title: "Vos essentiels gourmands",
       allergen_eyebrow: "Allergènes",
-      allergen_title: "Légende à valider avant publication",
+      contact_title: "Une question, un souci sur le site ?",
+      allergen_title: "Repères allergènes",
       allergen_note:
-        "Les allergènes affichés sont une base de travail issue du flyer. Avant toute mise en ligne publique, ils doivent être confirmés avec les fiches produits ou fournisseurs.",
+        "Les pictogrammes de chaque fiche produit signalent les allergènes présents. Ils sont donnés à titre indicatif : en cas d'allergie, appelez-nous au <a href=\"tel:+33675748449\">06 75 74 84 49</a> avant de commander, nous vérifions la composition avec la fiche du fabricant.",
       notice_title: "Vente d'alcool réglementée",
       notice_text:
         "Les boissons alcoolisées sont désactivées tant que la licence de vente à emporter n'est pas confirmée. L'abus d'alcool est dangereux pour la santé.",
@@ -244,9 +245,10 @@
       cat_eyebrow: "Catalogue",
       cat_title: "Your gourmet essentials",
       allergen_eyebrow: "Allergens",
-      allergen_title: "Legend to be confirmed before publication",
+      contact_title: "A question, or a problem with the site?",
+      allergen_title: "Allergen guide",
       allergen_note:
-        "The allergens shown are a working draft taken from the flyer. Before any public release, they must be confirmed against the product sheets or suppliers.",
+        "The icons on each product card flag the allergens it contains. They are indicative only: if you have an allergy, call us on <a href=\"tel:+33675748449\">+33 6 75 74 84 49</a> before ordering and we will check the exact composition against the manufacturer's sheet.",
       notice_title: "Regulated alcohol sales",
       notice_text:
         "Alcoholic drinks are disabled until the takeaway licence is confirmed. Excessive alcohol consumption is dangerous for your health.",
@@ -441,9 +443,10 @@
       cat_eyebrow: "Katalog",
       cat_title: "Ihre Feinkost-Essentials",
       allergen_eyebrow: "Allergene",
-      allergen_title: "Legende vor Veröffentlichung zu bestätigen",
+      contact_title: "Eine Frage oder ein Problem mit der Website?",
+      allergen_title: "Allergen-Übersicht",
       allergen_note:
-        "Die angezeigten Allergene sind eine Arbeitsgrundlage aus dem Flyer. Vor jeder öffentlichen Veröffentlichung müssen sie anhand der Produktblätter oder Lieferanten bestätigt werden.",
+        "Die Symbole auf jeder Produktkarte weisen auf enthaltene Allergene hin. Sie dienen nur zur Orientierung: Bei einer Allergie rufen Sie uns bitte vor der Bestellung unter <a href=\"tel:+33675748449\">+33 6 75 74 84 49</a> an – wir prüfen die genaue Zusammensetzung anhand des Herstellerdatenblatts.",
       notice_title: "Reglementierter Alkoholverkauf",
       notice_text:
         "Alkoholische Getränke sind deaktiviert, solange die Lizenz für den Außer-Haus-Verkauf nicht bestätigt ist. Übermäßiger Alkoholkonsum ist gesundheitsschädlich.",
