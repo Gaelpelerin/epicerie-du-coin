@@ -1024,6 +1024,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
     }
     if (button.dataset.adminView === "history") renderSalesHistory();
     if (button.dataset.adminView === "manual") renderManualPanel();
+    if (button.dataset.adminView === "produits") openProductsPanel();
     if (button.dataset.adminView === "packs") openPackPanel();
     if (button.dataset.adminView === "closures") openClosuresPanel();
     if (button.dataset.adminView === "promos") openPromosPanel();
@@ -1208,6 +1209,136 @@ function maxAssemblable(stock) {
     const available = stock[component.product_id] ?? 0;
     return Math.min(min, Math.floor(available / component.quantity));
   }, Infinity);
+}
+
+// ── Recadrage photo ──────────────────────────────────────────────────────────
+// Une photo de téléphone est verticale et mal cadrée ; la vignette produit, elle,
+// est un rectangle 4/3 rempli en plein cadre. Sans recadrage, le client voit un
+// bout de table ou un produit coupé. Renvoie une data URI JPEG, comme les packs.
+const CROP_WIDTH = 1000;
+const CROP_HEIGHT = 750; // 4/3, le format de la vignette produit
+
+const cropper = document.querySelector("[data-cropper]");
+const cropperFrame = document.querySelector("[data-cropper-frame]");
+const cropperImage = document.querySelector("[data-cropper-image]");
+const cropperZoom = document.querySelector("[data-cropper-zoom]");
+let cropState = null;
+
+function cropperApply() {
+  const { frameW, frameH, baseScale, zoom } = cropState;
+  const scale = baseScale * zoom;
+  const largeur = cropperImage.naturalWidth * scale;
+  const hauteur = cropperImage.naturalHeight * scale;
+  // L'image doit toujours couvrir le cadre : on borne le déplacement.
+  cropState.x = Math.min(0, Math.max(frameW - largeur, cropState.x));
+  cropState.y = Math.min(0, Math.max(frameH - hauteur, cropState.y));
+  cropperImage.style.width = `${largeur}px`;
+  cropperImage.style.height = `${hauteur}px`;
+  cropperImage.style.transform = `translate(${cropState.x}px, ${cropState.y}px)`;
+}
+
+function openImageCropper(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      let pret = false;
+      // Rouvrir l'outil avec la MÊME photo ne redéclenche pas « onload » (source
+      // identique, image déjà en cache) : sans ce garde-fou, le cadre restait figé.
+      const initialiser = () => {
+        if (pret) return;
+        pret = true;
+        // On affiche AVANT de mesurer : dans une modale masquée, le cadre fait
+        // 0 px et tous les calculs de zoom partiraient d'une taille inventée.
+        cropper.classList.remove("hidden");
+        const rect = cropperFrame.getBoundingClientRect();
+        const frameW = rect.width || 320;
+        const frameH = rect.height || frameW * (CROP_HEIGHT / CROP_WIDTH);
+        // Échelle minimale pour que l'image couvre le cadre au zoom 1.
+        const baseScale = Math.max(
+          frameW / cropperImage.naturalWidth,
+          frameH / cropperImage.naturalHeight
+        );
+        cropState = { frameW, frameH, baseScale, zoom: 1, x: 0, y: 0, resolve };
+        cropState.x = (frameW - cropperImage.naturalWidth * baseScale) / 2;
+        cropState.y = (frameH - cropperImage.naturalHeight * baseScale) / 2;
+        cropperZoom.value = "100";
+        cropperApply();
+      };
+      cropperImage.onload = initialiser;
+      cropperImage.onerror = reject;
+      cropperImage.src = reader.result;
+      if (cropperImage.complete && cropperImage.naturalWidth) initialiser();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function closeCropper(dataUrl) {
+  cropper.classList.add("hidden");
+  const resolve = cropState?.resolve;
+  cropState = null;
+  if (resolve) resolve(dataUrl || null);
+}
+
+if (cropper) {
+  cropperZoom.addEventListener("input", () => {
+    if (!cropState) return;
+    const ancien = cropState.zoom;
+    const nouveau = Number(cropperZoom.value) / 100;
+    // Zoom centré sur le milieu du cadre, sinon l'image s'échappe sur un bord.
+    const centreX = cropState.frameW / 2;
+    const centreY = cropState.frameH / 2;
+    cropState.x = centreX - ((centreX - cropState.x) * nouveau) / ancien;
+    cropState.y = centreY - ((centreY - cropState.y) * nouveau) / ancien;
+    cropState.zoom = nouveau;
+    cropperApply();
+  });
+
+  let drag = null;
+  cropperFrame.addEventListener("pointerdown", (event) => {
+    if (!cropState) return;
+    drag = { x: event.clientX, y: event.clientY };
+    cropperFrame.setPointerCapture(event.pointerId);
+  });
+  cropperFrame.addEventListener("pointermove", (event) => {
+    if (!drag || !cropState) return;
+    cropState.x += event.clientX - drag.x;
+    cropState.y += event.clientY - drag.y;
+    drag = { x: event.clientX, y: event.clientY };
+    cropperApply();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((evt) =>
+    cropperFrame.addEventListener(evt, () => {
+      drag = null;
+    })
+  );
+
+  document.querySelector("[data-cropper-validate]").addEventListener("click", () => {
+    if (!cropState) return;
+    const scale = cropState.baseScale * cropState.zoom;
+    const canvas = document.createElement("canvas");
+    canvas.width = CROP_WIDTH;
+    canvas.height = CROP_HEIGHT;
+    // On redessine la portion visible du cadre, à la taille finale.
+    canvas.getContext("2d").drawImage(
+      cropperImage,
+      -cropState.x / scale,
+      -cropState.y / scale,
+      cropState.frameW / scale,
+      cropState.frameH / scale,
+      0,
+      0,
+      CROP_WIDTH,
+      CROP_HEIGHT
+    );
+    closeCropper(canvas.toDataURL("image/jpeg", 0.82));
+  });
+
+  document.querySelector("[data-cropper-cancel]").addEventListener("click", () => closeCropper(null));
+  cropper.addEventListener("click", (event) => {
+    if (event.target === cropper) closeCropper(null);
+  });
 }
 
 // Redimensionne une photo dans le navigateur → data URI JPEG (~800px) stockée en base.
@@ -1424,6 +1555,220 @@ async function reloadPackRecipe() {
     console.error(error);
     errorMessage.textContent = "Impossible de charger la recette du pack.";
   }
+}
+
+// ── Onglet « Produits » ──────────────────────────────────────────────────────
+// Créer un produit sans toucher au code : il part en base (extra_products) et
+// la boutique le charge au démarrage, comme les packs. Photo recadrée en 4/3.
+const PRODUCT_CATEGORIES = [
+  ["quiches", "Quiches"], ["snacking", "Snacking"], ["pizzas", "Pizzas"],
+  ["pizza-pincees", "Pizzas pincées"], ["panwichs", "Panwichs"], ["douceurs", "Douceurs"],
+  ["softs", "Softs"], ["eaux", "Eaux"], ["jus", "Jus premium"],
+  ["bieres", "Bières"], ["vins", "Vins"], ["bulles", "Bulles"],
+];
+const PRODUCT_ALLERGENS = [
+  "Gluten", "Œufs", "Lait", "Fruits à coque", "Soja", "Sésame", "Moutarde",
+  "Céleri", "Sulfites", "Poisson", "Lupin", "Arachides", "Mollusques",
+];
+
+const productsManager = document.querySelector("[data-products-manager]");
+let extraProductsData = [];
+let productFormState = null; // { id?, image } — l'édition en cours
+
+function productFormHtml(p) {
+  const estNouveau = !p.id;
+  const photo = productFormState?.image ?? p.image ?? "";
+  return `
+    <form class="product-form" data-product-form>
+      <input type="hidden" data-product-field="id" value="${packEscape(p.id || "")}" />
+      <p class="product-form-title">${estNouveau ? "Nouveau produit" : "Modifier « " + packEscape(p.name) + " »"}</p>
+
+      <label>Nom *<input type="text" data-product-field="name" value="${packEscape(p.name || "")}" required /></label>
+
+      <label>Catégorie *
+        <select data-product-field="category">
+          ${PRODUCT_CATEGORIES.map(([id, label]) =>
+            `<option value="${id}" ${p.category === id ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+      </label>
+
+      <label class="product-form-wide">Ingrédients et poids
+        <textarea data-product-field="description" rows="2"
+          placeholder="200 g - farine, beurre, sucre.">${packEscape(p.description || "")}</textarea>
+      </label>
+
+      <label>Prix (€) *<input type="number" min="0.01" step="0.01" data-product-field="price" value="${p.price ?? ""}" required /></label>
+      <label>Stock<input type="number" min="0" step="1" data-product-field="stock" value="${p.stock ?? 0}" /></label>
+      <label>Icône<input type="text" maxlength="4" data-product-field="icon" value="${packEscape(p.icon || "🛒")}" /></label>
+
+      <fieldset class="product-allergens product-form-wide">
+        <legend>Allergènes</legend>
+        ${PRODUCT_ALLERGENS.map((a) => `
+          <label class="product-allergen">
+            <input type="checkbox" data-product-allergen="${packEscape(a)}"
+              ${(p.allergens || []).includes(a) ? "checked" : ""} /> ${a}
+          </label>`).join("")}
+      </fieldset>
+
+      <label class="product-form-wide product-alcohol">
+        <input type="checkbox" data-product-field="alcohol" ${p.alcohol ? "checked" : ""} />
+        Contient de l'alcool (age confirmé à la commande)
+      </label>
+
+      <label class="product-form-wide">Photo
+        <input type="file" accept="image/*" data-product-photo />
+      </label>
+      <div class="product-photo-preview ${photo ? "" : "hidden"}" data-product-photo-preview>
+        ${photo ? `<img src="${photo}" alt="Aperçu de la photo" />` : ""}
+      </div>
+
+      <div class="admin-actions product-form-wide">
+        <button class="primary-btn" type="submit">${estNouveau ? "Créer le produit" : "Enregistrer"}</button>
+        ${estNouveau ? "" : '<button class="ghost-btn" type="button" data-product-cancel>Annuler</button>'}
+      </div>
+    </form>`;
+}
+
+function renderProductsManager() {
+  if (!productsManager) return;
+  const liste = extraProductsData.length
+    ? extraProductsData.map((p) => `
+        <div class="product-row ${p.active ? "" : "is-off"}">
+          <span class="product-row-photo">${p.image ? `<img src="${p.image}" alt="" />` : (p.icon || "🛒")}</span>
+          <span class="product-row-main">
+            <strong>${packEscape(p.name)}</strong>
+            <small>${formatPrice(Number(p.price))} · stock ${p.stock ?? 0} · ${packEscape(p.category)}${p.active ? "" : " · retiré de la vente"}</small>
+          </span>
+          <span class="product-row-actions">
+            <button class="ghost-btn" type="button" data-product-edit="${packEscape(p.id)}">Modifier</button>
+            <button class="ghost-btn" type="button" data-product-toggle="${packEscape(p.id)}">${p.active ? "Retirer" : "Remettre"}</button>
+            <button class="ghost-btn" type="button" data-product-delete="${packEscape(p.id)}">Supprimer</button>
+          </span>
+        </div>`).join("")
+    : '<p class="admin-hint">Aucun produit créé depuis l\'admin pour l\'instant. Les 65 produits d\'origine restent gérés dans le code.</p>';
+
+  const enEdition = productFormState?.id
+    ? extraProductsData.find((p) => p.id === productFormState.id) || {}
+    : {};
+
+  productsManager.innerHTML = `
+    <div class="product-list">${liste}</div>
+    ${productFormHtml(enEdition)}`;
+}
+
+async function openProductsPanel() {
+  try {
+    const list = await adminListExtraProducts(adminSessionPin);
+    extraProductsData = Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error(error);
+    extraProductsData = [];
+    errorMessage.textContent = "Chargement des produits impossible.";
+  }
+  productFormState = null;
+  renderProductsManager();
+}
+
+if (productsManager) {
+  productsManager.addEventListener("click", async (event) => {
+    const modifier = event.target.closest("[data-product-edit]");
+    const basculer = event.target.closest("[data-product-toggle]");
+    const supprimer = event.target.closest("[data-product-delete]");
+    const annuler = event.target.closest("[data-product-cancel]");
+
+    if (annuler) {
+      productFormState = null;
+      renderProductsManager();
+      return;
+    }
+    if (modifier) {
+      productFormState = { id: modifier.dataset.productEdit };
+      renderProductsManager();
+      productsManager.querySelector("[data-product-form]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (basculer) {
+      const produit = extraProductsData.find((p) => p.id === basculer.dataset.productToggle);
+      if (!produit) return;
+      try {
+        // Photo omise : la fonction garde celle déjà enregistrée.
+        await adminSaveExtraProduct(adminSessionPin, { ...produit, image: "", active: !produit.active });
+        successMessage.textContent = produit.active ? "Produit retiré de la vente." : "Produit remis en vente.";
+        await openProductsPanel();
+      } catch (error) {
+        errorMessage.textContent = String(error.message || error);
+      }
+      return;
+    }
+    if (supprimer) {
+      const produit = extraProductsData.find((p) => p.id === supprimer.dataset.productDelete);
+      if (!window.confirm(`Supprimer définitivement « ${produit?.name || ""} » ? Son stock sera effacé aussi.`)) return;
+      try {
+        await adminDeleteExtraProduct(adminSessionPin, supprimer.dataset.productDelete);
+        successMessage.textContent = "Produit supprimé.";
+        await openProductsPanel();
+      } catch (error) {
+        errorMessage.textContent = String(error.message || error);
+      }
+    }
+  });
+
+  // Photo : on passe par le recadrage, jamais par le fichier brut.
+  productsManager.addEventListener("change", async (event) => {
+    const champ = event.target.closest("[data-product-photo]");
+    if (!champ || !champ.files?.[0]) return;
+    try {
+      const recadree = await openImageCropper(champ.files[0]);
+      champ.value = "";
+      if (!recadree) return;
+      productFormState = { ...(productFormState || {}), image: recadree };
+      const apercu = productsManager.querySelector("[data-product-photo-preview]");
+      apercu.innerHTML = `<img src="${recadree}" alt="Aperçu de la photo" />`;
+      apercu.classList.remove("hidden");
+    } catch (error) {
+      errorMessage.textContent = "Photo illisible.";
+    }
+  });
+
+  productsManager.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.target.closest("[data-product-form]");
+    if (!form) return;
+    const champ = (nom) => form.querySelector(`[data-product-field="${nom}"]`);
+    const produit = {
+      id: champ("id").value || undefined,
+      name: champ("name").value.trim(),
+      category: champ("category").value,
+      description: champ("description").value.trim(),
+      price: Number(champ("price").value),
+      stock: Number(champ("stock").value) || 0,
+      icon: champ("icon").value.trim() || "🛒",
+      alcohol: champ("alcohol").checked,
+      image: productFormState?.image || "",
+      allergens: [...form.querySelectorAll("[data-product-allergen]")]
+        .filter((c) => c.checked)
+        .map((c) => c.dataset.productAllergen),
+      active: true,
+    };
+
+    if (!produit.name || !(produit.price > 0)) {
+      errorMessage.textContent = "Nom et prix sont obligatoires.";
+      return;
+    }
+
+    errorMessage.textContent = "";
+    successMessage.textContent = "Enregistrement…";
+    try {
+      const res = await adminSaveExtraProduct(adminSessionPin, produit);
+      successMessage.textContent = res?.created
+        ? `Produit créé : il est en ligne immédiatement.`
+        : "Produit mis à jour.";
+      await openProductsPanel();
+    } catch (error) {
+      successMessage.textContent = "";
+      errorMessage.textContent = String(error.message || error);
+    }
+  });
 }
 
 async function openPackPanel() {

@@ -496,6 +496,50 @@ async function listTopProducts(days = 90, limit = 10) {
   }
 }
 
+// Produits créés depuis l'admin (table extra_products). Comme pour le bandeau
+// des ventes, un échec ne doit pas empêcher la boutique de s'afficher.
+async function listExtraProducts() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/list_extra_products`, {
+      method: "POST",
+      headers: supabaseHeaders,
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    return Array.isArray(rows) ? rows : [];
+  } catch (error) {
+    console.warn(error);
+    return [];
+  }
+}
+
+// Côté admin (PIN requis) : lister, enregistrer, supprimer.
+async function adminListExtraProducts(pin) {
+  return callAdminRpc("admin_list_extra_products", { p_pin: pin });
+}
+
+async function adminSaveExtraProduct(pin, product) {
+  return callAdminRpc("admin_save_extra_product", { p_pin: pin, p_product: product });
+}
+
+async function adminDeleteExtraProduct(pin, id) {
+  return callAdminRpc("admin_delete_extra_product", { p_pin: pin, p_id: id });
+}
+
+async function callAdminRpc(name, payload) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Action impossible.");
+  }
+  return response.json();
+}
+
 // Packs persos : liste admin (tous les packs + stock, PIN requis).
 async function adminListPacks(pin) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_packs`, {

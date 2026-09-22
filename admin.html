@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=nav-fix2" />
+    <link rel="stylesheet" href="styles.css?v=nav-fix3" />
   </head>
   <body class="admin-page">
     <main class="admin-shell">
@@ -38,6 +38,7 @@
         <div class="admin-tabs" role="tablist" aria-label="Administration">
           <button class="active" type="button" data-admin-view="stock">Stock</button>
           <button type="button" data-admin-view="manual">Commande manuelle</button>
+          <button type="button" data-admin-view="produits">Produits</button>
           <button type="button" data-admin-view="packs">Packs</button>
           <button type="button" data-admin-view="closures">Fermetures</button>
           <button type="button" data-admin-view="promos">Promos</button>
@@ -88,6 +89,10 @@
           </div>
         </div>
 
+        <div class="hidden" data-admin-panel="produits">
+          <div class="products-manager" data-products-manager></div>
+        </div>
+
         <div class="hidden" data-admin-panel="packs">
           <div class="pack-manager" data-pack-manager></div>
         </div>
@@ -134,7 +139,28 @@
       </div>
     </div>
 
+    <!-- Recadrage photo : une photo prise au téléphone est rarement cadrée pour
+         une vignette. On laisse déplacer et zoomer dans un cadre 4/3, qui est
+         exactement ce que le client verra sur la fiche produit. -->
+    <div class="admin-modal hidden" data-cropper aria-label="Recadrer la photo" aria-modal="true">
+      <div class="admin-modal-panel cropper-panel">
+        <p class="cropper-title">Recadrez la photo</p>
+        <p class="cropper-hint">Faites glisser l'image pour la centrer, utilisez le curseur pour zoomer.</p>
+        <div class="cropper-frame" data-cropper-frame>
+          <img alt="" data-cropper-image />
+        </div>
+        <label class="cropper-zoom">
+          Zoom
+          <input type="range" min="100" max="300" value="100" step="1" data-cropper-zoom />
+        </label>
+        <div class="admin-actions cropper-actions">
+          <button class="primary-btn" type="button" data-cropper-validate>Utiliser cette photo</button>
+          <button class="ghost-btn" type="button" data-cropper-cancel>Annuler</button>
+        </div>
+      </div>
+    </div>
+
     <script src="stock.js?v=tartiflette1"></script>
-    <script src="admin.js?v=tartiflette4"></script>
+    <script src="admin.js?v=tartiflette6"></script>
   </body>
 </html>

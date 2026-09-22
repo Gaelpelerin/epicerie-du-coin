@@ -1236,6 +1236,155 @@ main {
 
 /* Bandeau de contact : joignable sans quitter la page, y compris quand le site
    coince — c'est le seul recours du client si quelque chose ne marche pas. */
+/* Recadrage photo : le cadre reproduit exactement la vignette produit (4/3),
+   pour que le gérant voie ce que verra le client, sans surprise. */
+.cropper-panel {
+  max-width: 460px;
+  display: grid;
+  gap: 12px;
+}
+
+.cropper-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--cream);
+}
+
+.cropper-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.cropper-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(240, 162, 66, 0.35);
+  background: #0b1614;
+  cursor: grab;
+  touch-action: none; /* sinon le doigt fait défiler la page au lieu de déplacer */
+}
+
+.cropper-frame:active {
+  cursor: grabbing;
+}
+
+.cropper-frame img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.cropper-zoom {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cropper-zoom input {
+  width: 100%;
+}
+
+.cropper-actions {
+  margin: 0;
+}
+
+/* Onglet Produits de l'admin : liste + formulaire de création. */
+.products-manager { display: grid; gap: 18px; }
+.product-list { display: grid; gap: 10px; }
+
+.product-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.product-row.is-off { opacity: 0.55; }
+
+.product-row-photo {
+  flex: none;
+  width: 52px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(240, 162, 66, 0.08);
+  font-size: 1.3rem;
+}
+.product-row-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.product-row-main { flex: 1; min-width: 0; display: grid; }
+.product-row-main small { color: var(--muted); font-size: 0.78rem; }
+.product-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.product-row-actions button { min-height: 38px; padding: 0 12px; font-size: 0.8rem; }
+
+.product-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(240, 162, 66, 0.3);
+  border-radius: 14px;
+}
+.product-form-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--cream);
+}
+.product-form label { display: grid; gap: 5px; font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+.product-form-wide { grid-column: 1 / -1; }
+
+.product-allergens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.product-allergens legend { padding: 0 6px; font-size: 0.8rem; font-weight: 800; color: var(--muted); }
+/* Plus précis que « .product-form label », sinon la case passe au-dessus du texte. */
+.product-form label.product-allergen,
+.product-form label.product-alcohol {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.product-form label.product-allergen input,
+.product-form label.product-alcohol input { width: 18px; height: 18px; flex: none; }
+
+.product-photo-preview { grid-column: 1 / -1; }
+.product-photo-preview img {
+  width: 220px;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+@media (max-width: 680px) {
+  .product-form { grid-template-columns: 1fr; }
+  .product-row { flex-wrap: wrap; }
+}
+
 .contact-strip {
   margin: 30px 0 10px;
   padding: 16px 18px;

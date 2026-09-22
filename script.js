@@ -1817,6 +1817,43 @@ async function translateAndRegisterPacks(packs) {
 // (rendu, panier, paiement) fonctionne ensuite via products[] sans changement.
 const customPackIds = new Set();
 
+// ── Produits créés depuis l'admin ────────────────────────────────────────────
+// Ils vivent en base (table extra_products) et rejoignent le catalogue au
+// démarrage, exactement comme les packs. Leur stock est déjà dans le cache :
+// il vient de product_stock, comme pour n'importe quel produit.
+const extraProductIds = new Set();
+
+async function loadExtraProducts() {
+  if (typeof listExtraProducts !== "function") return;
+  const rows = await listExtraProducts();
+  if (!Array.isArray(rows)) return;
+
+  // On retire la fournée précédente avant de réinjecter, sinon un produit
+  // modifié apparaîtrait en double.
+  for (let i = products.length - 1; i >= 0; i -= 1) {
+    if (extraProductIds.has(products[i].id)) products.splice(i, 1);
+  }
+  extraProductIds.clear();
+
+  rows.forEach((row) => {
+    if (!row || !row.id) return;
+    extraProductIds.add(row.id);
+    products.push({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      description: row.description || "",
+      price: Number(row.price) || 0,
+      icon: row.icon || "🛒",
+      images: row.image ? [row.image] : undefined,
+      allergens: Array.isArray(row.allergens) ? row.allergens : [],
+      alcohol: Boolean(row.alcohol),
+    });
+  });
+
+  refreshShopFromStock();
+}
+
 // ── Bandeau « Les plus commandés » ───────────────────────────────────────────
 // Classement réel (RPC list_top_products) : aucun entretien, il suit les ventes.
 // On n'affiche que des produits du catalogue, avec photo et en stock — mettre en
@@ -2796,7 +2833,7 @@ renderCart();
 setupDeliveryDateInput();
 // On charge d'abord le stock central (réécrit tout le cache), PUIS les packs
 // (qui injectent leur dispo calculée) pour éviter que le refresh ne l'écrase.
-refreshStockThenShop().then(loadCustomPacks).then(loadTopSellers);
+refreshStockThenShop().then(loadCustomPacks).then(loadExtraProducts).then(loadTopSellers);
 loadDeliveryClosures();
 loadPromos();
 loadUpsell();
