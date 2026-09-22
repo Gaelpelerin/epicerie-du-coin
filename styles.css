@@ -4761,7 +4761,10 @@ main {
   .allergen-panel { order: 5; }
   .notice         { order: 6; }
   .newsletter     { order: 7; }
-  .legal-footer   { order: 8; }
+  /* Sans ordre explicite, une section vaut 0 et remonte devant tout le reste :
+     c'est ce qui propulsait le bandeau contact juste sous la bannière. */
+  .contact-strip  { order: 8; }
+  .legal-footer   { order: 9; }
 
   .hero-cover { margin-top: 16px; }
   .hero-cover img {
