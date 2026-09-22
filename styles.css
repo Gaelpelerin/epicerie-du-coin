@@ -425,10 +425,12 @@ main {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  /* L'animation du défilement est confiée au CSS : le navigateur la désactive
-     tout seul si le visiteur a demandé des animations réduites. */
-  scroll-behavior: smooth;
+  /* Ni accrochage ni animation CSS : le glissement est calculé image par image
+     en JavaScript. Les deux réglages précédents se battaient contre lui — le
+     « snap » ramenait la rangée en arrière et l'animation rejouait à chaque
+     image. Le doigt du client, lui, fait toujours défiler normalement. */
+  scroll-behavior: auto;
+  overscroll-behavior-x: contain;
   padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;

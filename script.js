@@ -1824,6 +1824,7 @@ const customPackIds = new Set();
 const topSellers = document.querySelector("[data-top-sellers]");
 const topSellersRail = document.querySelector("[data-top-sellers-rail]");
 let topSellersTimer = null;
+let topSellersResume = null;
 
 async function loadTopSellers() {
   if (!topSellers || !topSellersRail || typeof listTopProducts !== "function") return;
@@ -1839,49 +1840,79 @@ async function loadTopSellers() {
     return;
   }
 
-  topSellersRail.innerHTML = shown
-    .map(
-      (product) => `
-        <button type="button" class="top-seller-card" data-top-seller="${product.id}">
-          <img src="${webpVariant(product.images[0], "sm")}" alt="${pName(product)}" loading="lazy" />
+  const cardHtml = (product, clone) => `
+        <button type="button" class="top-seller-card" data-top-seller="${product.id}"
+          ${clone ? 'aria-hidden="true" tabindex="-1"' : ""}>
+          <img src="${webpVariant(product.images[0], "sm")}" alt="${clone ? "" : pName(product)}" loading="lazy" />
           <span class="top-seller-body">
             <span class="top-seller-name">${pName(product)}</span>
             <span class="top-seller-price">${formatPrice(getEffectivePrice(product))}</span>
           </span>
-        </button>`
-    )
-    .join("");
+        </button>`;
+
+  // La liste est écrite DEUX fois : quand le défilement atteint la copie, on
+  // revient au début sans que rien ne bouge à l'écran. Sans ce doublon, la
+  // boucle ferait un saut visible en fin de course.
+  topSellersRail.innerHTML =
+    shown.map((p) => cardHtml(p, false)).join("") + shown.map((p) => cardHtml(p, true)).join("");
 
   topSellers.classList.remove("hidden");
   startTopSellersAutoScroll();
 }
 
-// Défilement doux qui s'arrête définitivement dès que le client touche le
-// bandeau : une animation qui reprend la main pendant qu'on lit est pénible.
+// Glissement continu, à la vitesse d'une vitrine qui tourne. Un pas toutes les
+// 4 s donnait des à-coups et paraissait figé ; ici le mouvement ne s'arrête
+// jamais, ce qui se lit comme « la boutique est vivante ».
+const TOP_SELLERS_SPEED = 60; // pixels par seconde (~1 carte toutes les 2,4 s)
+
 function startTopSellersAutoScroll() {
-  if (topSellersTimer) clearInterval(topSellersTimer);
+  stopTopSellersAutoScroll();
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const stop = () => {
-    clearInterval(topSellersTimer);
-    topSellersTimer = null;
-  };
-  ["pointerdown", "touchstart", "wheel", "focusin"].forEach((evt) =>
-    topSellersRail.addEventListener(evt, stop, { once: true, passive: true })
-  );
-
+  let last = null;
+  // Un tick toutes les 40 ms (~25 images/s) : assez fin pour que le mouvement
+  // paraisse continu. On mesure le temps réellement écoulé plutôt que de se fier
+  // au rythme du minuteur, que le téléphone ralentit quand il économise l'énergie.
   topSellersTimer = setInterval(() => {
-    if (document.hidden) return;
-    const card = topSellersRail.querySelector(".top-seller-card");
-    if (!card) return stop();
-    const step = card.offsetWidth + 12;
-    const end = topSellersRail.scrollWidth - topSellersRail.clientWidth - 4;
-    const next = topSellersRail.scrollLeft >= end ? 0 : topSellersRail.scrollLeft + step;
-    topSellersRail.scrollLeft = next;
-  }, 4000);
+    const now = Date.now();
+    // Page en arrière-plan : on repart du temps courant, sinon le bandeau
+    // rattraperait d'un bond tout le temps écoulé au retour du client.
+    if (document.hidden) {
+      last = null;
+      return;
+    }
+    if (last !== null) advanceTopSellers(((now - last) * TOP_SELLERS_SPEED) / 1000);
+    last = now;
+  }, 40);
+}
+
+function stopTopSellersAutoScroll() {
+  clearInterval(topSellersTimer);
+  topSellersTimer = null;
+}
+
+function advanceTopSellers(pixels) {
+  // La rangée contient la liste deux fois : au-delà de la moitié, on recule
+  // d'une moitié exacte. Le contenu affiché est identique, l'œil ne voit rien.
+  const moitie = topSellersRail.scrollWidth / 2;
+  let next = topSellersRail.scrollLeft + pixels;
+  if (next >= moitie) next -= moitie;
+  topSellersRail.scrollLeft = next;
+}
+
+// Pause pendant que le client manipule le bandeau, reprise 8 s après son dernier
+// geste. L'arrêt DÉFINITIF précédent le figeait dès le premier contact : sur
+// téléphone, faire défiler la page en posant le doigt sur le bandeau suffisait
+// à le bloquer pour toute la visite — il ne bougeait donc jamais.
+function pauseTopSellersAutoScroll() {
+  stopTopSellersAutoScroll();
+  clearTimeout(topSellersResume);
+  topSellersResume = setTimeout(startTopSellersAutoScroll, 4000);
 }
 
 if (topSellersRail) {
+  ["pointerdown", "touchstart", "wheel", "focusin"].forEach((evt) =>
+    topSellersRail.addEventListener(evt, pauseTopSellersAutoScroll, { passive: true })
+  );
   topSellersRail.addEventListener("click", (event) => {
     const card = event.target.closest("[data-top-seller]");
     if (card) openProductModal(card.dataset.topSeller);
