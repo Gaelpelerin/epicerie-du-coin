@@ -4728,6 +4728,12 @@ main {
   margin-top: 18px;
 }
 
+/* « .door » est déclaré après « .hidden » avec la même priorité : sans cette
+   règle, masquer une carte n'avait aucun effet. */
+.door.hidden {
+  display: none;
+}
+
 .door {
   position: relative;
   display: flex;
@@ -4929,6 +4935,12 @@ main {
      c'est ce qui propulsait le bandeau contact juste sous la bannière. */
   .contact-strip  { order: 8; }
   .legal-footer   { order: 9; }
+
+  /* Le catalogue est déjà remonté en tête sur mobile : « Commander maintenant »
+     ne déplace la page que de 106 px, et « Voir nos packs » double l'onglet
+     Packs situé juste en dessous. Mesuré dans Clarity : ces deux boutons
+     représentaient l'essentiel des 114 clics morts. */
+  .main-actions { display: none; }
 
   .hero-cover { margin-top: 16px; }
   .hero-cover img {

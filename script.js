@@ -1467,7 +1467,7 @@ function closeUpsell() {
 function setCheckoutFormVisible(isVisible) {
   checkoutFormVisible = isVisible;
   checkoutForm.classList.toggle("hidden", !checkoutFormVisible);
-  checkoutButton.textContent = checkoutFormVisible ? t("checkout_send") : t("checkout_btn");
+  refreshCheckoutButtonLabel();
   if (checkoutFormVisible) cartMessage.textContent = t("checkout_fill");
 }
 
@@ -1505,9 +1505,7 @@ async function checkoutCart() {
     // passait inapercu. 32 tentatives de paiement sur 72 s'arretaient ici.
     // On surligne les champs vides, on amene le premier a l'ecran, on y place
     // le curseur, puis on laisse le navigateur afficher son propre message.
-    const missing = ["name", "phone", "address"]
-      .map((field) => checkoutForm.elements[field])
-      .filter((input) => input && !input.value.trim());
+    const missing = missingCheckoutFields();
     missing.forEach((input) => input.classList.add("field-error"));
     if (missing[0]) {
       missing[0].scrollIntoView({ block: "center", behavior: "smooth" });
@@ -1765,6 +1763,40 @@ function hideEmptyCategoryTabs() {
       document.querySelector('[data-filter="all"]')?.classList.add("active");
     }
   });
+
+  // Les boutons « Voir nos packs » mènent à l'onglet Packs : sans pack en vente,
+  // ils filtrent sur une catégorie vide, donc ne font visiblement rien. Mesuré
+  // dans Clarity : c'est le genre de clic mort qui déclenche les rage clicks.
+  const sansPack = !products.some((p) => p.category === "pack");
+  document.querySelectorAll('[href="#packs"]').forEach((lien) => {
+    lien.classList.toggle("hidden", sansPack);
+    lien.closest(".door")?.classList.toggle("hidden", sansPack);
+  });
+}
+
+// Champs de coordonnées obligatoires encore vides.
+let lastCartTotal = 0;
+
+// Le libellé était écrit à deux endroits : renderCart() puis, juste après,
+// setCheckoutFormVisible() — qui écrasait le premier. D'où un bouton « Envoyer
+// la demande » sur un formulaire vide. Un seul point de vérité désormais.
+function refreshCheckoutButtonLabel() {
+  if (!checkoutFormVisible) {
+    checkoutButton.textContent = t("checkout_btn");
+    return;
+  }
+  checkoutButton.textContent = missingCheckoutFields().length
+    ? t("checkout_fill_cta")
+    : `${t("checkout_send")} · ${formatPrice(lastCartTotal)}`;
+}
+
+function missingCheckoutFields() {
+  // Pas de condition sur l'affichage du formulaire : renderCart() s'exécute
+  // AVANT que le panier ne s'ouvre, et le bouton affichait alors « Envoyer la
+  // demande » sur un formulaire vide — exactement l'inverse du but recherché.
+  return ["name", "phone", "address"]
+    .map((champ) => checkoutForm.elements[champ])
+    .filter((input) => input && !input.value.trim());
 }
 
 function refreshShopFromStock() {
@@ -2247,7 +2279,12 @@ function renderCart() {
   setCheckoutFormVisible(true);
   // Montant rappelé sur le bouton : grâce à la barre collante il reste visible
   // en permanence, donc le client sait toujours ce qu'il va payer.
-  checkoutButton.textContent = `${t("checkout_send")} · ${formatPrice(totalPrice)}`;
+  // Le bouton est collé en bas de l'écran, les champs sont plus haut : beaucoup
+  // cliquent sans les avoir vus et se font refuser. Mesuré en base sur 7 jours :
+  // 11 refus pour 33 clics. Le bouton annonce donc ce qui manque AVANT le clic,
+  // et redevient « Envoyer la demande » dès que les coordonnées sont remplies.
+  lastCartTotal = totalPrice;
+  refreshCheckoutButtonLabel();
 
   const menuLinesHtml = menuCart
     .map(
@@ -2632,6 +2669,13 @@ if (promoApplyButton) {
 if (promoBanner) {
   promoBanner.addEventListener("click", applyWelcomeFromBanner);
 }
+["name", "phone", "address"].forEach((champ) => {
+  const input = checkoutForm.elements[champ];
+  // Sans ceci, le bouton garderait « Complétez vos coordonnées » alors que le
+  // client vient de tout remplir.
+  if (input) input.addEventListener("input", renderCart);
+});
+
 if (phoneInput) {
   // Dès que le téléphone est renseigné, on applique automatiquement le code
   // déjà saisi (ex : cliqué depuis le bandeau) — plus besoin de reclíquer.
@@ -2676,6 +2720,17 @@ upsellModal.addEventListener("click", (event) => {
     closeUpsell();
     setCheckoutFormVisible(true);
   }
+});
+
+// Saut brut de 12 000 px quand le lien est en bas de page sur mobile : le
+// client ne comprend pas où il a atterri. Un défilement doux garde le repère.
+document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
+  lien.addEventListener("click", (event) => {
+    const cible = document.getElementById("catalogue");
+    if (!cible) return;
+    event.preventDefault();
+    cible.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 });
 
 document.querySelectorAll('[href="#packs"]').forEach((btn) => {
