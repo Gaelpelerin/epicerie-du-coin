@@ -19,9 +19,14 @@
     if (stored && SUPPORTED.indexOf(stored) !== -1) return stored;
     const nav = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
     const code = String(nav).toLowerCase().slice(0, 2);
-    if (code === "fr") return "fr";
+    if (code === "en") return "en";
     if (code === "de") return "de";
-    return "en"; // repli anglais pour toute autre langue
+    // Repli français, pas anglais : la boutique livre dans un rayon de 30 km
+    // autour du Thillot. Un habitant dont le téléphone est réglé en arabe, en
+    // portugais ou en italien parle français et commande en français — il
+    // voyait jusqu'ici un site en anglais, avec le sélecteur de langue en bas
+    // de page. L'anglais reste servi à qui règle son téléphone en anglais.
+    return "fr";
   }
 
   let currentLang = detectLang();
@@ -35,15 +40,20 @@
       nav_cart: "Panier",
       hero_note:
         "Une envie, une petite faim ? On vous livre chez vous 7j/7 — même tard le soir, quand plus rien n'est ouvert. Le Thillot et 30 km alentour.",
-      svc_order_title: "Commander<br />à l'avance",
+      svc_order_title: "Commander à l'avance",
       svc_order_text:
         "Pour être sûr que vos produits soient disponibles et livrés dans les meilleures conditions !",
-      svc_delivery_title: "Livraison à votre adresse<br />7 jours sur 7",
+      svc_delivery_title: "Livraison à votre adresse, 7 jours sur 7",
       svc_delivery_text: "On arrive chez vous, où que vous soyez dans la zone.",
       svc_treat_title: "Une envie à toute heure ?",
       svc_treat_text: "Livraison en soirée, même tard — on est là pour vous régaler !",
       cta_shop: "Commander maintenant",
       cta_packs: "Voir nos packs",
+      family_back: "Les familles",
+      family_from: "dès {price}",
+      family_menu_from: "formule dès 12,90 €",
+      family_all_cta: "Voir tout le catalogue",
+      family_all_title: "Tout le catalogue",
       cat_eyebrow: "Catalogue",
       cat_title: "Vos essentiels gourmands",
       allergen_eyebrow: "Allergènes",
@@ -234,15 +244,20 @@
       nav_cart: "Cart",
       hero_note:
         "Hungry, or just craving something? We deliver to your door 7 days a week — even late at night, when nothing else is open. Le Thillot and 30 km around.",
-      svc_order_title: "Order<br />ahead",
+      svc_order_title: "Order ahead",
       svc_order_text:
         "To make sure your products are available and delivered in the best conditions!",
-      svc_delivery_title: "Delivery to your door<br />7 days a week",
+      svc_delivery_title: "Delivery to your door, 7 days a week",
       svc_delivery_text: "We come to you, wherever you are in the delivery zone.",
       svc_treat_title: "Craving something, any time?",
       svc_treat_text: "Evening delivery, even late — we're here to treat you!",
       cta_shop: "Order now",
       cta_packs: "See our packs",
+      family_back: "All ranges",
+      family_from: "from {price}",
+      family_menu_from: "set menu from €12.90",
+      family_all_cta: "See the whole catalogue",
+      family_all_title: "Whole catalogue",
       cat_eyebrow: "Catalogue",
       cat_title: "Your gourmet essentials",
       allergen_eyebrow: "Allergens",
@@ -433,15 +448,20 @@
       nav_cart: "Warenkorb",
       hero_note:
         "Hunger oder einfach Lust auf etwas? Wir liefern zu Ihnen nach Hause, 7 Tage die Woche — auch spät abends, wenn sonst nichts mehr offen ist. Le Thillot und 30 km im Umkreis.",
-      svc_order_title: "Im Voraus<br />bestellen",
+      svc_order_title: "Im Voraus bestellen",
       svc_order_text:
         "Damit Ihre Produkte verfügbar sind und unter besten Bedingungen geliefert werden!",
-      svc_delivery_title: "Lieferung an Ihre Adresse<br />7 Tage die Woche",
+      svc_delivery_title: "Lieferung an Ihre Adresse, 7 Tage die Woche",
       svc_delivery_text: "Wir kommen zu Ihnen, wo immer Sie im Liefergebiet sind.",
       svc_treat_title: "Lust auf etwas, zu jeder Zeit?",
       svc_treat_text: "Lieferung am Abend, auch spät — wir sind da, um Sie zu verwöhnen!",
       cta_shop: "Jetzt bestellen",
       cta_packs: "Unsere Pakete ansehen",
+      family_back: "Alle Bereiche",
+      family_from: "ab {price}",
+      family_menu_from: "Menü ab 12,90 €",
+      family_all_cta: "Gesamten Katalog ansehen",
+      family_all_title: "Gesamter Katalog",
       cat_eyebrow: "Katalog",
       cat_title: "Ihre Feinkost-Essentials",
       allergen_eyebrow: "Allergene",
@@ -627,12 +647,34 @@
     },
   };
 
+  // ---- Familles (les six bandes du menu) --------------------------------
+  const FAMILY_LABELS = {
+    pizzas: { fr: "Pizzas", en: "Pizzas", de: "Pizzas" },
+    quiches: { fr: "Quiches & tartes", en: "Quiches & tarts", de: "Quiches & Tartes" },
+    snacking: { fr: "Snacking salé", en: "Savoury snacks", de: "Herzhafte Snacks" },
+    douceurs: { fr: "Douceurs & cakes", en: "Sweets & cakes", de: "Süßes & Kuchen" },
+    boissons: { fr: "Boissons", en: "Drinks", de: "Getränke" },
+    packs: { fr: "Packs", en: "Packs", de: "Pakete" },
+    menus: { fr: "Menus", en: "Set menus", de: "Menüs" },
+  };
+
+  const FAMILY_SUBS = {
+    pizzas: { fr: "Individuelles, 26 cm & pincées", en: "Individual, 26 cm & pinched", de: "Einzeln, 26 cm & Pizzataschen" },
+    quiches: { fr: "Recettes individuelles", en: "Individual recipes", de: "Einzelportionen" },
+    snacking: { fr: "Croques, bretzels, panwichs", en: "Toasties, pretzels, panwichs", de: "Toasts, Brezeln, Panwichs" },
+    douceurs: { fr: "Donuts, brioches, cakes à partager", en: "Donuts, brioches, cakes to share", de: "Donuts, Brioches, Kuchen zum Teilen" },
+    boissons: { fr: "Softs, jus, eaux", en: "Sodas, juices, water", de: "Softdrinks, Säfte, Wasser" },
+    packs: { fr: "Sélections prêtes à partager", en: "Ready-to-share selections", de: "Fertige Auswahl zum Teilen" },
+    menus: { fr: "Un plat, une boisson, un donut", en: "A dish, a drink, a donut", de: "Gericht, Getränk, Donut" },
+  };
+
   // ---- Catégories --------------------------------------------------------
   const CATEGORIES = {
     all: { fr: "Tout", en: "All", de: "Alle" },
     quiches: { fr: "Quiches", en: "Quiches", de: "Quiches" },
     snacking: { fr: "Snacking", en: "Snacking", de: "Snacks" },
-    pizzas: { fr: "Pizzas", en: "Pizzas", de: "Pizzas" },
+    pizzas: { fr: "Pizzas individuelles", en: "Individual pizzas", de: "Einzelpizzas" },
+    "pizzas-26": { fr: "Pizzas 26 cm", en: "26 cm pizzas", de: "Pizzen 26 cm" },
     "pizza-pincees": { fr: "Pizzas pincées", en: "Pinched pizzas", de: "Pizzataschen" },
     panwichs: { fr: "Panwichs", en: "Panwichs", de: "Panwichs" },
     douceurs: { fr: "Douceurs", en: "Sweets", de: "Süßes" },
@@ -990,6 +1032,16 @@
     return (map && map[currentLang]) || key;
   }
 
+  function tFamily(key) {
+    const map = FAMILY_LABELS[key];
+    return (map && map[currentLang]) || key;
+  }
+
+  function tFamilySub(key) {
+    const map = FAMILY_SUBS[key];
+    return (map && map[currentLang]) || "";
+  }
+
   function locale() {
     return LOCALES[currentLang] || "fr-FR";
   }
@@ -1053,6 +1105,8 @@
   window.pHigh = pHigh;
   window.tAllergen = tAllergen;
   window.tCategory = tCategory;
+  window.tFamily = tFamily;
+  window.tFamilySub = tFamilySub;
   window.i18nLocale = locale;
   window.getLang = function () {
     return currentLang;

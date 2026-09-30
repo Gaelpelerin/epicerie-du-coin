@@ -47,15 +47,22 @@ a {
   padding: 18px clamp(16px, 3vw, 38px) 28px;
   position: relative;
   overflow: hidden;
+  /* Le haut de l'en-tete doit etre EXACTEMENT la couleur vers laquelle la
+     photo se fond, sinon la jonction se voit comme une bande. */
+  background: var(--bg);
 }
 
 .hero::before {
   content: "";
   position: absolute;
   inset: 0;
+  /* Le halo cuivre partait du bord haut : il teintait en brun la bande au
+     dessus de la navigation, juste au-dessus d'une photo qui, elle, se fond
+     dans le vert-noir du fond. D'ou la barre visible. Il demarre maintenant
+     plus bas, la ou la photo le recouvre. */
   background:
-    radial-gradient(circle at top, rgba(215, 122, 34, 0.14), transparent 28rem),
-    linear-gradient(180deg, rgba(3, 7, 6, 0.64), rgba(3, 7, 6, 0.98));
+    radial-gradient(circle at 50% 46%, rgba(215, 122, 34, 0.14), transparent 28rem),
+    linear-gradient(180deg, rgba(3, 7, 6, 0) 0%, rgba(3, 7, 6, 0.64) 34%, rgba(3, 7, 6, 0.98) 100%);
 }
 
 .topbar,
@@ -63,6 +70,38 @@ a {
 main {
   position: relative;
   z-index: 1;
+}
+
+/* Pastille seule : le texte du logo a ete retire, la marque est ecrite en
+   grand dans la photo juste en dessous. */
+.brand-mark-only {
+  gap: 0;
+}
+
+/* Le selecteur de langue vit maintenant dans le pied de page. */
+.legal-footer .lang-switch {
+  margin-right: 4px;
+}
+
+/* Sur grand ecran la navigation tient sur une ligne : on la fait flotter sur
+   la photo plutot que de lui reserver une bande au-dessus. Raccorder la
+   couleur de cette bande ne suffisait pas — un aplat pose sur une image se
+   voit toujours. Le haut de la photo est deja assombri par son propre degrade,
+   donc le logo et les boutons restent lisibles.
+   En dessous de 961 px la navigation occupe trois lignes : elle couvrirait la
+   photo entiere, on la laisse donc au-dessus. */
+@media (min-width: 961px) {
+  .hero {
+    padding-top: 0;
+  }
+
+  .topbar {
+    position: absolute;
+    top: 18px;
+    right: clamp(16px, 3vw, 38px);
+    left: clamp(16px, 3vw, 38px);
+    z-index: 3;
+  }
 }
 
 .topbar {
@@ -184,21 +223,43 @@ main {
   color: #130805;
 }
 
+/* Pleine largeur : les marges negatives annulent exactement le padding
+   horizontal de .hero, donc le bandeau touche les deux bords de l'ecran sans
+   recourir a 100vw, qui compte la barre de defilement et cree un debordement
+   horizontal sur ordinateur. */
 .hero-cover {
-  max-width: 1220px;
-  margin: 34px auto 0;
+  position: relative;
+  max-width: none;
+  margin: 0 calc(-1 * clamp(16px, 3vw, 38px));
+  overflow: hidden;
   text-align: center;
 }
 
 .hero-cover img {
   display: block;
   width: 100%;
-  max-height: 390px;
-  aspect-ratio: 1366 / 372;
+  height: clamp(200px, 29vw, 450px);
+  max-height: none;
+  aspect-ratio: auto;
   object-fit: cover;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 22px 70px var(--shadow);
+  object-position: 50% 54%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Fondu des quatre bords : sans ca l'image reste un rectangle pose sur la
+   page. Les cotes et le bas s'effacent dans le fond du site, le haut est
+   assombri pour que la barre de navigation garde son contraste. */
+.hero-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--bg) 0%, rgba(6, 16, 15, 0) 15%, rgba(6, 16, 15, 0) 85%, var(--bg) 100%),
+    linear-gradient(180deg, var(--bg) 0%, rgba(6, 16, 15, 0.82) 7%, rgba(6, 16, 15, 0) 30%, rgba(6, 16, 15, 0) 78%, rgba(6, 16, 15, 0.45) 92%, var(--bg) 100%);
 }
 
 .eyebrow {
@@ -321,69 +382,54 @@ main {
   padding: 18px clamp(16px, 3vw, 38px) 64px;
 }
 
+/* Direction A : la boite disparait, il ne reste que deux filets fins. Les
+   bordures pleines sur trois cases donnaient un tableau de caracteristiques ;
+   l'orange sature sur des traits de 5 px criait plus fort que les produits. */
 .service-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  border: 1px solid var(--line);
-  background: rgba(8, 20, 18, 0.78);
+  gap: 40px;
+  padding: 34px 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .service-strip article {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  min-height: 150px;
-  padding: 24px;
-  border-right: 1px solid var(--line);
   text-align: center;
   cursor: pointer;
 }
 
-.service-strip article:last-child {
-  border-right: 0;
-}
-
 .service-strip span {
   display: block;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 12px;
-  overflow: hidden;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 16px;
+  color: var(--copper-light);
+  opacity: 0.9;
 }
 
-.service-order span {
-  width: 64px;
-  height: 64px;
-}
-
-.service-strip span img {
+.service-strip span svg {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-}
-
-.service-order span img {
-  object-fit: contain;
-  object-position: center;
 }
 
 .service-strip strong {
   display: block;
   max-width: 320px;
-  margin: 4px auto 8px;
+  margin: 0 auto 8px;
   color: var(--cream);
-  font-size: clamp(0.95rem, 1.2vw, 1.2rem);
-  line-height: 1.12;
-  text-transform: uppercase;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .service-strip p {
-  max-width: 360px;
+  max-width: 34ch;
   margin-right: auto;
   margin-left: auto;
+  font-size: 0.88rem;
 }
 
 .service-strip p,
@@ -3151,15 +3197,7 @@ main {
 
   .service-strip {
     grid-template-columns: 1fr;
-  }
-
-  .service-strip article {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .service-strip article:last-child {
-    border-bottom: 0;
+    gap: 30px;
   }
 }
 
@@ -3173,18 +3211,17 @@ main {
     padding: 12px 10px 18px;
   }
 
-  .topbar,
   .feature-band {
     align-items: stretch;
     flex-direction: column;
   }
 
+  /* La barre passait en colonne parce qu'elle portait cinq elements : logo,
+     Catalogue, Livraison, trois langues et Panier. Reduite a trois, elle
+     tient sur une seule ligne — 88 px repris au-dessus de la ligne de
+     flottaison, la ou la profondeur de defilement moyenne est de 20 %. */
   .topbar {
-    gap: 12px;
-  }
-
-  .brand {
-    justify-content: center;
+    gap: 10px;
   }
 
   .brand-mark {
@@ -3225,18 +3262,16 @@ main {
   }
 
   .hero-cover {
-    margin-top: 16px;
-    max-width: none;
-    width: 100%;
+    margin-top: 0;
   }
 
   .hero-cover img {
     width: 100%;
-    height: auto;
+    height: clamp(190px, 44vw, 300px);
     max-height: none;
     min-height: 0;
     aspect-ratio: auto;
-    object-fit: contain;
+    object-fit: cover;
     background: #030706;
     border-radius: 6px;
   }
@@ -3258,22 +3293,22 @@ main {
 
   .service-strip article {
     min-height: auto;
-    padding: 22px 16px;
+    padding: 0 8px;
   }
 
   .service-strip span {
-    width: 52px;
-    height: 52px;
-    margin-bottom: 10px;
+    width: 30px;
+    height: 30px;
+    margin-bottom: 12px;
   }
 
   .service-strip strong {
-    font-size: 1rem;
+    font-size: 1.05rem;
   }
 
   .service-strip p {
     margin-bottom: 0;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
   }
 
   .main-actions {
@@ -4942,9 +4977,9 @@ main {
      représentaient l'essentiel des 114 clics morts. */
   .main-actions { display: none; }
 
-  .hero-cover { margin-top: 16px; }
+  .hero-cover { margin-top: 0; }
   .hero-cover img {
-    max-height: 32vh;
+    height: clamp(180px, 52vw, 260px);
     aspect-ratio: auto;
   }
 }
@@ -4957,4 +4992,292 @@ main {
 }
 .checkout-form input.field-error::placeholder {
   color: rgba(224, 103, 79, 0.75);
+}
+
+/* `.hidden` est déclaré bien plus haut dans ce fichier : à spécificité égale,
+   c'est la dernière règle qui gagne. Sans ces deux lignes, `.family-menu` et
+   `.family-bar` ci-dessous écrasent `.hidden` — les bandes restent affichées
+   quand on ouvre une famille, et les produits semblent s'ajouter en bas de
+   page. Déjà rencontré avec `.door.hidden`. */
+.family-menu.hidden,
+.family-bar.hidden {
+  display: none;
+}
+
+/* ── Menu par familles ────────────────────────────────────────────────────
+   Six bandes larges remplacent la barre de treize onglets. Une bande = une
+   photo pleine, le texte posé dessus à gauche sur un dégradé, pour que le
+   titre reste lisible quelle que soit la photo. */
+.family-menu {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* Sur grand écran, six bandes pleine largeur obligeraient à faire défiler pour
+   voir la sixième. Deux colonnes tiennent dans un seul coup d'oeil. */
+@media (min-width: 900px) {
+  .family-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+.family-band {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 168px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Le sujet est poussé vers la droite : il respire, et le titre ne lui passe
+   pas dessus. */
+.family-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 68% 50%;
+}
+
+/* Montage : trois vignettes cote a cote sur la droite de la bande. Chacune
+   est fondue par un masque elliptique, ce qui efface a la fois le bord de la
+   photo et la jonction entre deux cliches — on voit trois objets poses sur le
+   panneau, pas trois rectangles accoles. */
+.family-montage {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  display: flex;
+  gap: 6px;
+  width: 66%;
+  padding-right: 10px;
+}
+
+/* Masque resserre autour de l'objet : le tissu de fond disparait presque
+   entierement, il ne reste que la canette posee sur le panneau. Un masque
+   plus large laissait voir la jointure verticale entre deux cliches. */
+.family-montage img {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 47%;
+  filter: brightness(0.9);
+  -webkit-mask-image: radial-gradient(ellipse 48% 76% at 50% 50%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 48% 76% at 50% 50%, #000 30%, transparent 80%);
+}
+
+.family-band.is-emblem {
+  background:
+    radial-gradient(120% 140% at 82% 50%, rgba(215, 122, 34, 0.22) 0%, transparent 62%),
+    linear-gradient(120deg, var(--panel) 0%, var(--panel-strong) 100%);
+}
+
+.family-emblem {
+  position: absolute;
+  right: 46px;
+  top: 50%;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  color: var(--copper-light);
+  opacity: 0.5;
+  transform: translateY(-50%);
+}
+
+.family-emblem svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.family-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 16, 15, 0.95) 0%,
+    rgba(6, 16, 15, 0.72) 36%,
+    rgba(6, 16, 15, 0.05) 72%,
+    transparent 100%
+  );
+}
+
+.family-band.is-emblem .family-veil {
+  background: linear-gradient(90deg, rgba(6, 16, 15, 0.9) 0%, rgba(6, 16, 15, 0.45) 46%, transparent 78%);
+}
+
+.family-text {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  gap: 4px;
+  transform: translateY(-50%);
+}
+
+.family-text strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.family-text small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.family-from {
+  position: absolute;
+  left: 20px;
+  bottom: 16px;
+  z-index: 3;
+  color: var(--copper-light);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.family-chevron {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  z-index: 3;
+  color: var(--copper-light);
+  font-size: 1.35rem;
+  opacity: 0.85;
+  transform: translateY(-50%);
+}
+
+/* Entrée discrète vers le catalogue complet : volontairement sans photo et
+   sans prix, pour ne pas concurrencer les six familles — c'est une sortie de
+   secours pour le client qui veut tout parcourir, pas un septième choix. */
+.family-all {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  /* Meme Playfair que les titres des bandes, mais libelle centre : le bouton
+     appartient au meme systeme sans singer une septieme famille. Le chevron
+     reste cale a droite, en absolu, donc il ne decentre pas le texte. */
+  justify-content: center;
+  padding: 16px 44px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  /* Même bordure et même rayon que les bandes : la largeur était déjà
+     identique, c'est le trait en pointillés plus clair qui donnait
+     l'impression d'un élément mal aligné. */
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(120deg, rgba(16, 28, 25, 0.6) 0%, rgba(22, 35, 31, 0.6) 100%);
+  color: var(--cream);
+  font-size: 1.02rem;
+  cursor: pointer;
+}
+
+.family-all span {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  color: var(--copper-light);
+  font-size: 1.35rem;
+  line-height: 1;
+  opacity: 0.85;
+  transform: translateY(-50%);
+}
+
+.family-all:hover {
+  color: var(--cream);
+}
+
+@media (min-width: 900px) {
+  .family-all {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Barre de retour affichée à l'intérieur d'une famille. */
+.family-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.family-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px 8px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cream);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.family-back span[aria-hidden] {
+  color: var(--copper-light);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.family-current {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Intertitre des anciennes catégories, devenues sections dans une famille. */
+.family-section-title {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.family-section-title:first-child {
+  margin-top: 0;
+}
+
+/* Une famille à une seule catégorie n'a rien à filtrer : la barre d'onglets
+   « Tout / Quiches » sur une page qui ne contient que des quiches est du bruit. */
+.category-tabs.no-tabs {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .family-band {
+    height: 148px;
+    border-radius: 10px;
+  }
+
+  .family-text strong {
+    font-size: 1.35rem;
+  }
+
+  .family-emblem {
+    right: 34px;
+    width: 56px;
+    height: 56px;
+  }
 }

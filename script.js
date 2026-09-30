@@ -955,6 +955,22 @@ function renderPromoSection() {
 }
 
 function renderProducts(filter = "all") {
+  // Dans une famille, « Tout » veut dire « tout ce que contient cette
+  // famille », et les anciennes catégories reviennent en intertitres. C'est là
+  // que le regroupement se paie : rien n'est perdu, tout est rangé.
+  if (currentFamily && filter === "all") {
+    const cats = familyCategories(currentFamily);
+    grid.innerHTML = cats
+      .map((cat) => {
+        const liste = products.filter((product) => product.category === cat);
+        if (!liste.length) return "";
+        const titre = cats.length > 1 ? `<h3 class="family-section-title">${tCategory(cat)}</h3>` : "";
+        return titre + liste.map(renderCatalogueCard).join("");
+      })
+      .join("");
+    return;
+  }
+
   // Sur la vue « Tout », les produits en promo (en stock) sont déjà mis en avant
   // dans « Offres du moment » → on les retire du catalogue principal pour éviter
   // le doublon. Ils réapparaissent normalement quand on filtre par catégorie.
@@ -965,29 +981,33 @@ function renderProducts(filter = "all") {
 
   grid.innerHTML = `
     ${filter === "all" ? renderPromoSection() : ""}
-    ${visibleProducts
-    .map((product) =>
-      product.scalable
-        ? renderScalablePackCard(product)
-        : `
-        <article class="product-card ${getProductStock(product.id) <= 0 ? "is-sold-out" : ""}" data-product-card="${product.id}">
-          ${getProductStock(product.id) <= 0 ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
-          ${getPromoForProduct(product.id) ? `<div class="promo-ribbon product-ribbon"><span>${getPromoForProduct(product.id).label || t("badge_promo")}</span></div>` : ""}
-          ${renderProductCardImage(product)}
-          <div class="product-body">
-            <h3>${pName(product)}</h3>
-            <p>${pDesc(product)}</p>
-            ${renderStockBadge(product)}
-            ${renderAllergens(product)}
-            <div class="product-meta">
-              ${renderPromoPrice(product)}
-              ${renderProductCardControl(product)}
-            </div>
-          </div>
-        </article>
-      `
-    )
-    .join("")}
+    ${visibleProducts.map(renderCatalogueCard).join("")}
+  `;
+}
+
+// Une seule définition de la carte : la vue « famille » et la vue « catégorie »
+// affichaient sinon deux cartes légèrement différentes, et toute correction
+// devait être faite deux fois.
+function renderCatalogueCard(product) {
+  if (product.scalable) return renderScalablePackCard(product);
+  const soldOut = getProductStock(product.id) <= 0;
+  const promo = getPromoForProduct(product.id);
+  return `
+    <article class="product-card ${soldOut ? "is-sold-out" : ""}" data-product-card="${product.id}">
+      ${soldOut ? `<div class="sold-out-ribbon product-ribbon"><span>${t("ribbon_soldout")}</span></div>` : ""}
+      ${promo ? `<div class="promo-ribbon product-ribbon"><span>${promo.label || t("badge_promo")}</span></div>` : ""}
+      ${renderProductCardImage(product)}
+      <div class="product-body">
+        <h3>${pName(product)}</h3>
+        <p>${pDesc(product)}</p>
+        ${renderStockBadge(product)}
+        ${renderAllergens(product)}
+        <div class="product-meta">
+          ${renderPromoPrice(product)}
+          ${renderProductCardControl(product)}
+        </div>
+      </div>
+    </article>
   `;
 }
 
@@ -1749,20 +1769,210 @@ function applyAlcoholPolicy() {
   }
 }
 
+// ── Menu par familles ─────────────────────────────────────────────────────
+// Treize onglets alignés sur une ligne, c'est treize décisions avant de voir
+// un seul produit — et sur mobile, la moitié est hors écran. Six familles : le
+// client choisit une envie, et les anciennes catégories deviennent les
+// sous-sections à l'intérieur. Rien n'est supprimé du catalogue.
+const FAMILY_ICONS = {
+  bouteille:
+    '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5h10v6.5l4.2 6.4A9 9 0 0 1 34.7 23v16a4 4 0 0 1-4 4H17.3a4 4 0 0 1-4-4V23a9 9 0 0 1 1.5-5.1L19 11.5V5Z"/><path d="M14 27h20.7"/></svg>',
+  cloche:
+    '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 35h38"/><path d="M8.5 35a15.5 15.5 0 0 1 31 0"/><path d="M24 19.5v-4"/><circle cx="24" cy="13" r="2.4"/><path d="M10 40h28"/></svg>',
+  panier:
+    '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18h36l-3.4 20a4 4 0 0 1-4 3.3H13.4a4 4 0 0 1-4-3.3L6 18Z"/><path d="M16 18 22 6"/><path d="M32 18 26 6"/><path d="M18 26v9"/><path d="M30 26v9"/></svg>',
+};
+
+// La photo des boissons est volontairement absente : toutes les photos de
+// bouteilles sont verticales, prises sur le même tissu sombre. Recadrées dans
+// une bande large, elles donnent un rectangle rapporté. Le pictogramme tient
+// mieux en attendant une photo horizontale.
+const FAMILIES = [
+  { key: "pizzas", cats: ["pizzas", "pizzas-26", "pizza-pincees"], image: "assets/pizza-napolitaine.jpeg" },
+  { key: "quiches", cats: ["quiches"], image: "assets/quiche-tartiflette.jpeg" },
+  { key: "snacking", cats: ["snacking", "panwichs"], image: "assets/croque.jpeg" },
+  { key: "douceurs", cats: ["douceurs"], image: "assets/carrot-cake.jpeg" },
+  { key: "boissons", cats: ["softs", "jus", "eaux", "bieres", "vins", "bulles"], icon: "bouteille",
+    montage: ["products/coca.jpeg", "products/orangina.jpeg", "products/oasis-tropical.jpeg"] },
+  { key: "packs", cats: ["pack"], icon: "panier" },
+];
+
+let currentFamily = null;
+// Vue « tout le catalogue » : le mode d'avant les familles, conservé tel quel.
+// Six bandes donnent six choix ; le client qui veut juste faire défiler tout
+// le magasin n'a plus de porte d'entrée sans ça.
+let fullCatalogueOpen = false;
+
+function categoryHasProducts(cat) {
+  return products.some((product) => product.category === cat);
+}
+
+function familyCategories(family) {
+  return family.cats.filter(categoryHasProducts);
+}
+
+function familyProducts(family) {
+  const cats = familyCategories(family);
+  return products.filter((product) => cats.includes(product.category));
+}
+
+// Le visuel d'une bande : la photo choisie si elle existe encore, sinon la
+// première photo de produit de la famille, sinon le pictogramme. Comme ça une
+// bande ne se retrouve jamais vide parce qu'un fichier a été renommé.
+function familyVisual(family) {
+  // Un montage remplace la photo unique quand aucune photo horizontale
+  // n'existe : toutes les bouteilles sont photographiees sur le meme tissu
+  // sombre, donc trois vignettes fondues dans le panneau se lisent comme une
+  // composition, pas comme trois images rapportees.
+  if (family.montage) return renderFamilyMontage(family.montage);
+  if (!family.icon && family.image) {
+    return `<img class="family-photo" src="${family.image}" alt="" loading="lazy" decoding="async" />`;
+  }
+  return `<span class="family-emblem">${FAMILY_ICONS[family.icon] || FAMILY_ICONS.cloche}</span>`;
+}
+
+function renderFamilyMontage(sources) {
+  return `<span class="family-montage" aria-hidden="true">${sources
+    .map((src) => `<img src="${src}" alt="" loading="lazy" decoding="async" />`)
+    .join("")}</span>`;
+}
+
+function renderFamilyMenu() {
+  const menu = document.querySelector("[data-family-menu]");
+  if (!menu) return;
+
+  const bandes = FAMILIES.map((family) => {
+    const liste = familyProducts(family);
+    if (!liste.length) return "";
+    const prixMini = Math.min(...liste.map((product) => getEffectivePrice(product)));
+    const sansPhoto = Boolean(family.icon);
+    return `
+      <button class="family-band ${sansPhoto ? "is-emblem" : ""}" type="button" data-family="${family.key}">
+        ${familyVisual(family)}
+        <span class="family-veil"></span>
+        <span class="family-text">
+          <strong>${tFamily(family.key)}</strong>
+          <small>${tFamilySub(family.key)}</small>
+        </span>
+        <span class="family-from">${t("family_from", { price: formatPrice(prixMini) })}</span>
+        <span class="family-chevron" aria-hidden="true">&rsaquo;</span>
+      </button>
+    `;
+  }).join("");
+
+  // Le composeur de menu n'est pas une catégorie : c'est une formule. Il garde
+  // sa bande, toujours visible, qui ouvre directement le composeur.
+  menu.innerHTML = `
+    ${bandes}
+    <button class="family-band is-emblem" type="button" data-family="menus">
+      <span class="family-emblem">${FAMILY_ICONS.cloche}</span>
+      <span class="family-veil"></span>
+      <span class="family-text">
+        <strong>${tFamily("menus")}</strong>
+        <small>${tFamilySub("menus")}</small>
+      </span>
+      <span class="family-from">${t("family_menu_from")}</span>
+      <span class="family-chevron" aria-hidden="true">&rsaquo;</span>
+    </button>
+    <button class="family-all" type="button" data-family="tout">
+      ${t("family_all_cta")}
+      <span aria-hidden="true">&rsaquo;</span>
+    </button>
+  `;
+}
+
+// Le catalogue complet, exactement comme avant les familles : la barre des
+// treize onglets, les offres du moment, tous les produits à la suite.
+function openFullCatalogue() {
+  currentFamily = null;
+  fullCatalogueOpen = true;
+  document.querySelector("[data-family-current]").textContent = t("family_all_title");
+  document.querySelector("[data-family-menu]")?.classList.add("hidden");
+  document.querySelector("[data-family-bar]")?.classList.remove("hidden");
+  document.querySelector(".category-tabs")?.classList.remove("hidden");
+  grid?.classList.remove("hidden");
+
+  tabs.forEach((tab) => tab.classList.remove("active"));
+  document.querySelector('[data-filter="all"]')?.classList.add("active");
+  hideEmptyCategoryTabs();
+  renderProducts("all");
+  document.querySelector("[data-family-bar]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openFamily(key) {
+  if (key === "menus") {
+    document.querySelector("[data-open-composer]")?.click();
+    return;
+  }
+  if (key === "tout") {
+    openFullCatalogue();
+    return;
+  }
+  const family = FAMILIES.find((item) => item.key === key);
+  if (!family || !familyProducts(family).length) return;
+
+  currentFamily = family;
+  fullCatalogueOpen = false;
+  document.querySelector("[data-family-current]").textContent = tFamily(key);
+  document.querySelector("[data-family-menu]")?.classList.add("hidden");
+  document.querySelector("[data-family-bar]")?.classList.remove("hidden");
+  document.querySelector(".category-tabs")?.classList.remove("hidden");
+  grid?.classList.remove("hidden");
+
+  tabs.forEach((tab) => tab.classList.remove("active"));
+  document.querySelector('[data-filter="all"]')?.classList.add("active");
+  hideEmptyCategoryTabs();
+  renderProducts("all");
+  // On cale la barre de retour en haut, pas le titre du catalogue : sinon le
+  // client retrouve l'intitulé et le bandeau « Les plus commandés » avant ses
+  // produits, et croit que rien ne s'est passé.
+  document.querySelector("[data-family-bar]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeFamily() {
+  currentFamily = null;
+  fullCatalogueOpen = false;
+  document.querySelector("[data-family-menu]")?.classList.remove("hidden");
+  document.querySelector("[data-family-bar]")?.classList.add("hidden");
+  document.querySelector(".category-tabs")?.classList.add("hidden");
+  grid?.classList.add("hidden");
+  renderFamilyMenu();
+}
+
+document.querySelector("[data-family-back]")?.addEventListener("click", () => {
+  closeFamily();
+  document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.querySelector("[data-family-menu]")?.addEventListener("click", (event) => {
+  const bande = event.target.closest("[data-family]");
+  if (bande) openFamily(bande.dataset.family);
+});
+
 // Un onglet sans aucun produit est un cul-de-sac : il envoie le client sur une
 // page vide. Vrai pour les alcools retirés, mais aussi pour les packs, dont le
-// seul actif contient de la bière.
+// seul actif contient de la bière. À l'intérieur d'une famille, on masque en
+// plus tout ce qui n'appartient pas à cette famille.
 function hideEmptyCategoryTabs() {
+  const catsFamille = currentFamily ? familyCategories(currentFamily) : null;
+
   document.querySelectorAll("[data-filter]").forEach((tab) => {
     const cat = tab.dataset.filter;
     if (cat === "all") return;
-    const vide = !products.some((p) => p.category === cat);
+    const horsFamille = catsFamille ? !catsFamille.includes(cat) : false;
+    const vide = horsFamille || !products.some((p) => p.category === cat);
     tab.classList.toggle("hidden", vide);
     if (vide && tab.classList.contains("active")) {
       tab.classList.remove("active");
       document.querySelector('[data-filter="all"]')?.classList.add("active");
     }
   });
+
+  // Une famille à une seule catégorie n'a rien à filtrer : les onglets
+  // « Tout / Quiches » sur une page qui ne contient que des quiches sont du
+  // bruit. On masque la barre entière.
+  const uneSeule = catsFamille ? catsFamille.length < 2 : false;
+  document.querySelector(".category-tabs")?.classList.toggle("no-tabs", uneSeule);
 
   // Les boutons « Voir nos packs » mènent à l'onglet Packs : sans pack en vente,
   // ils filtrent sur une catégorie vide, donc ne font visiblement rien. Mesuré
@@ -1804,7 +2014,13 @@ function refreshShopFromStock() {
   // arrivent après le démarrage, et peuvent eux aussi contenir de l'alcool.
   applyAlcoholPolicy();
   hideEmptyCategoryTabs();
-  renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+  renderFamilyMenu();
+  // Une famille peut se vider en cours de route (rupture, coupure alcool) :
+  // mieux vaut renvoyer le client au menu que le laisser sur une page vide.
+  if (currentFamily && !familyProducts(currentFamily).length) closeFamily();
+  if (currentFamily || fullCatalogueOpen) {
+    renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+  }
   renderCart();
 }
 
@@ -2729,6 +2945,9 @@ document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
     const cible = document.getElementById("catalogue");
     if (!cible) return;
     event.preventDefault();
+    // « Catalogue » doit ramener au choix des familles, pas laisser le client
+    // dans celle qu'il visitait sans qu'il comprenne pourquoi rien ne bouge.
+    if (currentFamily || fullCatalogueOpen) closeFamily();
     cible.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 });
@@ -2736,13 +2955,7 @@ document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
 document.querySelectorAll('[href="#packs"]').forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
-    const packTab = document.querySelector('[data-filter="pack"]');
-    if (packTab) {
-      tabs.forEach((b) => b.classList.remove("active"));
-      packTab.classList.add("active");
-      renderProducts("pack");
-    }
-    document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth" });
+    openFamily("packs");
   });
 });
 
@@ -2899,6 +3112,12 @@ function trackVisit() {
 // Appelé par i18n.js quand la langue change : on re-rend tout le contenu
 // dynamique (cartes produits, panier, indice de livraison) dans la langue active.
 window.onI18nChange = function () {
+  renderFamilyMenu();
+  if (currentFamily) {
+    document.querySelector("[data-family-current]").textContent = tFamily(currentFamily.key);
+  } else if (fullCatalogueOpen) {
+    document.querySelector("[data-family-current]").textContent = t("family_all_title");
+  }
   renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
   renderCart();
   renderDeliveryClosuresHint();

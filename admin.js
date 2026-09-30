@@ -1561,8 +1561,8 @@ async function reloadPackRecipe() {
 // Créer un produit sans toucher au code : il part en base (extra_products) et
 // la boutique le charge au démarrage, comme les packs. Photo recadrée en 4/3.
 const PRODUCT_CATEGORIES = [
-  ["quiches", "Quiches"], ["snacking", "Snacking"], ["pizzas", "Pizzas"],
-  ["pizza-pincees", "Pizzas pincées"], ["panwichs", "Panwichs"], ["douceurs", "Douceurs"],
+  ["quiches", "Quiches"], ["snacking", "Snacking"], ["pizzas", "Pizzas individuelles"],
+  ["pizzas-26", "Pizzas 26 cm"], ["pizza-pincees", "Pizzas pincées"], ["panwichs", "Panwichs"], ["douceurs", "Douceurs"],
   ["softs", "Softs"], ["eaux", "Eaux"], ["jus", "Jus premium"],
   ["bieres", "Bières"], ["vins", "Vins"], ["bulles", "Bulles"],
 ];
