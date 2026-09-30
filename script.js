@@ -1788,8 +1788,12 @@ const FAMILY_ICONS = {
 // une bande large, elles donnent un rectangle rapporté. Le pictogramme tient
 // mieux en attendant une photo horizontale.
 const FAMILIES = [
-  { key: "pizzas", cats: ["pizzas", "pizzas-26", "pizza-pincees"], image: "assets/pizza-napolitaine.jpeg",
+  { key: "pizzas", cats: ["pizzas", "pizza-pincees"], image: "assets/pizza-napolitaine.jpeg",
     dynamicSub: true },
+  // Famille a part entiere, pas une section dans Pizzas. Sans photo declaree :
+  // la bande prendra automatiquement celle de la premiere pizza 26 cm creee
+  // depuis l'admin.
+  { key: "pizzas26", cats: ["pizzas-26"], countSub: true },
   { key: "quiches", cats: ["quiches"], image: "assets/quiche-tartiflette.jpeg" },
   { key: "snacking", cats: ["snacking", "panwichs"], image: "assets/croque.jpeg" },
   { key: "douceurs", cats: ["douceurs"], image: "assets/carrot-cake.jpeg" },
@@ -1826,10 +1830,19 @@ function familyVisual(family) {
   // sombre, donc trois vignettes fondues dans le panneau se lisent comme une
   // composition, pas comme trois images rapportees.
   if (family.montage) return renderFamilyMontage(family.montage);
-  if (!family.icon && family.image) {
-    return `<img class="family-photo" src="${family.image}" alt="" loading="lazy" decoding="async" />`;
+  const photo = family.icon ? null : family.image || firstFamilyPhoto(family);
+  if (photo) {
+    return `<img class="family-photo" src="${photo}" alt="" loading="lazy" decoding="async" />`;
   }
   return `<span class="family-emblem">${FAMILY_ICONS[family.icon] || FAMILY_ICONS.cloche}</span>`;
+}
+
+// Une famille creee depuis l'admin n'a pas de photo choisie dans le code : on
+// prend celle d'un de ses produits, pour qu'elle ne se retrouve jamais avec un
+// pictogramme par defaut alors que de vraies photos existent.
+function firstFamilyPhoto(family) {
+  const avecPhoto = familyProducts(family).find((product) => (product.images || [])[0]);
+  return avecPhoto ? avecPhoto.images[0] : null;
 }
 
 function renderFamilyMontage(sources) {
@@ -1844,6 +1857,10 @@ function renderFamilyMontage(sources) {
 // compose donc a partir des categories qui ont reellement des produits, et se
 // mettra a jour tout seul a la premiere pizza 26 cm enregistree.
 function familySubtitle(family) {
+  if (family.countSub) {
+    const total = familyProducts(family).length;
+    return t(total > 1 ? "family_recipes" : "family_recipe", { count: total });
+  }
   if (!family.dynamicSub) return tFamilySub(family.key);
   const mots = familyCategories(family).map(tCategoryShort);
   if (!mots.length) return tFamilySub(family.key);
