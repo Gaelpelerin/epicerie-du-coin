@@ -1788,7 +1788,8 @@ const FAMILY_ICONS = {
 // une bande large, elles donnent un rectangle rapporté. Le pictogramme tient
 // mieux en attendant une photo horizontale.
 const FAMILIES = [
-  { key: "pizzas", cats: ["pizzas", "pizzas-26", "pizza-pincees"], image: "assets/pizza-napolitaine.jpeg" },
+  { key: "pizzas", cats: ["pizzas", "pizzas-26", "pizza-pincees"], image: "assets/pizza-napolitaine.jpeg",
+    dynamicSub: true },
   { key: "quiches", cats: ["quiches"], image: "assets/quiche-tartiflette.jpeg" },
   { key: "snacking", cats: ["snacking", "panwichs"], image: "assets/croque.jpeg" },
   { key: "douceurs", cats: ["douceurs"], image: "assets/carrot-cake.jpeg" },
@@ -1837,6 +1838,19 @@ function renderFamilyMontage(sources) {
     .join("")}</span>`;
 }
 
+// Le sous-titre de la famille Pizzas enumere les formats. Ecrit en dur, il
+// annoncait « 26 cm » avant meme que la categorie contienne un produit — le
+// client voyait trois formats promis et deux sections a l'interieur. Il se
+// compose donc a partir des categories qui ont reellement des produits, et se
+// mettra a jour tout seul a la premiere pizza 26 cm enregistree.
+function familySubtitle(family) {
+  if (!family.dynamicSub) return tFamilySub(family.key);
+  const mots = familyCategories(family).map(tCategoryShort);
+  if (!mots.length) return tFamilySub(family.key);
+  const phrase = mots.join(" · ");
+  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+}
+
 function renderFamilyMenu() {
   const menu = document.querySelector("[data-family-menu]");
   if (!menu) return;
@@ -1852,7 +1866,7 @@ function renderFamilyMenu() {
         <span class="family-veil"></span>
         <span class="family-text">
           <strong>${tFamily(family.key)}</strong>
-          <small>${tFamilySub(family.key)}</small>
+          <small>${familySubtitle(family)}</small>
         </span>
         <span class="family-from">${t("family_from", { price: formatPrice(prixMini) })}</span>
         <span class="family-chevron" aria-hidden="true">&rsaquo;</span>

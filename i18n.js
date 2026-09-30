@@ -668,6 +668,14 @@
     menus: { fr: "Un plat, une boisson, un donut", en: "A dish, a drink, a donut", de: "Gericht, Getränk, Donut" },
   };
 
+  // Libellés courts, utilisés pour composer le sous-titre d'une bande à partir
+  // des catégories qui contiennent réellement des produits.
+  const CATEGORY_SHORT = {
+    pizzas: { fr: "individuelles", en: "individual", de: "einzeln" },
+    "pizzas-26": { fr: "26 cm", en: "26 cm", de: "26 cm" },
+    "pizza-pincees": { fr: "pincées", en: "pinched", de: "Pizzataschen" },
+  };
+
   // ---- Catégories --------------------------------------------------------
   const CATEGORIES = {
     all: { fr: "Tout", en: "All", de: "Alle" },
@@ -1042,6 +1050,11 @@
     return (map && map[currentLang]) || "";
   }
 
+  function tCategoryShort(key) {
+    const map = CATEGORY_SHORT[key];
+    return (map && map[currentLang]) || tCategory(key);
+  }
+
   function locale() {
     return LOCALES[currentLang] || "fr-FR";
   }
@@ -1107,6 +1120,7 @@
   window.tCategory = tCategory;
   window.tFamily = tFamily;
   window.tFamilySub = tFamilySub;
+  window.tCategoryShort = tCategoryShort;
   window.i18nLocale = locale;
   window.getLang = function () {
     return currentLang;
