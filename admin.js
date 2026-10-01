@@ -1571,6 +1571,24 @@ const PRODUCT_ALLERGENS = [
   "Céleri", "Sulfites", "Poisson", "Lupin", "Arachides", "Mollusques",
 ];
 
+// Les familles du menu, déclarées dans script.js que l'admin ne charge pas.
+// Dupliquées ici comme PRODUCT_CATEGORIES. Si tu en ajoutes une dans le code,
+// ajoute-la ici aussi — sinon elle reste gérable sur la boutique mais
+// n'apparaît pas dans cette liste.
+const MENU_FAMILIES = [
+  ["pizzas", "Pizzas"],
+  ["pizzas26", "Pizzas 26 cm"],
+  ["quiches", "Quiches & tartes"],
+  ["snacking", "Snacking salé"],
+  ["douceurs", "Douceurs & cakes"],
+  ["boissons", "Boissons"],
+  ["packs", "Packs"],
+  ["menus", "Menus"],
+];
+
+let familyOrderData = MENU_FAMILIES.map(([key]) => key);
+let familyOrderDirty = false;
+
 const productsManager = document.querySelector("[data-products-manager]");
 let extraProductsData = [];
 let alcoholSalesOn = true; // réglage serveur, relu à l'ouverture de l'onglet
@@ -1664,15 +1682,64 @@ function renderProductsManager() {
     </div>`;
 
   productsManager.innerHTML = `
+    ${familyOrderHtml()}
     ${alcoolHtml}
     <div class="product-list">${liste}</div>
     ${productFormHtml(enEdition)}`;
+}
+
+// Ordre des bandes du menu. Des flèches plutôt qu'un glisser-déposer : l'admin
+// se consulte au téléphone, et traîner une ligne au doigt dans une page qui
+// défile se termine presque toujours par un défilement involontaire.
+// Même tolérance que sur la boutique : clé inconnue ignorée, famille absente
+// de l'ordre enregistré remise à la fin.
+function normaliserOrdreFamilles(ordre) {
+  const connues = MENU_FAMILIES.map(([key]) => key);
+  const triees = [];
+  (Array.isArray(ordre) ? ordre : []).forEach((key) => {
+    if (connues.includes(key) && !triees.includes(key)) triees.push(key);
+  });
+  connues.forEach((key) => {
+    if (!triees.includes(key)) triees.push(key);
+  });
+  return triees;
+}
+
+function familyOrderHtml() {
+  const libelle = new Map(MENU_FAMILIES);
+  const lignes = familyOrderData
+    .map((key, index) => {
+      const nom = libelle.get(key) || key;
+      return `
+        <div class="family-order-row">
+          <span class="family-order-rank">${index + 1}</span>
+          <strong>${packEscape(nom)}</strong>
+          <span class="family-order-actions">
+            <button class="ghost-btn" type="button" data-family-move="${packEscape(key)}" data-dir="-1" ${index === 0 ? "disabled" : ""} aria-label="Monter ${packEscape(nom)}">↑</button>
+            <button class="ghost-btn" type="button" data-family-move="${packEscape(key)}" data-dir="1" ${index === familyOrderData.length - 1 ? "disabled" : ""} aria-label="Descendre ${packEscape(nom)}">↓</button>
+          </span>
+        </div>`;
+    })
+    .join("");
+
+  return `
+    <section class="family-order">
+      <h2>Ordre des familles</h2>
+      <p class="admin-hint">L'ordre des bandes sur la page d'accueil. Une famille sans produit en vente reste masquée sur la boutique, même si elle apparaît ici.</p>
+      <div class="family-order-list">${lignes}</div>
+      <div class="admin-actions">
+        <button class="primary-btn" type="button" data-family-order-save ${familyOrderDirty ? "" : "disabled"}>Enregistrer l'ordre</button>
+        <button class="ghost-btn" type="button" data-family-order-reset ${familyOrderDirty ? "" : "disabled"}>Annuler</button>
+      </div>
+    </section>`;
 }
 
 async function openProductsPanel() {
   try {
     const reglages = await getShopSettings();
     if (reglages && typeof reglages.alcohol_sales === "boolean") alcoholSalesOn = reglages.alcohol_sales;
+    familyOrderData = normaliserOrdreFamilles(reglages && reglages.family_order);
+    familyOrderDirty = false;
   } catch (error) {
     console.warn(error);
   }
@@ -1690,6 +1757,37 @@ async function openProductsPanel() {
 
 if (productsManager) {
   productsManager.addEventListener("click", async (event) => {
+    const deplacer = event.target.closest("[data-family-move]");
+    if (deplacer) {
+      const key = deplacer.dataset.familyMove;
+      const dir = Number(deplacer.dataset.dir);
+      const index = familyOrderData.indexOf(key);
+      const cible = index + dir;
+      if (index !== -1 && cible >= 0 && cible < familyOrderData.length) {
+        familyOrderData.splice(cible, 0, familyOrderData.splice(index, 1)[0]);
+        familyOrderDirty = true;
+        renderProductsManager();
+      }
+      return;
+    }
+
+    if (event.target.closest("[data-family-order-save]")) {
+      try {
+        await adminSetFamilyOrder(adminSessionPin, familyOrderData);
+        familyOrderDirty = false;
+        successMessage.textContent = "Ordre des familles enregistré. Il s'applique au prochain chargement de la boutique.";
+        renderProductsManager();
+      } catch (error) {
+        errorMessage.textContent = String(error.message || error);
+      }
+      return;
+    }
+
+    if (event.target.closest("[data-family-order-reset]")) {
+      await openProductsPanel();
+      return;
+    }
+
     const alcool = event.target.closest("[data-alcohol-toggle]");
     if (alcool) {
       const activer = !alcoholSalesOn;

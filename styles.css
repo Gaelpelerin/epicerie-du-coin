@@ -5281,3 +5281,67 @@ main {
     height: 56px;
   }
 }
+
+
+/* ── Ordre des familles (admin) ──────────────────────────────────────────── */
+.family-order {
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 243, 223, 0.03);
+}
+
+.family-order h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.family-order-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.family-order-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: rgba(8, 20, 18, 0.6);
+}
+
+.family-order-rank {
+  flex: 0 0 auto;
+  width: 24px;
+  color: var(--copper-light);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.family-order-row strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
+}
+
+.family-order-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+/* Cibles larges : ce panneau se manipule au doigt. */
+.family-order-actions .ghost-btn {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.family-order-actions .ghost-btn:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}

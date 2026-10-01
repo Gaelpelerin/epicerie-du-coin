@@ -517,6 +517,11 @@ async function adminSetAlcoholSales(pin, enabled) {
   return callAdminRpc("admin_set_alcohol_sales", { p_pin: pin, p_enabled: enabled });
 }
 
+// Ordre des familles du menu, choisi depuis l'admin. Un tableau de clés.
+async function adminSetFamilyOrder(pin, order) {
+  return callAdminRpc("admin_set_family_order", { p_pin: pin, p_order: order });
+}
+
 // Produits créés depuis l'admin (table extra_products). Comme pour le bandeau
 // des ventes, un échec ne doit pas empêcher la boutique de s'afficher.
 async function listExtraProducts() {

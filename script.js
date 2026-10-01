@@ -1760,6 +1760,27 @@ async function loadShopSettings() {
   if (settings && typeof settings.alcohol_sales === "boolean") {
     alcoholSalesEnabled = settings.alcohol_sales;
   }
+  if (settings && Array.isArray(settings.family_order)) {
+    applyFamilyOrder(settings.family_order);
+  }
+}
+
+// Ordre choisi depuis l'admin. Volontairement tolerant : une cle inconnue est
+// ignoree, une famille absente de la liste est remise a la fin. Ajouter une
+// famille dans le code ne peut donc pas la faire disparaitre du menu parce
+// qu'un ordre enregistre ne la mentionne pas.
+function applyFamilyOrder(order) {
+  const connues = new Map(FAMILIES.map((family) => [family.key, family]));
+  const triees = [];
+  order.forEach((key) => {
+    const family = connues.get(key);
+    if (family && !triees.includes(family)) triees.push(family);
+  });
+  FAMILIES.forEach((family) => {
+    if (!triees.includes(family)) triees.push(family);
+  });
+  FAMILIES.length = 0;
+  FAMILIES.push(...triees);
 }
 
 function applyAlcoholPolicy() {
@@ -1800,6 +1821,10 @@ const FAMILIES = [
   { key: "boissons", cats: ["softs", "jus", "eaux", "bieres", "vins", "bulles"], icon: "bouteille",
     montage: ["products/coca.jpeg", "products/orangina.jpeg", "products/oasis-tropical.jpeg"] },
   { key: "packs", cats: ["pack"], icon: "panier" },
+  // Le composeur de menu n'est pas une categorie mais une formule : il n'a
+  // aucun produit a lui. « always » le garde affiche, et le fait entrer dans
+  // l'ordre reorganisable depuis l'admin au meme titre que les autres.
+  { key: "menus", cats: [], icon: "cloche", always: true, composer: true },
 ];
 
 let currentFamily = null;
@@ -1874,8 +1899,10 @@ function renderFamilyMenu() {
 
   const bandes = FAMILIES.map((family) => {
     const liste = familyProducts(family);
-    if (!liste.length) return "";
-    const prixMini = Math.min(...liste.map((product) => getEffectivePrice(product)));
+    if (!liste.length && !family.always) return "";
+    const depuis = family.always
+      ? t("family_menu_from")
+      : t("family_from", { price: formatPrice(Math.min(...liste.map((p) => getEffectivePrice(p)))) });
     const sansPhoto = Boolean(family.icon);
     return `
       <button class="family-band ${sansPhoto ? "is-emblem" : ""}" type="button" data-family="${family.key}">
@@ -1885,26 +1912,14 @@ function renderFamilyMenu() {
           <strong>${tFamily(family.key)}</strong>
           <small>${familySubtitle(family)}</small>
         </span>
-        <span class="family-from">${t("family_from", { price: formatPrice(prixMini) })}</span>
+        <span class="family-from">${depuis}</span>
         <span class="family-chevron" aria-hidden="true">&rsaquo;</span>
       </button>
     `;
   }).join("");
 
-  // Le composeur de menu n'est pas une catégorie : c'est une formule. Il garde
-  // sa bande, toujours visible, qui ouvre directement le composeur.
   menu.innerHTML = `
     ${bandes}
-    <button class="family-band is-emblem" type="button" data-family="menus">
-      <span class="family-emblem">${FAMILY_ICONS.cloche}</span>
-      <span class="family-veil"></span>
-      <span class="family-text">
-        <strong>${tFamily("menus")}</strong>
-        <small>${tFamilySub("menus")}</small>
-      </span>
-      <span class="family-from">${t("family_menu_from")}</span>
-      <span class="family-chevron" aria-hidden="true">&rsaquo;</span>
-    </button>
     <button class="family-all" type="button" data-family="tout">
       ${t("family_all_cta")}
       <span aria-hidden="true">&rsaquo;</span>
@@ -1931,7 +1946,8 @@ function openFullCatalogue() {
 }
 
 function openFamily(key) {
-  if (key === "menus") {
+  const famille = FAMILIES.find((item) => item.key === key);
+  if (famille && famille.composer) {
     document.querySelector("[data-open-composer]")?.click();
     return;
   }
@@ -1939,7 +1955,7 @@ function openFamily(key) {
     openFullCatalogue();
     return;
   }
-  const family = FAMILIES.find((item) => item.key === key);
+  const family = famille;
   if (!family || !familyProducts(family).length) return;
 
   currentFamily = family;
