@@ -5280,6 +5280,25 @@ main {
     width: 56px;
     height: 56px;
   }
+
+  /* Sur telephone la bande est bien plus carree : `cover` met la photo a
+     l'echelle de la LARGEUR, donc object-position horizontal n'a plus aucun
+     effet et le plat occupe toute la bande. Le voile de l'ordinateur, qui
+     s'efface des 36 %, laissait alors les titres sur du fromage en pleine
+     lumiere. Il faut le tenir sombre bien plus loin. */
+  .family-veil {
+    background: linear-gradient(
+      90deg,
+      rgba(6, 16, 15, 0.96) 0%,
+      rgba(6, 16, 15, 0.9) 42%,
+      rgba(6, 16, 15, 0.55) 70%,
+      rgba(6, 16, 15, 0.2) 100%
+    );
+  }
+
+  .family-band.is-emblem .family-veil {
+    background: linear-gradient(90deg, rgba(6, 16, 15, 0.92) 0%, rgba(6, 16, 15, 0.5) 52%, transparent 84%);
+  }
 }
 
 
