@@ -2987,15 +2987,60 @@ upsellModal.addEventListener("click", (event) => {
 
 // Saut brut de 12 000 px quand le lien est en bas de page sur mobile : le
 // client ne comprend pas où il a atterri. Un défilement doux garde le repère.
+// Un lien d'ancre vers une section DEJA visible ne fait rien bouger : le client
+// en conclut que le bouton est casse et reclique. Mesure dans les
+// enregistrements Clarity : 25 des 38 clics morts d'une semaine sont de ce
+// type, dont une session a sept clics d'affilee sur le meme bouton.
+// Quand le defilement ne changerait rien, on fait clignoter la cible : il se
+// passe quelque chose, donc le bouton a repondu.
+function signalerCible(cible) {
+  cible.classList.remove("just-reached");
+  void cible.offsetWidth; // force le redemarrage de l'animation
+  cible.classList.add("just-reached");
+  window.setTimeout(() => cible.classList.remove("just-reached"), 1100);
+}
+
+function allerAuCatalogue() {
+  const cible = document.getElementById("catalogue");
+  if (!cible) return;
+
+  // « Catalogue » ramene au choix des familles plutot que de laisser le client
+  // dans celle qu'il visitait sans comprendre pourquoi rien ne bouge.
+  const sortiDUneFamille = Boolean(currentFamily || fullCatalogueOpen);
+  if (sortiDUneFamille) closeFamily();
+
+  const haut = Math.round(cible.getBoundingClientRect().top);
+  if (Math.abs(haut) > 8) {
+    cible.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  // Deja en haut de l'ecran : quitter une famille est deja un changement
+  // visible, sinon on signale le menu.
+  if (!sortiDUneFamille) {
+    signalerCible(document.querySelector("[data-family-menu]") || cible);
+  }
+}
+
 document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
   lien.addEventListener("click", (event) => {
-    const cible = document.getElementById("catalogue");
+    event.preventDefault();
+    allerAuCatalogue();
+  });
+});
+
+// Le bandeau des services et l'image d'accueil ne sont pas des liens, mais ils
+// se font cliquer : 8 clics morts dessus en une semaine. On les envoie vers le
+// catalogue plutot que de ne rien faire.
+document.querySelector(".hero-cover")?.addEventListener("click", allerAuCatalogue);
+
+document.querySelectorAll('[href="#livraison"]').forEach((lien) => {
+  lien.addEventListener("click", (event) => {
+    const cible = document.getElementById("livraison");
     if (!cible) return;
     event.preventDefault();
-    // « Catalogue » doit ramener au choix des familles, pas laisser le client
-    // dans celle qu'il visitait sans qu'il comprenne pourquoi rien ne bouge.
-    if (currentFamily || fullCatalogueOpen) closeFamily();
-    cible.scrollIntoView({ behavior: "smooth", block: "start" });
+    const haut = Math.round(cible.getBoundingClientRect().top);
+    if (Math.abs(haut) > 8) cible.scrollIntoView({ behavior: "smooth", block: "start" });
+    else signalerCible(cible);
   });
 });
 
@@ -3010,9 +3055,7 @@ document.querySelectorAll('[href="#packs"]').forEach((btn) => {
 // clics morts dessus. On les envoie vers le catalogue plutôt que de ne rien
 // faire.
 document.querySelectorAll(".service-strip article").forEach((card) => {
-  card.addEventListener("click", () => {
-    document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth" });
-  });
+  card.addEventListener("click", allerAuCatalogue);
 });
 
 // Inscription newsletter (double opt-in côté Supabase).
