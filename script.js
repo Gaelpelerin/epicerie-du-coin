@@ -3001,24 +3001,29 @@ function signalerCible(cible) {
 }
 
 function allerAuCatalogue() {
-  const cible = document.getElementById("catalogue");
-  if (!cible) return;
+  const section = document.getElementById("catalogue");
+  if (!section) return;
 
   // « Catalogue » ramene au choix des familles plutot que de laisser le client
   // dans celle qu'il visitait sans comprendre pourquoi rien ne bouge.
   const sortiDUneFamille = Boolean(currentFamily || fullCatalogueOpen);
   if (sortiDUneFamille) closeFamily();
 
+  // On vise le MENU des familles, pas le titre de la section. Viser le titre
+  // ne bougeait rien quand il etait deja en haut de l'ecran — mesure du
+  // 3 octobre : « Catalogue » et « Voir la boutique » recoltaient encore
+  // 5 clics morts chacun malgre le clignotement. Le menu est ~340 px plus
+  // bas, donc le defilement a toujours quelque chose a faire, et il amene
+  // les produits a l'ecran au lieu d'un intitule.
+  const menu = document.querySelector("[data-family-menu]");
+  const cible = menu && !menu.classList.contains("hidden") ? menu : section;
+
   const haut = Math.round(cible.getBoundingClientRect().top);
   if (Math.abs(haut) > 8) {
     cible.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
-  // Deja en haut de l'ecran : quitter une famille est deja un changement
-  // visible, sinon on signale le menu.
-  if (!sortiDUneFamille) {
-    signalerCible(document.querySelector("[data-family-menu]") || cible);
-  }
+  if (!sortiDUneFamille) signalerCible(cible);
 }
 
 document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
@@ -3032,6 +3037,7 @@ document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
 // se font cliquer : 8 clics morts dessus en une semaine. On les envoie vers le
 // catalogue plutot que de ne rien faire.
 document.querySelector(".hero-cover")?.addEventListener("click", allerAuCatalogue);
+document.querySelector(".hero-note")?.addEventListener("click", allerAuCatalogue);
 
 document.querySelectorAll('[href="#livraison"]').forEach((lien) => {
   lien.addEventListener("click", (event) => {
