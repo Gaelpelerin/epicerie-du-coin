@@ -44,11 +44,15 @@ const stock = new Map(
 // etaient invisibles pour Google et Meta. On genere leur ligne ici.
 // Seules celles qui ont une vraie URL d'image sont retenues : une photo encore
 // stockee en data URI n'a pas d'adresse et serait rejetee par le flux.
-const extraRes = await fetch(
-  `${url}/rest/v1/extra_products?select=id,name,description,price,category,image,active,alcohol&active=eq.true`,
-  { headers: { apikey: key, Authorization: `Bearer ${key}` } },
-);
-if (!extraRes.ok) throw new Error(`extra_products : ${extraRes.status} ${await extraRes.text()}`);
+// On passe par la RPC list_extra_products, pas par la table : extra_products
+// est protegee par RLS et la cle publique n'y a pas acces en lecture directe.
+// La RPC ne renvoie que les produits actifs.
+const extraRes = await fetch(`${url}/rest/v1/rpc/list_extra_products`, {
+  method: "POST",
+  headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+  body: "{}",
+});
+if (!extraRes.ok) throw new Error(`list_extra_products : ${extraRes.status} ${await extraRes.text()}`);
 const extras = (await extraRes.json()).filter(
   (p) => !p.alcohol && /^https?:\/\//i.test(String(p.image || "")),
 );
