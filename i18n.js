@@ -785,17 +785,9 @@
       en: { name: "Ham & cheese pizza", description: "approx. 290 g - ham and cheese, simple and effective." },
       de: { name: "Schinken-Käse-Pizza", description: "ca. 290 g - Schinken und Käse, einfach und gut." },
     },
-    "pizza-mozzarella-pesto": {
-      en: { name: "Mozzarella, tomato & pesto pizza", description: "approx. 290 g - mozzarella, tomato and pesto." },
-      de: { name: "Mozzarella-Tomaten-Pesto-Pizza", description: "ca. 290 g - Mozzarella, Tomate und Pesto." },
-    },
     "pizza-chevre": {
       en: { name: "Goat cheese & honey pizza", description: "approx. 290 g - vegetarian goat cheese and honey recipe." },
       de: { name: "Ziegenkäse-Honig-Pizza", description: "ca. 290 g - vegetarisches Ziegenkäse-Honig-Rezept." },
-    },
-    "pizza-saumon-aneth": {
-      en: { name: "Salmon & dill pizza", description: "approx. 290 g - salmon and dill." },
-      de: { name: "Lachs-Dill-Pizza", description: "ca. 290 g - Lachs und Dill." },
     },
     "pizza-poulet-curry": {
       en: { name: "Chicken curry pizza", description: "450 g - chicken curry." },
@@ -804,10 +796,6 @@
     "pizza-poulet": {
       en: { name: "Chicken pizza", description: "450 g - chicken pizza." },
       de: { name: "Hähnchen-Pizza", description: "450 g - Pizza mit Hähnchen." },
-    },
-    "pizza-vegetarienne": {
-      en: { name: "Vegetarian pizza", description: "approx. 290 g - grilled vegetables, mozzarella and tomato." },
-      de: { name: "Vegetarische Pizza", description: "ca. 290 g - gegrilltes Gemüse, Mozzarella und Tomate." },
     },
     "pizza-4-fromages": {
       en: { name: "4-cheese pizza", description: "approx. 290 g - vegetarian cheese recipe." },

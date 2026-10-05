@@ -180,16 +180,7 @@ const products = [
     icon: "🍕",
     allergens: ["Gluten", "Lait"],
   },
-  {
-    id: "pizza-mozzarella-pesto",
-    name: "Pizza mozzarella tomate pesto",
-    category: "pizzas",
-    description: "environ 290 g - mozzarella, tomate et pesto.",
-    price: 8.9,
-    icon: "🍕",
-    allergens: ["Gluten", "Lait", "Fruits à coque"],
-  },
-  {
+{
     id: "pizza-chevre",
     name: "Pizza chèvre miel",
     category: "pizzas",
@@ -198,25 +189,7 @@ const products = [
     icon: "🍕",
     allergens: ["Gluten", "Lait"],
   },
-  {
-    id: "pizza-saumon-aneth",
-    name: "Pizza saumon aneth",
-    category: "pizzas",
-    description: "environ 290 g - saumon et aneth.",
-    price: 8.9,
-    icon: "🍕",
-    allergens: ["Gluten", "Lait", "Poisson"],
-  },
-  {
-    id: "pizza-vegetarienne",
-    name: "Pizza végétarienne",
-    category: "pizzas",
-    description: "environ 290 g - légumes grillés, mozzarella et tomate.",
-    price: 8.9,
-    icon: "🍕",
-    allergens: ["Gluten", "Lait"],
-  },
-  {
+{
     id: "pizza-4-fromages",
     images: ["assets/pizza-4-fromages.jpeg?v=1"],
     name: "Pizza 4 fromages",
