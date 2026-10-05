@@ -182,6 +182,7 @@ const products = [
   },
 {
     id: "pizza-chevre",
+    images: ["assets/pizza-chevre.jpeg?v=1"],
     name: "Pizza chèvre miel",
     category: "pizzas",
     description: "environ 290 g - recette végétarienne chèvre et miel.",
