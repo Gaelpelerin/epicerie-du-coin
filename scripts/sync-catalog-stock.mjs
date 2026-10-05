@@ -46,6 +46,11 @@ const sellable = new Set(
 );
 if (sellable.size === 0) throw new Error("Aucun produit lu dans script.js : synchro interrompue par securite.");
 
+/** Protege un champ pour l'ecriture CSV : guillemets doubles a l'interieur. */
+function toCsvField(value) {
+  return '"' + String(value).replace(/"/g, '""') + '"';
+}
+
 /** Decoupe une ligne CSV en respectant les guillemets. */
 function splitCsvLine(line) {
   const out = [];
@@ -81,8 +86,14 @@ const updated = lines.map((line, i) => {
     ? "rupture"
     : sellable.has(id) ? `stock ${stock.get(id)}` : "absent du catalogue du site";
   changes.push(`${id} : ${current} -> ${wanted} (${why})`);
-  cells[AVAILABILITY] = `"${wanted}"`;
-  return cells.join(",");
+  cells[AVAILABILITY] = wanted;
+  // splitCsvLine retire les guillemets : il faut les remettre sur TOUS les
+  // champs, pas seulement sur celui qu'on modifie. Sinon un champ contenant
+  // une virgule — « Food, Beverages & Tobacco > Food Items », ou une
+  // description — eclate en deux colonnes et Google rejette la ligne.
+  // C'est ce qui etait arrive a quiche-lorraine, la seule ligne dont le stock
+  // avait change depuis la mise en service du script.
+  return cells.map(toCsvField).join(",");
 });
 
 if (changes.length === 0) {
