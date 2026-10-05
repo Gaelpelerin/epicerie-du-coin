@@ -38,6 +38,20 @@ if (!res.ok) throw new Error(`Supabase a repondu ${res.status} : ${await res.tex
 const stock = new Map(
   (await res.json()).map((r) => [String(r.product_id), Number(r.quantity) || 0])
 );
+
+// Produits crees depuis l'admin (table extra_products). Ils ne figurent pas
+// dans script.js, donc le CSV ne les connaissait pas : les 8 pizzas 26 cm
+// etaient invisibles pour Google et Meta. On genere leur ligne ici.
+// Seules celles qui ont une vraie URL d'image sont retenues : une photo encore
+// stockee en data URI n'a pas d'adresse et serait rejetee par le flux.
+const extraRes = await fetch(
+  `${url}/rest/v1/extra_products?select=id,name,description,price,category,image,active,alcohol&active=eq.true`,
+  { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+);
+if (!extraRes.ok) throw new Error(`extra_products : ${extraRes.status} ${await extraRes.text()}`);
+const extras = (await extraRes.json()).filter(
+  (p) => !p.alcohol && /^https?:\/\//i.test(String(p.image || "")),
+);
 if (stock.size === 0) throw new Error("Table product_stock vide : synchro interrompue par securite.");
 
 // Les produits reellement proposes a la vente, tels que le site les declare.
@@ -95,6 +109,35 @@ const updated = lines.map((line, i) => {
   // avait change depuis la mise en service du script.
   return cells.map(toCsvField).join(",");
 });
+
+// Les produits de l'admin absents du flux y sont ajoutes ; ceux qui y figurent
+// deja gardent leur ligne, dont la disponibilite vient d'etre alignee plus haut.
+const presents = new Set(
+  updated.slice(1).filter((l) => l.trim()).map((l) => splitCsvLine(l)[0]),
+);
+const ajouts = [];
+for (const p of extras) {
+  if (presents.has(p.id)) continue;
+  const dispo = (stock.get(p.id) ?? 0) > 0 ? "in stock" : "out of stock";
+  ajouts.push([
+    p.id,
+    p.name,
+    p.description || p.name,
+    dispo,
+    "new",
+    `${Number(p.price).toFixed(2)} EUR`,
+    `https://epicerieducoin.fr/?p=${p.id}#catalogue`,
+    p.image,
+    "L'Épicerie du Coin",
+    "Food, Beverages & Tobacco > Food Items",
+  ].map(toCsvField).join(","));
+  changes.push(`${p.id} : ajoute au flux (${dispo})`);
+}
+if (ajouts.length) {
+  // on insere avant l'eventuelle ligne vide finale
+  const fin = updated.length && updated[updated.length - 1].trim() === "" ? updated.length - 1 : updated.length;
+  updated.splice(fin, 0, ...ajouts);
+}
 
 if (changes.length === 0) {
   console.log("Flux deja aligne sur le stock, aucune modification.");
