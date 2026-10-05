@@ -231,6 +231,7 @@ const products = [
   },
   {
     id: "panwich-jambon-emmental",
+    images: ["assets/panwich-jambon.jpeg?v=1"],
     name: "Panwich jambon emmental",
     category: "panwichs",
     description: "220 g - panwich chaud jambon emmental.",
@@ -250,6 +251,7 @@ const products = [
   },
   {
     id: "panwich-jambon-fromage",
+    images: ["assets/panwich-jambon.jpeg?v=1"],
     name: "Panwich jambon fromage emmental",
     category: "panwichs",
     description: "220 g - panwich jambon fromage emmental.",
