@@ -3024,6 +3024,39 @@ document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
   });
 });
 
+// Lien direct vers un produit : epicerieducoin.fr/?p=<identifiant>#catalogue
+//
+// Les 55 lignes du flux Google Shopping et du catalogue Meta pointent vers
+// cette adresse depuis la mise en service du flux, mais RIEN ne lisait le
+// parametre : le client qui cliquait sur l'annonce d'une pizza chorizo
+// atterrissait devant les sept bandes familles et devait la retrouver seul.
+// On ouvre sa famille, on amene sa carte au centre de l'ecran et on la fait
+// clignoter — meme signal que partout ailleurs sur le site.
+function ouvrirProduitCible() {
+  const id = new URLSearchParams(window.location.search).get("p");
+  if (!id) return;
+
+  // Produit retire du catalogue depuis que l'annonce est partie : on laisse le
+  // client sur l'accueil plutot que de le planter devant une famille vide.
+  const produit = products.find((item) => item.id === id);
+  if (!produit) return;
+
+  const famille = FAMILIES.find(
+    (item) => !item.composer && item.cats.includes(produit.category)
+  );
+  if (famille && familyProducts(famille).length) openFamily(famille.key);
+  else openFullCatalogue();
+
+  // openFamily lance deja un defilement vers la barre de retour. Viser la carte
+  // dans la foulee ferait se battre les deux : on attend qu'il soit fini.
+  window.setTimeout(() => {
+    const carte = document.querySelector(`[data-product-card="${CSS.escape(id)}"]`);
+    if (!carte) return;
+    carte.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => signalerCible(carte), 450);
+  }, 550);
+}
+
 // Le bandeau des services et l'image d'accueil ne sont pas des liens, mais ils
 // se font cliquer : 8 clics morts dessus en une semaine. On les envoie vers le
 // catalogue plutot que de ne rien faire.
@@ -3241,7 +3274,18 @@ loadShopSettings()
   .then(refreshStockThenShop)
   .then(loadCustomPacks)
   .then(loadExtraProducts)
-  .then(loadTopSellers);
+  .then(loadTopSellers)
+  // Apres le chargement, sinon les produits crees depuis l'admin ne sont pas
+  // encore dans « products » et leur lien d'annonce ne trouverait rien.
+  // « finally » plutot que « then » : si le stock ne repond pas, le lien doit
+  // au moins fonctionner pour les produits du catalogue.
+  .finally(() => {
+    try {
+      ouvrirProduitCible();
+    } catch (error) {
+      console.warn(error);
+    }
+  });
 loadDeliveryClosures();
 loadPromos();
 loadUpsell();
