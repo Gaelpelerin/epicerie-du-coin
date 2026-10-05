@@ -1594,6 +1594,18 @@ let extraProductsData = [];
 let alcoholSalesOn = true; // réglage serveur, relu à l'ouverture de l'onglet
 let productFormState = null; // { id?, image } — l'édition en cours
 
+// Identifiant lisible tire du nom, pour nommer le fichier photo d'un produit
+// qui n'a pas encore d'identifiant (creation).
+function slugProduit(nom) {
+  return String(nom || "produit")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || "produit";
+}
+
 function productFormHtml(p) {
   const estNouveau = !p.id;
   const photo = productFormState?.image ?? p.image ?? "";
@@ -1682,6 +1694,7 @@ function renderProductsManager() {
     </div>`;
 
   productsManager.innerHTML = `
+    ${photosAMigrerHtml()}
     ${familyOrderHtml()}
     ${alcoolHtml}
     <div class="product-list">${liste}</div>
@@ -1703,6 +1716,22 @@ function normaliserOrdreFamilles(ordre) {
     if (!triees.includes(key)) triees.push(key);
   });
   return triees;
+}
+
+// Photos encore stockees en base plutot qu'en fichier : elles s'affichent sur
+// le site mais n'ont pas d'adresse web, donc leur produit ne peut pas entrer
+// dans le flux Google et Meta.
+function photosAMigrerHtml() {
+  const concernes = extraProductsData.filter((p) => String(p.image || "").startsWith("data:"));
+  if (!concernes.length) return "";
+  return `
+    <div class="alcohol-switch is-off">
+      <span>
+        <strong>${concernes.length} photo${concernes.length > 1 ? "s" : ""} à convertir en fichier</strong>
+        <small>Ces produits s'affichent bien sur la boutique, mais leur photo n'a pas d'adresse web : ils restent invisibles pour Google et pour les publicités. La conversion est sans risque et ne change rien à l'affichage.</small>
+      </span>
+      <button class="ghost-btn" type="button" data-photos-migrate>Convertir</button>
+    </div>`;
 }
 
 function familyOrderHtml() {
@@ -1757,6 +1786,23 @@ async function openProductsPanel() {
 
 if (productsManager) {
   productsManager.addEventListener("click", async (event) => {
+    if (event.target.closest("[data-photos-migrate]")) {
+      successMessage.textContent = "Conversion des photos…";
+      errorMessage.textContent = "";
+      try {
+        const res = await adminMigratePhotos(adminSessionPin);
+        const n = (res.migres || []).length;
+        successMessage.textContent = res.restants
+          ? `${n} photo(s) convertie(s), ${res.restants} en echec.`
+          : `${n} photo(s) convertie(s). Les produits peuvent entrer dans le flux.`;
+        await openProductsPanel();
+      } catch (error) {
+        successMessage.textContent = "";
+        errorMessage.textContent = String(error.message || error);
+      }
+      return;
+    }
+
     const deplacer = event.target.closest("[data-family-move]");
     if (deplacer) {
       const key = deplacer.dataset.familyMove;
@@ -1893,6 +1939,15 @@ if (productsManager) {
     errorMessage.textContent = "";
     successMessage.textContent = "Enregistrement…";
     try {
+      // La photo part d'abord dans le bucket public et devient une vraie
+      // adresse web. Stockee en data URI comme avant, elle s'affichait sur le
+      // site mais restait invisible pour le flux Google et Meta.
+      if (produit.image.startsWith("data:")) {
+        successMessage.textContent = "Envoi de la photo…";
+        const cle = produit.id || slugProduit(produit.name);
+        produit.image = await adminUploadPhoto(adminSessionPin, cle, produit.image);
+      }
+      successMessage.textContent = "Enregistrement…";
       const res = await adminSaveExtraProduct(adminSessionPin, produit);
       successMessage.textContent = res?.created
         ? `Produit créé : il est en ligne immédiatement.`

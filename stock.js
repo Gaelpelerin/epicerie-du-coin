@@ -549,6 +549,35 @@ async function adminSaveExtraProduct(pin, product) {
   return callAdminRpc("admin_save_extra_product", { p_pin: pin, p_product: product });
 }
 
+// Depot d'une photo produit dans le bucket public, via la fonction edge qui
+// verifie le PIN et ecrit avec la cle de service. Renvoie l'adresse publique.
+// Les photos etaient jusqu'ici stockees en data URI dans la base : elles
+// s'affichaient, mais n'avaient pas d'URL, donc le produit ne pouvait pas
+// entrer dans le flux Google/Meta.
+async function adminUploadPhoto(pin, id, dataUrl) {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-photo`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ action: "upload", pin, id, dataUrl }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.ok) throw new Error(data?.error || "Envoi de la photo impossible.");
+  return data.url;
+}
+
+// Reprise de l'existant : convertit en fichiers toutes les photos encore
+// stockees en data URI.
+async function adminMigratePhotos(pin) {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-upload-photo`, {
+    method: "POST",
+    headers: supabaseHeaders,
+    body: JSON.stringify({ action: "migrate", pin }),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.ok) throw new Error(data?.error || "Migration impossible.");
+  return data;
+}
+
 async function adminDeleteExtraProduct(pin, id) {
   return callAdminRpc("admin_delete_extra_product", { p_pin: pin, p_id: id });
 }
