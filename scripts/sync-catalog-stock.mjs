@@ -5,8 +5,14 @@
  * Sans cette synchro, un produit en rupture reste annonce "in stock" : la pub
  * envoie le client vers un bouton d'ajout desactive.
  *
- * Seule la colonne "availability" est touchee. Les prix, titres, images et
- * liens restent la propriete du CSV, qui n'est pas regenere.
+ * Pour les produits du catalogue du site (script.js), seule la colonne
+ * "availability" est touchee : prix, titres, images et liens restent la
+ * propriete du CSV.
+ *
+ * Pour les produits crees depuis l'admin (extra_products), c'est la base qui
+ * fait foi : titre, description, prix, lien et photo sont realignes a chaque
+ * passage. Sans cela, renommer une pizza dans l'admin ne changeait rien dans
+ * le flux Google, sans le moindre avertissement.
  *
  * Regle : "in stock" exige DEUX conditions, une quantite > 0 ET une fiche
  * produit sur le site. Certains articles ont du stock physique sans figurer
@@ -66,67 +72,59 @@ if (sellable.size === 0) throw new Error("Aucun produit lu dans script.js : sync
 
 /** Protege un champ pour l'ecriture CSV : guillemets doubles a l'interieur. */
 function toCsvField(value) {
-  return '"' + String(value).replace(/"/g, '""') + '"';
+  return '"' + String(value ?? "").replace(/"/g, '""') + '"';
 }
 
-/** Decoupe une ligne CSV en respectant les guillemets. */
-function splitCsvLine(line) {
-  const out = [];
-  let field = "", inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQuotes && line[i + 1] === '"') { field += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (c === "," && !inQuotes) { out.push(field); field = ""; }
-    else field += c;
+/**
+ * Decoupe le CSV en enregistrements, champ par champ.
+ *
+ * Un champ entre guillemets peut contenir des virgules ET des retours a la
+ * ligne. Decouper d'abord par lignes, comme on le faisait, coupait en deux
+ * les trois pizzas dont la description venait de l'admin sur plusieurs
+ * lignes : la colonne "availability" devenait introuvable et le script
+ * plantait au passage suivant.
+ */
+function parseCsv(text) {
+  const records = [];
+  let record = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else if (c !== "\r") field += c;
+      continue;
+    }
+    if (c === '"') { inQuotes = true; continue; }
+    if (c === ",") { record.push(field); field = ""; continue; }
+    if (c === "\r") continue;
+    if (c === "\n") {
+      record.push(field);
+      if (record.length > 1 || record[0] !== "") records.push(record);
+      record = [];
+      field = "";
+      continue;
+    }
+    field += c;
   }
-  out.push(field);
-  return out;
+  if (field !== "" || record.length) { record.push(field); records.push(record); }
+  return records;
 }
 
-const raw = readFileSync(CSV, "utf8");
-const eol = raw.includes("\r\n") ? "\r\n" : "\n";
-const lines = raw.split(/\r?\n/);
-const changes = [];
+/** Texte sur une seule ligne : une description coupee casse la colonne suivante. */
+function uneSeuleLigne(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
 
-const updated = lines.map((line, i) => {
-  if (i === 0 || line.trim() === "") return line;
-  const cells = splitCsvLine(line);
-  const id = cells[0].replace(/^"|"$/g, "");
-  if (!stock.has(id)) return line;
-
-  const wanted = stock.get(id) > 0 && sellable.has(id) ? "in stock" : "out of stock";
-  const current = cells[AVAILABILITY].replace(/^"|"$/g, "");
-  if (current === wanted) return line;
-
-  const why = stock.get(id) === 0
-    ? "rupture"
-    : sellable.has(id) ? `stock ${stock.get(id)}` : "absent du catalogue du site";
-  changes.push(`${id} : ${current} -> ${wanted} (${why})`);
-  cells[AVAILABILITY] = wanted;
-  // splitCsvLine retire les guillemets : il faut les remettre sur TOUS les
-  // champs, pas seulement sur celui qu'on modifie. Sinon un champ contenant
-  // une virgule — « Food, Beverages & Tobacco > Food Items », ou une
-  // description — eclate en deux colonnes et Google rejette la ligne.
-  // C'est ce qui etait arrive a quiche-lorraine, la seule ligne dont le stock
-  // avait change depuis la mise en service du script.
-  return cells.map(toCsvField).join(",");
-});
-
-// Les produits de l'admin absents du flux y sont ajoutes ; ceux qui y figurent
-// deja gardent leur ligne, dont la disponibilite vient d'etre alignee plus haut.
-const presents = new Set(
-  updated.slice(1).filter((l) => l.trim()).map((l) => splitCsvLine(l)[0]),
-);
-const ajouts = [];
-for (const p of extras) {
-  if (presents.has(p.id)) continue;
-  const dispo = (stock.get(p.id) ?? 0) > 0 ? "in stock" : "out of stock";
-  ajouts.push([
+/** La ligne de flux telle qu'elle doit etre pour un produit de l'admin. */
+function ligneExtra(p, dispo) {
+  return [
     p.id,
-    p.name,
-    p.description || p.name,
+    uneSeuleLigne(p.name),
+    uneSeuleLigne(p.description || p.name),
     dispo,
     "new",
     `${Number(p.price).toFixed(2)} EUR`,
@@ -134,13 +132,56 @@ for (const p of extras) {
     p.image,
     "L'Épicerie du Coin",
     "Food, Beverages & Tobacco > Food Items",
-  ].map(toCsvField).join(","));
-  changes.push(`${p.id} : ajoute au flux (${dispo})`);
+  ];
 }
-if (ajouts.length) {
-  // on insere avant l'eventuelle ligne vide finale
-  const fin = updated.length && updated[updated.length - 1].trim() === "" ? updated.length - 1 : updated.length;
-  updated.splice(fin, 0, ...ajouts);
+
+const COLONNES = ["id", "titre", "description", "disponibilite", "etat",
+  "prix", "lien", "photo", "marque", "categorie"];
+
+const raw = readFileSync(CSV, "utf8");
+const eol = raw.includes("\r\n") ? "\r\n" : "\n";
+const records = parseCsv(raw);
+const extrasParId = new Map(extras.map((p) => [p.id, p]));
+const presents = new Set();
+const changes = [];
+
+const updated = records.map((cells, i) => {
+  if (i === 0) return cells;
+  const id = cells[0];
+  if (!id) return cells;
+  presents.add(id);
+
+  // Produit de l'admin : la base fait foi sur toute la ligne.
+  const extra = extrasParId.get(id);
+  if (extra) {
+    const dispo = (stock.get(id) ?? 0) > 0 ? "in stock" : "out of stock";
+    const voulue = ligneExtra(extra, dispo);
+    const ecarts = COLONNES.filter((_, c) => cells[c] !== voulue[c]);
+    if (ecarts.length === 0) return cells;
+    changes.push(`${id} : ${ecarts.join(", ")} realigne(s) sur l'admin`);
+    return voulue;
+  }
+
+  // Produit du catalogue du site : on ne touche que la disponibilite.
+  if (!stock.has(id)) return cells;
+  const wanted = stock.get(id) > 0 && sellable.has(id) ? "in stock" : "out of stock";
+  if (cells[AVAILABILITY] === wanted) return cells;
+
+  const why = stock.get(id) === 0
+    ? "rupture"
+    : sellable.has(id) ? `stock ${stock.get(id)}` : "absent du catalogue du site";
+  changes.push(`${id} : ${cells[AVAILABILITY]} -> ${wanted} (${why})`);
+  const copie = cells.slice();
+  copie[AVAILABILITY] = wanted;
+  return copie;
+});
+
+// Les produits de l'admin absents du flux y sont ajoutes.
+for (const p of extras) {
+  if (presents.has(p.id)) continue;
+  const dispo = (stock.get(p.id) ?? 0) > 0 ? "in stock" : "out of stock";
+  updated.push(ligneExtra(p, dispo));
+  changes.push(`${p.id} : ajoute au flux (${dispo})`);
 }
 
 if (changes.length === 0) {
@@ -148,6 +189,6 @@ if (changes.length === 0) {
   process.exit(0);
 }
 
-writeFileSync(CSV, updated.join(eol));
-console.log(`${changes.length} disponibilite(s) mise(s) a jour :`);
+writeFileSync(CSV, updated.map((r) => r.map(toCsvField).join(",")).join(eol) + eol);
+console.log(`${changes.length} modification(s) :`);
 for (const c of changes) console.log("  - " + c);
