@@ -1491,7 +1491,15 @@ async function checkoutCart() {
   const hasAlcohol = items.some((item) => item.product.alcohol);
 
   if (!customer.name || !customer.phone || !fullAddress) {
-    logProductEvent("pay_blocked_fields");
+    // On journalise le ou les champs vides, pas seulement le fait qu'il en
+    // manque un : 25 refus sur 62 clics en 30 jours, sans savoir lesquels.
+    // Le nom du champ part dans product_id, faute de colonne dediee.
+    const champsVides = [
+      !customer.name ? "nom" : null,
+      !customer.phone ? "telephone" : null,
+      !fullAddress ? "adresse" : null,
+    ].filter(Boolean);
+    logProductEvent("pay_blocked_fields", { id: champsVides.join("+") });
     cartMessage.textContent = t("msg_fill_fields");
     // Sans ce qui suit, le clic ne produisait aucun effet visible : le bouton
     // flotte en bas de l'ecran, les champs sont plus haut, et le message seul
@@ -1663,6 +1671,11 @@ async function checkoutCart() {
     num_items: items.reduce((sum, item) => sum + item.quantity, 0) + menuCartTotalQuantity(),
   });
 
+  // Toute la validation est passee : on marque le depart, par mode de paiement.
+  // Sans ca, 24 commandes disparaissaient entre la validation et la base sans
+  // qu'on puisse dire si elles se perdaient a l'enregistrement ou sur Stripe.
+  logProductEvent(paymentMethod === "cash" ? "pay_ok_cash" : "pay_ok_card");
+
   // Paiement à la livraison (espèces) : on enregistre la commande directement
   // (RPC create_order_request → stock + notif Telegram), sans passer par Stripe.
   if (paymentMethod === "cash") {
@@ -1685,6 +1698,7 @@ async function checkoutCart() {
       console.warn(error);
       // Refus du serveur sur les prix : le plus souvent un panier ouvert avant un
       // changement de prix ou la fin d'une promo — recharger suffit.
+      logProductEvent("pay_error", { id: isPriceMismatch(error) ? "prix_change" : "enregistrement" });
       cartMessage.textContent = isPriceMismatch(error) ? t("msg_price_changed") : t("msg_order_failed");
     }
     return;
@@ -1696,6 +1710,7 @@ async function checkoutCart() {
   try {
     const session = await createCheckoutSession(items, customer, orderReference, menuItems, appliedPromo?.code || "");
     if (!session?.url) throw new Error("URL de paiement manquante.");
+    logProductEvent("pay_card_redirect");
     window.location.href = session.url;
   } catch (error) {
     console.warn(error);
