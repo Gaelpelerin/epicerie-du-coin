@@ -2915,7 +2915,28 @@ document.addEventListener("click", (event) => {
 document.querySelectorAll("[data-cart-open]").forEach((button) => button.addEventListener("click", openCart));
 document.querySelectorAll("[data-cart-close]").forEach((button) => button.addEventListener("click", closeCart));
 document.querySelectorAll("[data-product-modal-close]").forEach((button) => button.addEventListener("click", closeProductModal));
-document.querySelector("[data-checkout]").addEventListener("click", checkoutCart);
+// Le bouton se verrouille pendant tout l'envoi. Mesure du 6 octobre a 15h00 :
+// un client a tape deux fois en une seconde et la commande est partie DEUX FOIS
+// (pay_click + checkout + pay_ok_card a 15:00:07 puis a 15:00:08). En carte le
+// doublon est reste invisible — une session Stripe gagne, l'autre est perdue —
+// mais en especes createCashOrder aurait cree deux vraies commandes, deux
+// notifications, et retire le stock deux fois.
+// Le drapeau arrete le deuxieme appui meme si le navigateur ignore « disabled »
+// sur un appui deja parti ; « disabled » sert surtout a le montrer au client.
+let envoiCommandeEnCours = false;
+document.querySelector("[data-checkout]").addEventListener("click", async () => {
+  if (envoiCommandeEnCours) return;
+  envoiCommandeEnCours = true;
+  checkoutButton.disabled = true;
+  try {
+    await checkoutCart();
+  } finally {
+    // Sur un depart reussi la page change ; ce deverrouillage ne sert que
+    // lorsqu'on reste sur place, apres un refus de validation par exemple.
+    envoiCommandeEnCours = false;
+    checkoutButton.disabled = false;
+  }
+});
 
 if (promoApplyButton) {
   promoApplyButton.addEventListener("click", applyPromoCode);
@@ -3060,8 +3081,12 @@ function ouvrirProduitCible() {
 // Le bandeau des services et l'image d'accueil ne sont pas des liens, mais ils
 // se font cliquer : 8 clics morts dessus en une semaine. On les envoie vers le
 // catalogue plutot que de ne rien faire.
+// Le bandeau des services, lui, n'avait jamais ete cable malgre ce commentaire :
+// seules l'image et sa legende l'etaient. « Commander a l'avance » recoltait
+// encore une vingtaine de clics morts par semaine (mesure du 13 octobre).
 document.querySelector(".hero-cover")?.addEventListener("click", allerAuCatalogue);
 document.querySelector(".hero-note")?.addEventListener("click", allerAuCatalogue);
+document.querySelector(".service-strip")?.addEventListener("click", allerAuCatalogue);
 
 document.querySelectorAll('[href="#livraison"]').forEach((lien) => {
   lien.addEventListener("click", (event) => {
