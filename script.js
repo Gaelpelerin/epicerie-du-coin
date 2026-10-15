@@ -1920,7 +1920,11 @@ function renderFamilyMenu() {
 
 // Le catalogue complet, exactement comme avant les familles : la barre des
 // treize onglets, les offres du moment, tous les produits à la suite.
-function openFullCatalogue() {
+// « defilement: false » : appelé par le lien produit des annonces, qui fait son
+// propre defilement vers la carte. Deux defilements animes lances en meme temps
+// se battent, et dans le navigateur interne de Facebook c'est souvent le nôtre
+// qui perd — le client restait en haut de page.
+function openFullCatalogue(options) {
   currentFamily = null;
   fullCatalogueOpen = true;
   document.querySelector("[data-family-current]").textContent = t("family_all_title");
@@ -1933,17 +1937,19 @@ function openFullCatalogue() {
   document.querySelector('[data-filter="all"]')?.classList.add("active");
   hideEmptyCategoryTabs();
   renderProducts("all");
-  document.querySelector("[data-family-bar]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!options || options.defilement !== false) {
+    document.querySelector("[data-family-bar]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
-function openFamily(key) {
+function openFamily(key, options) {
   const famille = FAMILIES.find((item) => item.key === key);
   if (famille && famille.composer) {
     document.querySelector("[data-open-composer]")?.click();
     return;
   }
   if (key === "tout") {
-    openFullCatalogue();
+    openFullCatalogue(options);
     return;
   }
   const family = famille;
@@ -1964,7 +1970,9 @@ function openFamily(key) {
   // On cale la barre de retour en haut, pas le titre du catalogue : sinon le
   // client retrouve l'intitulé et le bandeau « Les plus commandés » avant ses
   // produits, et croit que rien ne s'est passé.
-  document.querySelector("[data-family-bar]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!options || options.defilement !== false) {
+    document.querySelector("[data-family-bar]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function closeFamily() {
@@ -3053,29 +3061,98 @@ document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
 // atterrissait devant les sept bandes familles et devait la retrouver seul.
 // On ouvre sa famille, on amene sa carte au centre de l'ecran et on la fait
 // clignoter — meme signal que partout ailleurs sur le site.
-function ouvrirProduitCible() {
-  const id = new URLSearchParams(window.location.search).get("p");
+// ATTENTION au moment ou cette fonction s'execute. Premiere version, le
+// 5 octobre : elle attendait la fin du chargement du stock, puis reorganisait
+// la page. Mesure du 15 octobre sur le site en ligne, a l'arrivee d'une
+// annonce : UN saut de mise en page de 0,946 a 1 085 ms, contre 0,074 sur la
+// page d'accueil. Au-dessus de 0,25 c'est juge mauvais. Le client voyait la
+// page se remettre en ordre sous son doigt une seconde apres l'ouverture, et
+// Gael l'a constate lui-meme depuis son telephone.
+//
+// La cause : remplacer le menu des familles (1 176 px) par la grille pousse
+// tout ce qui suit. Le remede n'est pas d'animer, c'est de le faire AVANT le
+// premier affichage — la page arrive alors deja rangee, il n'y a aucun saut.
+// Pour les produits crees depuis l'admin, qui n'arrivent qu'apres un
+// aller-retour avec la base, on bascule quand meme la vue tout de suite : le
+// changement de structure est passe, seul le contenu de la grille se remplit.
+let cibleProduitFaite = false;
+let vueOuvertePourCible = false;
+
+function identifiantCible() {
+  return new URLSearchParams(window.location.search).get("p");
+}
+
+/** Premier passage, synchrone, avant le premier affichage. */
+function preparerCibleProduit() {
+  const id = identifiantCible();
   if (!id) return;
+
+  // Les annonces pointent vers ...?p=xxx#catalogue. Le navigateur saute sur
+  // l'ancre au chargement, puis notre defilement se bat avec le sien. On retire
+  // l'ancre : le parametre suffit, et le client garde une adresse propre.
+  if (window.location.hash === "#catalogue") {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+  if (ouvrirProduitCible()) return;
+
+  // Produit inconnu a ce stade : c'est un produit cree depuis l'admin, il
+  // n'arrivera qu'apres l'aller-retour avec la base. On bascule quand meme la
+  // vue MAINTENANT, avant le premier affichage. Le gros du saut vient de la
+  // disparition du menu des familles ; une fois ce changement passe, il ne
+  // restera que la grille qui se remplit.
+  vueOuvertePourCible = true;
+  openFullCatalogue({ defilement: false });
+}
+
+/** Ouvre la famille du produit et amene sa carte a l'ecran. Idempotent. */
+function ouvrirProduitCible() {
+  const id = identifiantCible();
+  if (!id || cibleProduitFaite) return cibleProduitFaite;
 
   // Produit retire du catalogue depuis que l'annonce est partie : on laisse le
   // client sur l'accueil plutot que de le planter devant une famille vide.
   const produit = products.find((item) => item.id === id);
-  if (!produit) return;
+  if (!produit) return false;
+  cibleProduitFaite = true;
 
+  // On ouvre toujours la FAMILLE du produit, meme si la vue « tout le
+  // catalogue » a ete basculee plus haut en attendant. Essai du 15 octobre :
+  // laisser le client dans le catalogue complet posait sa carte a 11 283 px
+  // dans une page de 15 372 px — un defilement qu'aucun redessin ne survivait.
+  // La famille tient en une poignee de cartes, la cible est atteignable.
   const famille = FAMILIES.find(
     (item) => !item.composer && item.cats.includes(produit.category)
   );
-  if (famille && familyProducts(famille).length) openFamily(famille.key);
-  else openFullCatalogue();
+  // « defilement: false » : on vise la carte, pas la barre de retour. Sans ca
+  // les deux defilements se battent.
+  if (famille && familyProducts(famille).length) openFamily(famille.key, { defilement: false });
+  else if (!vueOuvertePourCible) openFullCatalogue({ defilement: false });
 
-  // openFamily lance deja un defilement vers la barre de retour. Viser la carte
-  // dans la foulee ferait se battre les deux : on attend qu'il soit fini.
-  window.setTimeout(() => {
+  const carte = document.querySelector(`[data-product-card="${CSS.escape(id)}"]`);
+  if (!carte) return true;
+  // Defilement immediat, pas anime : le navigateur interne de Facebook
+  // interrompt volontiers un defilement doux lance au chargement.
+  carte.scrollIntoView({ block: "center" });
+  window.setTimeout(() => signalerCible(carte), 260);
+  garderCibleEnVue(id);
+  return true;
+}
+
+// Les promos, le stock et les plus commandes arrivent chacun a leur rythme et
+// redessinent la grille. Chaque redessin detruit la carte qu'on visait et
+// ramenait le client en haut de page — teste le 15 octobre sur la pizza
+// chorizo : position 0 alors que sa carte etait a 11 670 px. On remet la carte
+// a l'ecran apres chaque redessin, le temps que la page se stabilise.
+function garderCibleEnVue(id) {
+  if (!grid || typeof MutationObserver !== "function") return;
+  const observateur = new MutationObserver(() => {
     const carte = document.querySelector(`[data-product-card="${CSS.escape(id)}"]`);
     if (!carte) return;
-    carte.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => signalerCible(carte), 450);
-  }, 550);
+    const r = carte.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) carte.scrollIntoView({ block: "center" });
+  });
+  observateur.observe(grid, { childList: true });
+  window.setTimeout(() => observateur.disconnect(), 5000);
 }
 
 // Le bandeau des services et l'image d'accueil ne sont pas des liens, mais ils
@@ -3290,6 +3367,11 @@ async function loadUpsell() {
 }
 
 renderProducts();
+// AVANT le premier affichage : si l'adresse porte ?p=, la page doit arriver
+// deja ouverte sur le produit. Attendre le chargement du stock, c'est la
+// reorganiser sous les yeux du client — 0,946 de saut mesure le 15 octobre.
+// Couvre tous les produits du catalogue ; ceux de l'admin sont repris plus bas.
+preparerCibleProduit();
 renderCart();
 setupDeliveryDateInput();
 // On charge d'abord le stock central (réécrit tout le cache), PUIS les packs
@@ -3306,7 +3388,10 @@ loadShopSettings()
   // au moins fonctionner pour les produits du catalogue.
   .finally(() => {
     try {
-      ouvrirProduitCible();
+      // Produit introuvable meme apres chargement : l'annonce pointe vers un
+      // article retire. On ramene l'accueil, sinon le client resterait devant
+      // le catalogue complet ouvert en attendant un produit qui n'existe plus.
+      if (!ouvrirProduitCible() && vueOuvertePourCible) closeFamily();
     } catch (error) {
       console.warn(error);
     }
