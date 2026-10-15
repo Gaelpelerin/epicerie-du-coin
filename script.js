@@ -15,11 +15,19 @@ const SUPPORTS_WEBP = (() => {
   }
 })();
 
+// Photos arrivees apres la generation des copies WebP, et pour lesquelles on
+// n'a pas d'encodeur sur place : demander leur variante produit un 404 a chaque
+// chargement de page (mesure du 15 octobre : panwich-jambon, quatre fois par
+// visite). On sert directement le fichier d'origine.
+// A retirer de cette liste des que les WebP correspondantes existent.
+const SANS_WEBP = ["assets/panwich-jambon", "assets/pizza-chevre"];
+
 function webpVariant(path, size) {
   if (!SUPPORTS_WEBP || !path) return path;
   const [file, query] = path.split("?");
   const match = file.match(/^(assets|products)\/(.+)\.(?:jpe?g|png)$/i);
   if (!match) return path;
+  if (SANS_WEBP.indexOf(`${match[1]}/${match[2]}`) !== -1) return path;
   return `webp/${size}/${match[1]}/${match[2]}.webp${query ? `?${query}` : ""}`;
 }
 
