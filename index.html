@@ -80,7 +80,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot63" />
+  <link rel="stylesheet" href="styles.css?v=slot64" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -245,6 +245,101 @@
           </div>
 
           <div class="product-grid hidden" data-product-grid></div>
+
+          <!-- Catalogue de secours, affiché uniquement si le JavaScript ne
+               fonctionne pas. Tout le catalogue est construit par script.js :
+               la page envoyée par le serveur ne contenait AUCUN nom de produit.
+               Un controle automatique qui n'execute pas les scripts ouvrait
+               donc ?p=bretzel-gratine-lard sur une page ne mentionnant nulle
+               part le bretzel annonce — ce qui ressemble a un faux lien. Meta a
+               refuse l'annonce du bretzel le 16 octobre a 2h03, puis l'a
+               retablie a 5h44.
+               Genere par scripts/generer-catalogue-statique.mjs — NE PAS
+               modifier a la main, le bloc est reecrit. -->
+          <!-- CATALOGUE-STATIQUE:DEBUT -->
+          <noscript>
+            <section class="catalogue-secours" aria-label="Catalogue">
+              <h3>Notre catalogue</h3>
+              <p>
+                Livraison 7j/7 au Thillot et 30 km alentour, même tard le soir.
+                Pour commander en ligne, activez JavaScript, ou appelez le
+                <a href="tel:+33675748449">06 75 74 84 49</a>.
+              </p>
+              <ul>
+              <li><a href="?p=quiche-lorraine">Quiche lorraine</a> — 5,90 €</li>
+              <li><a href="?p=quiche-saumon">Quiche saumon &amp; brocoli</a> — 5,90 €</li>
+              <li><a href="?p=quiche-epinards">Quiche épinards, pignons de pin</a> — 5,90 €</li>
+              <li><a href="?p=quiche-poulet">Quiche poulet</a> — 5,90 €</li>
+              <li><a href="?p=quiche-dinde-halal">Quiche dinde halal</a> — 5,90 €</li>
+              <li><a href="?p=quiche-poireaux">Quiche poireaux</a> — 5,90 €</li>
+              <li><a href="?p=quiche-mediterraneenne">Quiche méditerranéenne</a> — 5,90 €</li>
+              <li><a href="?p=quiche-3-fromages">Quiche 3 fromages</a> — 5,90 €</li>
+              <li><a href="?p=quiche-chevre-tomate">Quiche chèvre tomate</a> — 5,90 €</li>
+              <li><a href="?p=quiche-tartiflette">Quiche tartiflette</a> — 5,90 €</li>
+              <li><a href="?p=croque">Croque-monsieur premium</a> — 8,90 €</li>
+              <li><a href="?p=bretzel-nature">Bretzel nature</a> — 3,90 €</li>
+              <li><a href="?p=bretzel-gratine-lard">Bretzel gratiné lard &amp; emmental</a> — 5,90 €</li>
+              <li><a href="?p=pizza-napolitaine">Pizza napolitaine</a> — 8,90 €</li>
+              <li><a href="?p=pizza-jambon-fromage">Pizza jambon fromage</a> — 8,90 €</li>
+              <li><a href="?p=pizza-chevre">Pizza chèvre miel</a> — 8,90 €</li>
+              <li><a href="?p=pizza-4-fromages">Pizza 4 fromages</a> — 8,90 €</li>
+              <li><a href="?p=pizza-pincee-margherita">Pizza pincée margherita</a> — 7,90 €</li>
+              <li><a href="?p=pizza-pincee-diavola">Pizza pincée diavola</a> — 7,90 €</li>
+              <li><a href="?p=pizza-pincee-jambon">Pizza pincée jambon fromage</a> — 7,90 €</li>
+              <li><a href="?p=panwich-jambon-emmental">Panwich jambon emmental</a> — 8,90 €</li>
+              <li><a href="?p=panwich-mozzarella-pesto">Panwich mozzarella tomate pesto</a> — 8,90 €</li>
+              <li><a href="?p=panwich-jambon-fromage">Panwich jambon fromage emmental</a> — 8,90 €</li>
+              <li><a href="?p=donut-speculoos">Donut Spéculoos</a> — 4,90 €</li>
+              <li><a href="?p=donut-lion">Donut Lion</a> — 4,90 €</li>
+              <li><a href="?p=brioche-babka">Brioche Babka</a> — 14,90 €</li>
+              <li><a href="?p=cake-marbre-rocher">Cake marbré rocher</a> — 24,90 €</li>
+              <li><a href="?p=carrot-cake">Carrot cake</a> — 19,90 €</li>
+              <li><a href="?p=cake-citron">Cake citron</a> — 18,90 €</li>
+              <li><a href="?p=cake-marbre">Cake marbré</a> — 17,90 €</li>
+              <li><a href="?p=cake-pain-epices">Cake pain d'épices</a> — 17,90 €</li>
+              <li><a href="?p=kouglof-sucre">Kouglof sucré</a> — 14,90 €</li>
+              <li><a href="?p=evian">Evian 50 cl</a> — 2,50 €</li>
+              <li><a href="?p=perrier-33">Perrier 33 cl</a> — 3,50 €</li>
+              <li><a href="?p=san-pellegrino-50">San Pellegrino 50 cl</a> — 3,90 €</li>
+              <li><a href="?p=coca">Coca-Cola 33 cl</a> — 3,50 €</li>
+              <li><a href="?p=coca-zero">Coca-Cola Zero 33 cl</a> — 3,50 €</li>
+              <li><a href="?p=ice-tea-peche">Ice Tea pêche</a> — 3,50 €</li>
+              <li><a href="?p=oasis-tropical">Tropico</a> — 3,50 €</li>
+              <li><a href="?p=orangina">Orangina</a> — 3,90 €</li>
+              <li><a href="?p=schweppes-agrumes">Schweppes Agrumes</a> — 3,90 €</li>
+              <li><a href="?p=lemonaid-citron">Lemonaid citron bio</a> — 5,90 €</li>
+              <li><a href="?p=lemonaid-passion">Lemonaid passion bio</a> — 5,90 €</li>
+              <li><a href="?p=lemonaid-ginger">Lemonaid ginger bio</a> — 5,90 €</li>
+              <li><a href="?p=jus-goyave-litchi">Jus goyave - litchi 25 cl</a> — 3,90 €</li>
+              <li><a href="?p=jus-pomme-kiwi">Jus pomme - kiwi 25 cl</a> — 3,90 €</li>
+              <li><a href="?p=jus-ananas-gingembre">Jus ananas - gingembre 25 cl</a> — 3,90 €</li>
+              <li><a href="?p=desperados">Desperados 33 cl</a> — 5,90 €</li>
+              <li><a href="?p=heineken">Heineken 33 cl</a> — 4,90 €</li>
+              <li><a href="?p=corona">Corona 33 cl</a> — 5,90 €</li>
+              <li><a href="?p=lorraine-peu-blond">Lorraine Peu Blond</a> — 5,90 €</li>
+              <li><a href="?p=lorraine-duchasse">Lorraine Duchasse</a> — 6,90 €</li>
+              <li><a href="?p=saint-nicolas">Saint Nicolas</a> — 7,50 €</li>
+              <li><a href="?p=loroyse-triple">Loroyse Triple</a> — 7,50 €</li>
+              <li><a href="?p=noiraude-blanche">Noiraude Blanche</a> — 7,90 €</li>
+              <li><a href="?p=riesling-alsace">Riesling</a> — 6,90 €</li>
+              <li><a href="?p=chardonnay">Chardonnay Pierres</a> — 19,90 €</li>
+              <li><a href="?p=cotes-du-rhone">Côtes-du-Rhône</a> — 19,90 €</li>
+              <li><a href="?p=coteaux-aix-rose">Rosé Coteaux d'Aix</a> — 17,90 €</li>
+              <li><a href="?p=uby-3">UBY n°3</a> — 19,90 €</li>
+              <li><a href="?p=prosecco">Prosecco</a> — 18,90 €</li>
+              <li><a href="?p=champagne-brut">Champagne Veuve Pelletier</a> — 39,90 €</li>
+              <li><a href="?p=4-fromages">Pizza 4 fromages 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=chevre">Pizza chèvre 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=chorizo">Pizza chorizo 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=margherita">Pizza margherita 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=royale">Pizza royale 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=saumon">Pizza saumon 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=tartiflette">Pizza tartiflette 26 cm</a> — 12,90 €</li>
+              <li><a href="?p=vegetarienne">Pizza végétarienne 26 cm</a> — 12,90 €</li>
+              </ul>
+            </section>
+          </noscript>
+          <!-- CATALOGUE-STATIQUE:FIN -->
         </section>
 
         <section class="allergen-panel" aria-label="Légende allergènes">
@@ -533,8 +628,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot63"></script>
-  <script src="stock.js?v=slot63"></script>
-  <script src="script.js?v=slot63"></script>
+  <script src="i18n.js?v=slot64"></script>
+  <script src="stock.js?v=slot64"></script>
+  <script src="script.js?v=slot64"></script>
   </body>
 </html>
