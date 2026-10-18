@@ -80,7 +80,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot66" />
+  <link rel="stylesheet" href="styles.css?v=slot67" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -579,6 +579,14 @@
           </div>
           <button class="primary-btn full" type="button" data-checkout>Finaliser ma commande</button>
           <p class="cart-message" data-cart-message aria-live="polite"></p>
+          <!-- Sous le bouton, jamais au-dessus : le but est de rattraper celui
+               qui hesite, pas de detourner celui qui allait commander seul.
+               Le 18 octobre, deux clients ont rempli tout le formulaire sans
+               envoyer ; l'un a trouve ce numero sur Facebook et a telephone. -->
+          <p class="cart-phone-help">
+            <span data-i18n="cart_phone_help">Vous préférez commander de vive voix ?</span>
+            <a href="tel:+33675748449">06 75 74 84 49</a>
+          </p>
         </div>
       </div>
     </aside>
@@ -636,8 +644,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot66"></script>
-  <script src="stock.js?v=slot66"></script>
-  <script src="script.js?v=slot66"></script>
+  <script src="i18n.js?v=slot67"></script>
+  <script src="stock.js?v=slot67"></script>
+  <script src="script.js?v=slot67"></script>
   </body>
 </html>
