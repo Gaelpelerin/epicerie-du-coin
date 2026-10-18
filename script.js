@@ -3177,6 +3177,18 @@ document.querySelector(".hero-cover")?.addEventListener("click", allerAuCatalogu
 document.querySelector(".hero-note")?.addEventListener("click", allerAuCatalogue);
 document.querySelector(".service-strip")?.addEventListener("click", allerAuCatalogue);
 
+// Un appel est une vraie vente, et personne ne le voyait. Le 18 octobre, un
+// client arrive par une publicite Facebook a rempli tout le formulaire, n'a pas
+// trouve le paiement en especes (alors replie), a renonce et a TELEPHONE pour
+// commander. Il l'a dit lui-meme a Gael. Cote outils : Meta affichait zero
+// achat, le tunnel zero commande. La vente etait invisible partout.
+// On envoie donc un evenement « Lead » au clic sur le numero : Meta apprend que
+// ses publicites produisent des appels, et on peut enfin les compter.
+document.addEventListener("click", (event) => {
+  if (!event.target.closest('a[href^="tel:"]')) return;
+  metaTrack("Lead", { content_name: "appel_telephone" });
+});
+
 document.querySelectorAll('[href="#livraison"]').forEach((lien) => {
   lien.addEventListener("click", (event) => {
     const cible = document.getElementById("livraison");
