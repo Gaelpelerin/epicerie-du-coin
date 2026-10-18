@@ -80,7 +80,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Satisfy&display=swap"
       rel="stylesheet"
     />
-  <link rel="stylesheet" href="styles.css?v=slot64" />
+  <link rel="stylesheet" href="styles.css?v=slot65" />
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -508,6 +508,15 @@
           <p class="checkout-note hidden" data-reheat-note data-i18n="checkout_reheat_note">
             Vos plats sont livrés prêts à réchauffer. Préchauffez votre four 10 à 15 minutes avant dégustation.
           </p>
+          </div>
+          <!-- Le paiement reste TOUJOURS visible, contrairement aux deux choix
+               ci-dessus. Replie le 9 aout avec eux, il etait devenu invisible :
+               le client lisait « 💳 Carte » dans la ligne recap et rien ne lui
+               disait qu'un autre choix existait. Zero paiement en especes entre
+               le 3 et le 13 octobre, puis un client a telephone le 18 pour
+               demander ou etait passee l'option.
+               Le creneau et la temperature, eux, ont de vraies valeurs par
+               defaut que presque personne ne change : ils restent replies. -->
           <fieldset class="pay-choice full-field">
             <legend data-i18n="pay_method">Mode de paiement</legend>
             <div class="pay-options">
@@ -523,7 +532,6 @@
               </label>
             </div>
           </fieldset>
-          </div>
           <div class="promo-field full-field">
             <span class="promo-label" data-i18n="promo_label">Code promo</span>
             <div class="promo-row">
@@ -628,8 +636,8 @@
     </div>
     <div class="cart-toast" data-cart-toast aria-live="polite"></div>
 
-  <script src="i18n.js?v=slot64"></script>
-  <script src="stock.js?v=slot64"></script>
-  <script src="script.js?v=slot64"></script>
+  <script src="i18n.js?v=slot65"></script>
+  <script src="stock.js?v=slot65"></script>
+  <script src="script.js?v=slot65"></script>
   </body>
 </html>

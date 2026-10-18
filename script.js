@@ -802,10 +802,14 @@ const OPTION_RECAP_KEYS = {
   cash: "opt_cash",
 };
 
-// « 🚀 Au plus vite · 🔥 Chaude · 💳 Carte » : le client voit ses choix sans
-// avoir à faire défiler trois blocs déjà pré-répondus.
+// « 🚀 Au plus vite · 🔥 Chaude » : le client voit ses choix sans avoir à
+// déplier des blocs déjà pré-répondus.
+// Le PAIEMENT ne figure plus dans ce résumé : il est désormais affiché en
+// clair sous le bloc replié. L'y laisser l'aurait montré deux fois — et c'est
+// justement parce qu'il n'apparaissait QUE dans cette ligne, derrière le mot
+// « Modifier », que personne ne trouvait le paiement en espèces.
 function updateCheckoutOptionsRecap() {
-  const parts = ["deliveryWhen", "deliveryTemp", "payment"].map((name) => {
+  const parts = ["deliveryWhen", "deliveryTemp"].map((name) => {
     const checked = checkoutForm.querySelector(`input[name="${name}"]:checked`);
     if (!checked) return "";
     const icon = checked.closest(".pay-option")?.querySelector(".pay-icon")?.textContent || "";
