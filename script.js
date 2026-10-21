@@ -3177,6 +3177,17 @@ document.querySelector(".hero-cover")?.addEventListener("click", allerAuCatalogu
 document.querySelector(".hero-note")?.addEventListener("click", allerAuCatalogue);
 document.querySelector(".service-strip")?.addEventListener("click", allerAuCatalogue);
 
+// Les trois cartes « Par ou commencer ? » ressemblent a des boutons mais seul
+// le bouton du bas repond. Un client venu d'une publicite a tape « Le + malin »
+// le 21 octobre : rien ne s'est passe. Meme famille que le bandeau des
+// services. On fait repondre toute la carte, en declenchant son propre bouton.
+document.querySelectorAll(".door").forEach((carte) => {
+  carte.addEventListener("click", (event) => {
+    if (event.target.closest("button, a")) return;
+    carte.querySelector("button, a")?.click();
+  });
+});
+
 // Un appel est une vraie vente, et personne ne le voyait. Le 18 octobre, un
 // client arrive par une publicite Facebook a rempli tout le formulaire, n'a pas
 // trouve le paiement en especes (alors replie), a renonce et a TELEPHONE pour
