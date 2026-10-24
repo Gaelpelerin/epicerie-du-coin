@@ -70,6 +70,33 @@ const productsForAdmin = [
   ["champagne-brut", "Champagne Veuve Pelletier", 39.9, "bulles", true],
 ];
 
+// Les produits crees depuis l'admin (les 8 pizzas 26 cm, par exemple) vivent
+// dans la table extra_products, pas dans productsForAdmin. L'onglet Stock, le
+// rapport fournisseur et la saisie de commande manuelle ne lisaient que le
+// tableau ci-dessus : ces produits y etaient donc introuvables, alors qu'ils
+// sont en vente sur la boutique. Constate le 24 octobre, une commande prise au
+// telephone ne pouvant pas contenir de grande pizza.
+let produitsAdminExtras = [];
+
+function extrasEnTableau(list) {
+  return (Array.isArray(list) ? list : [])
+    .filter((p) => p && p.id && p.active !== false)
+    .map((p) => [p.id, p.name, Number(p.price) || 0, p.category || "", Boolean(p.alcohol)]);
+}
+
+function tousLesProduitsAdmin() {
+  return [...productsForAdmin, ...produitsAdminExtras];
+}
+
+async function chargerProduitsExtras() {
+  try {
+    produitsAdminExtras = extrasEnTableau(await adminListExtraProducts(adminSessionPin));
+  } catch (error) {
+    console.error(error);
+    produitsAdminExtras = [];
+  }
+}
+
 const loginPanel = document.querySelector("[data-admin-login]");
 const stockPanel = document.querySelector("[data-admin-stock]");
 const stockTable = document.querySelector("[data-stock-table]");
@@ -95,7 +122,7 @@ const formatPrice = (price) =>
 
 function renderStockTable() {
   const stock = loadStock();
-  stockTable.innerHTML = productsForAdmin
+  stockTable.innerHTML = tousLesProduitsAdmin()
     .map(
       ([id, name]) => {
         const quantity = stock[id] ?? 0;
@@ -121,6 +148,7 @@ const CATEGORY_LABELS = {
   snacking: "Snacking",
   pizzas: "Pizzas",
   "pizza-pincees": "Pizzas pincées",
+  "pizzas-26": "Pizzas 26 cm",
   panwichs: "Panwichs",
   douceurs: "Douceurs",
   softs: "Softs",
@@ -143,7 +171,7 @@ function toCsvCell(value) {
 // un fournisseur ne les livre pas.
 function downloadStockReport() {
   const stock = loadStock();
-  const rows = productsForAdmin
+  const rows = tousLesProduitsAdmin()
     .filter(([, , , category]) => category !== "pack")
     .map(([id, name, price, category]) => ({
       category: CATEGORY_LABELS[category] || category,
@@ -840,6 +868,7 @@ async function unlockAdmin() {
     } catch (ordersError) {
       console.warn(ordersError);
     }
+    await chargerProduitsExtras();
     errorMessage.textContent = "";
     loginPanel.classList.add("hidden");
     stockPanel.classList.remove("hidden");
@@ -1023,7 +1052,7 @@ document.querySelectorAll("[data-admin-view]").forEach((button) => {
       renderQrStats();
     }
     if (button.dataset.adminView === "history") renderSalesHistory();
-    if (button.dataset.adminView === "manual") renderManualPanel();
+    if (button.dataset.adminView === "manual") openManualPanel();
     if (button.dataset.adminView === "produits") openProductsPanel();
     if (button.dataset.adminView === "packs") openPackPanel();
     if (button.dataset.adminView === "closures") openClosuresPanel();
@@ -1147,7 +1176,10 @@ const manualCart = new Map(); // id -> quantité
 let manualSearch = "";
 
 function findProduct(id) {
-  return productsForAdmin.find((product) => product[0] === id);
+  return (
+    productsForAdmin.find((product) => product[0] === id) ||
+    produitsAdminExtras.find((product) => product[0] === id)
+  );
 }
 
 /* --- Packs (création + recette éditable + assemblage) --- */
@@ -1775,6 +1807,7 @@ async function openProductsPanel() {
   try {
     const list = await adminListExtraProducts(adminSessionPin);
     extraProductsData = Array.isArray(list) ? list : [];
+    produitsAdminExtras = extrasEnTableau(extraProductsData);
   } catch (error) {
     console.error(error);
     extraProductsData = [];
@@ -2700,7 +2733,9 @@ function renderManualList() {
   if (!list) return;
   const stock = loadStock();
   const term = manualSearch.trim().toLowerCase();
-  const filtered = productsForAdmin.filter(([, name]) => name.toLowerCase().includes(term));
+  const filtered = tousLesProduitsAdmin().filter(([, name]) =>
+    String(name).toLowerCase().includes(term)
+  );
 
   if (!filtered.length) {
     list.innerHTML = '<p class="empty-cart">Aucun produit trouvé.</p>';
@@ -2755,6 +2790,16 @@ function renderManualSummary() {
 function renderManualPanel() {
   renderManualList();
   renderManualSummary();
+}
+
+// Ouvre l'onglet avec la liste deja connue, puis la recharge : les produits
+// crees depuis l'admin doivent etre selectionnables sans avoir a passer par
+// l'onglet Produits au prealable.
+async function openManualPanel() {
+  renderManualPanel();
+  await chargerProduitsExtras();
+  renderManualPanel();
+  renderStockTable();
 }
 
 async function submitManualOrder() {
