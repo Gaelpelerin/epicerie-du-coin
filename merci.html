@@ -327,8 +327,49 @@
       const orderContentIds = orderContents.map((c) => c.id);
       const orderNumItems = orderContents.reduce((sum, c) => sum + (c.quantity || 0), 0);
 
+      // Un achat ne doit etre signale qu'UNE fois. La commande reste dans
+      // localStorage apres le paiement : chaque retour sur cette page
+      // (historique, onglet restaure, favori, bouton precedent) renvoyait donc
+      // un nouvel achat a Meta. Mesure du 25 octobre : 4 achats signales les
+      // 18 et 19 octobre alors qu'aucune commande n'existe en base ces deux
+      // jours-la. Meta optimisait donc en partie sur des ventes inventees.
+      // L'apercu (?demo=1) est exclu pour la meme raison : il portait un faux
+      // montant de 18,30 EUR.
+      const CLE_ACHATS_SIGNALES = "epicerie-achats-signales";
+
+      function achatsSignales() {
+        try {
+          const liste = JSON.parse(localStorage.getItem(CLE_ACHATS_SIGNALES) || "[]");
+          return Array.isArray(liste) ? liste : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function marquerAchatSignale(ref) {
+        try {
+          // On ne garde que les 20 dernieres references : assez pour couvrir
+          // les retours sur la page, sans laisser le stockage grossir.
+          localStorage.setItem(
+            CLE_ACHATS_SIGNALES,
+            JSON.stringify([...achatsSignales(), ref].slice(-20)),
+          );
+        } catch (error) {
+          console.warn(error);
+        }
+      }
+
+      const achatASignaler = Boolean(
+        order &&
+          typeof order.total === "number" &&
+          reference &&
+          params.get("demo") !== "1" &&
+          !achatsSignales().includes(reference),
+      );
+      if (achatASignaler) marquerAchatSignale(reference);
+
       // Meta Pixel — événement Purchase (déduplication CAPI via event_id = référence commande)
-      if (typeof fbq === "function" && order && typeof order.total === "number" && reference) {
+      if (typeof fbq === "function" && achatASignaler) {
         fbq("track", "Purchase", {
           value: order.total,
           currency: "EUR",
@@ -340,7 +381,7 @@
       }
 
       // Meta CAPI — côté serveur (déduplication garantie par le même event_id)
-      if (order && typeof order.total === "number" && reference) {
+      if (achatASignaler) {
         const getCookie = (name) => {
           const m = document.cookie.match("(?:^|;)\\s*" + name + "=([^;]*)");
           return m ? decodeURIComponent(m[1]) : "";
