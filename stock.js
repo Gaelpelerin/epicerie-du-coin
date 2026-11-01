@@ -84,19 +84,42 @@ const stockDefaults = {
   "pack-apero": 4,
 };
 
-function loadStock() {
-  const storedStock = localStorage.getItem(STOCK_KEY);
-  if (!storedStock) return { ...stockDefaults };
+// Dernier stock connu de cet onglet. Safari en navigation privée refuse
+// d'écrire dans localStorage : sans cette copie en mémoire, chaque lecture
+// repartait d'un stockage vide et retombait sur stockDefaults, c'est-à-dire
+// « tout est disponible ». Des produits en rupture redevenaient commandables et
+// le refus n'arrivait qu'au paiement, ce qui se voit comme un bouton sans effet.
+let memoryStock = null;
 
+function loadStock() {
+  let storedStock = null;
   try {
-    return { ...stockDefaults, ...JSON.parse(storedStock) };
-  } catch {
-    return { ...stockDefaults };
+    storedStock = localStorage.getItem(STOCK_KEY);
+  } catch (error) {
+    console.warn(error);
   }
+
+  if (storedStock) {
+    try {
+      return { ...stockDefaults, ...JSON.parse(storedStock) };
+    } catch {
+      /* cache illisible : on tombe sur la copie mémoire, puis sur les défauts */
+    }
+  }
+
+  if (memoryStock) return { ...stockDefaults, ...memoryStock };
+  return { ...stockDefaults };
 }
 
+// Le cache est un confort, jamais une condition : l'écriture peut échouer sans
+// que le stock reçu soit perdu.
 function saveStock(stock) {
-  localStorage.setItem(STOCK_KEY, JSON.stringify(stock));
+  memoryStock = { ...stock };
+  try {
+    localStorage.setItem(STOCK_KEY, JSON.stringify(stock));
+  } catch (error) {
+    console.warn(error);
+  }
   window.dispatchEvent(new CustomEvent(STOCK_EVENT, { detail: stock }));
 
   if ("BroadcastChannel" in window) {
@@ -125,12 +148,17 @@ async function refreshRemoteStock() {
     if (!response.ok) throw new Error("Stock central indisponible.");
 
     const rows = await response.json();
+    // Le serveur fait foi : on part d'un objet vide, pas de stockDefaults. En
+    // partant des valeurs par défaut, un produit absent de la réponse héritait
+    // d'une quantité inventée et s'affichait disponible alors qu'il ne l'était
+    // pas. Les défauts ne servent plus qu'avant la première réponse et hors
+    // ligne, via loadStock().
     const remoteStock = rows.reduce(
       (stock, row) => ({
         ...stock,
         [row.product_id]: Number(row.quantity) || 0,
       }),
-      { ...stockDefaults }
+      {}
     );
 
     saveStock(remoteStock);
