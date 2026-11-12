@@ -3087,11 +3087,49 @@ document.querySelectorAll('[href="#catalogue"]').forEach((lien) => {
 // Pour les produits crees depuis l'admin, qui n'arrivent qu'apres un
 // aller-retour avec la base, on bascule quand meme la vue tout de suite : le
 // changement de structure est passe, seul le contenu de la grille se remplit.
+//
+// CORRECTIF DU 12 NOVEMBRE. La version precedente marquait la cible comme
+// atteinte AVANT d'avoir cherche la carte, et renvoyait « true » meme quand
+// elle ne la trouvait pas :
+//
+//     cibleProduitFaite = true;              // <- des maintenant
+//     const carte = document.querySelector(...);
+//     if (!carte) return true;               // <- mensonge
+//
+// Consequence : le deuxieme essai, celui qui tourne apres le chargement du
+// stock, repartait aussitot sans rien tenter (« cibleProduitFaite » etait deja
+// vrai). Un seul echec, pour n'importe quelle raison — grille pas encore
+// redessinee, produit arrive de l'admin, redessin tardif des promos — et le
+// client restait sur une page ouverte sans jamais voir le produit de l'annonce.
+// Il n'y avait aucune trace de l'echec : la fonction annoncait un succes.
+//
+// Desormais : on ne marque « fait » qu'une fois la carte REELLEMENT a l'ecran,
+// verifiee au rectangle, et on reessaie tant que la grille bouge.
 let cibleProduitFaite = false;
 let vueOuvertePourCible = false;
+// La famille du produit a deja ete ouverte : inutile de rebasculer la vue a
+// chaque nouvel essai, ce qui provoquerait un saut de mise en page par essai.
+let familleOuvertePourCible = false;
 
 function identifiantCible() {
   return new URLSearchParams(window.location.search).get("p");
+}
+
+/** Le produit annonce est-il connu du catalogue a cet instant ? */
+function cibleConnue() {
+  const id = identifiantCible();
+  return Boolean(id) && products.some((item) => item.id === id);
+}
+
+/**
+ * La carte est-elle vraiment visible ? Un rectangle de hauteur nulle veut dire
+ * que la carte existe dans le document mais n'est pas encore dessinee (image
+ * pas chargee, conteneur replie) : le defilement irait alors n'importe ou.
+ */
+function carteEnVue(carte) {
+  const r = carte.getBoundingClientRect();
+  if (!r.height) return false;
+  return r.bottom > 0 && r.top < window.innerHeight;
 }
 
 /** Premier passage, synchrone, avant le premier affichage. */
@@ -3106,6 +3144,10 @@ function preparerCibleProduit() {
     history.replaceState(null, "", window.location.pathname + window.location.search);
   }
   if (ouvrirProduitCible()) return;
+
+  // La famille est deja ouverte, la carte n'etait juste pas encore dessinee :
+  // surtout ne pas basculer sur le catalogue complet par-dessus.
+  if (familleOuvertePourCible) return;
 
   // Produit inconnu a ce stade : c'est un produit cree depuis l'admin, il
   // n'arrivera qu'apres l'aller-retour avec la base. On bascule quand meme la
@@ -3125,29 +3167,88 @@ function ouvrirProduitCible() {
   // client sur l'accueil plutot que de le planter devant une famille vide.
   const produit = products.find((item) => item.id === id);
   if (!produit) return false;
-  cibleProduitFaite = true;
 
   // On ouvre toujours la FAMILLE du produit, meme si la vue « tout le
   // catalogue » a ete basculee plus haut en attendant. Essai du 15 octobre :
   // laisser le client dans le catalogue complet posait sa carte a 11 283 px
   // dans une page de 15 372 px — un defilement qu'aucun redessin ne survivait.
   // La famille tient en une poignee de cartes, la cible est atteignable.
-  const famille = FAMILIES.find(
-    (item) => !item.composer && item.cats.includes(produit.category)
-  );
-  // « defilement: false » : on vise la carte, pas la barre de retour. Sans ca
-  // les deux defilements se battent.
-  if (famille && familyProducts(famille).length) openFamily(famille.key, { defilement: false });
-  else if (!vueOuvertePourCible) openFullCatalogue({ defilement: false });
+  // Une seule fois : rebasculer la vue a chaque essai rejouerait le saut de
+  // mise en page qu'on a passe trois jours a supprimer en octobre.
+  if (!familleOuvertePourCible) {
+    const famille = FAMILIES.find(
+      (item) => !item.composer && item.cats.includes(produit.category)
+    );
+    // « defilement: false » : on vise la carte, pas la barre de retour. Sans ca
+    // les deux defilements se battent.
+    if (famille && familyProducts(famille).length) {
+      openFamily(famille.key, { defilement: false });
+      familleOuvertePourCible = true;
+    } else if (!vueOuvertePourCible) {
+      openFullCatalogue({ defilement: false });
+    }
+  }
 
+  // Pas de carte dans le document : on renvoie false, et le prochain essai
+  // retentera. C'est tout le correctif — l'ancienne version renvoyait true ici
+  // et condamnait le lien pour le reste de la visite.
   const carte = document.querySelector(`[data-product-card="${CSS.escape(id)}"]`);
-  if (!carte) return true;
+  if (!carte) return false;
+
   // Defilement immediat, pas anime : le navigateur interne de Facebook
   // interrompt volontiers un defilement doux lance au chargement.
   carte.scrollIntoView({ block: "center" });
+
+  // Et on VERIFIE. getBoundingClientRect force le calcul de la mise en page,
+  // donc on lit la position reelle apres defilement, pas une intention.
+  if (!carteEnVue(carte)) return false;
+
+  cibleProduitFaite = true;
   window.setTimeout(() => signalerCible(carte), 260);
   garderCibleEnVue(id);
   return true;
+}
+
+/**
+ * Reessaie d'amener la carte a l'ecran tant que la grille se stabilise.
+ * Le stock, les promos, les packs, les plus commandes et les produits de
+ * l'admin arrivent chacun a leur rythme et redessinent la grille ; la carte
+ * visee peut n'exister qu'au bout de plusieurs secondes sur un telephone en
+ * 4G. Essais toutes les 200 ms pendant 8 s : une recherche de selecteur et un
+ * rectangle par essai, c'est negligeable.
+ */
+function reessayerCibleProduit(dureeMs = 8000) {
+  if (cibleProduitFaite || !identifiantCible()) return;
+  const fin = Date.now() + dureeMs;
+
+  // Si le client prend la main, on arrete. Rien n'agace plus qu'une page qui
+  // vous ramene de force ou vous ne voulez plus etre. On ecoute le doigt, la
+  // molette et le clavier, PAS l'evenement « scroll » : notre propre
+  // scrollIntoView le declenche aussi et on s'arreterait soi-meme.
+  let repris = false;
+  const mainPrise = () => {
+    repris = true;
+  };
+  const options = { passive: true, once: true };
+  window.addEventListener("touchstart", mainPrise, options);
+  window.addEventListener("wheel", mainPrise, options);
+  window.addEventListener("keydown", mainPrise, options);
+
+  const tenter = () => {
+    if (cibleProduitFaite || repris) return;
+    if (ouvrirProduitCible()) return;
+    if (Date.now() < fin) {
+      window.setTimeout(tenter, 200);
+      return;
+    }
+    // Abandon. On ne laisse pas le client devant une vue ouverte pour rien :
+    // s'il n'y a pas de famille ouverte sur laquelle se rabattre, retour a
+    // l'accueil. Et on laisse une trace dans la console — un lien d'annonce
+    // qui echoue doit etre constatable, pas silencieux.
+    console.warn("Lien d'annonce : produit introuvable a l'ecran", identifiantCible());
+    if (vueOuvertePourCible && !familleOuvertePourCible) closeFamily();
+  };
+  window.setTimeout(tenter, 200);
 }
 
 // Les promos, le stock et les plus commandes arrivent chacun a leur rythme et
@@ -3423,10 +3524,17 @@ loadShopSettings()
   // au moins fonctionner pour les produits du catalogue.
   .finally(() => {
     try {
-      // Produit introuvable meme apres chargement : l'annonce pointe vers un
-      // article retire. On ramene l'accueil, sinon le client resterait devant
-      // le catalogue complet ouvert en attendant un produit qui n'existe plus.
-      if (!ouvrirProduitCible() && vueOuvertePourCible) closeFamily();
+      // Trois cas, et il faut les distinguer — l'ancienne version les
+      // confondait tous les trois :
+      //   1. la carte est a l'ecran -> fini ;
+      //   2. le produit existe mais sa carte n'est pas encore dessinee ->
+      //      on reessaie, surtout on ne ferme rien ;
+      //   3. le produit est introuvable apres chargement : l'annonce pointe
+      //      vers un article retire du catalogue -> on ramene l'accueil,
+      //      sinon le client reste devant un catalogue ouvert pour rien.
+      if (ouvrirProduitCible()) return;
+      if (cibleConnue()) reessayerCibleProduit();
+      else if (vueOuvertePourCible) closeFamily();
     } catch (error) {
       console.warn(error);
     }
